@@ -6,7 +6,6 @@ import time
 import signal
 import sys
 import argparse
-from tqdm import tqdm
 
 # Import the training function directly
 from src.train import train
@@ -102,9 +101,9 @@ def run_hyperparameter_study():
     """
     percentiles = [50, 60, 70, 80, 90]
     results = {}
-    # Add progress bar for hyperparameter study
-    for percentile in tqdm(percentiles, desc="Testing percentiles", unit="%"):
-        print(f"\n{'='*50}")
+
+    for percentile in percentiles:
+        print(f"{'='*50}")
         print(f"Testing percentile: {percentile}")
         print(f"{'='*50}")
 
@@ -151,6 +150,7 @@ def run_hyperparameter_study():
 
         # Clean up
         os.remove(temp_config_path)
+        print("")
 
     # Print summary
     print(f"\n{'='*50}")
