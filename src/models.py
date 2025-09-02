@@ -1,5 +1,4 @@
 import torchvision.models as models
-import torch.nn as nn
 from torchvision.models import vit_b_16
 
 
@@ -8,7 +7,9 @@ def get_model(name="resnet18", num_classes=10):
         model = models.resnet18(num_classes=num_classes)
     elif name == "resnet56":
         # ResNet-56 implementation (simplified)
-        model = models.resnet18(num_classes=num_classes)  # Using ResNet18 as proxy
+        model = models.resnet18(
+            num_classes=num_classes
+        )  # Using ResNet18 as proxy
     elif name == "vgg11":
         model = models.vgg11(num_classes=num_classes)
     elif name == "vit_b_16":

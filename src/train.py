@@ -17,7 +17,7 @@ from src.utils import set_seed
 def get_device(config):
     """Get the best available device for training"""
     device_config = config["train"]["device"]
-    
+
     if device_config == "mps" and torch.backends.mps.is_available():
         return torch.device("mps")
     elif device_config == "cuda" and torch.cuda.is_available():
@@ -29,38 +29,36 @@ def get_device(config):
 def train(config):
     # Set seed for reproducibility
     set_seed(42)
-    
+
     device = get_device(config)
-    print(f"Using device: {device}")
-    
+
     # Get training parameters
     batch_size = int(config["train"]["batch_size"])
     num_workers = int(config["train"].get("num_workers", 2))
     pin_memory = config["train"].get("pin_memory", False)
     use_mixed_precision = config["train"].get("use_mixed_precision", False)
-    
+
     # Get dataset
     dataset_name = config.get("dataset", "cifar10")
     trainloader, testloader = get_dataset(
         dataset_name=dataset_name,
-        batch_size=batch_size, 
-        num_workers=num_workers, 
-        pin_memory=pin_memory
+        batch_size=batch_size,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
     )
-    
+
     # Get model
     model_name = config.get("model", "resnet18")
     num_classes = 100 if dataset_name == "cifar100" else 10
     model = get_model(model_name, num_classes=num_classes).to(device)
-    
+
     # Enable mixed precision for faster training on Apple Silicon (optional)
     if device.type == "mps" and use_mixed_precision:
         model = model.half()  # Use float16 for better performance
-        print("Using mixed precision (float16)")
-    
+
     # Setup optimizer based on config
     optimizer_type = config["optimizer"].get("type", "zsharp")
-    
+
     if optimizer_type == "sgd":
         optimizer = optim.SGD(
             model.parameters(),
@@ -84,24 +82,26 @@ def train(config):
         use_zsharp = True
 
     criterion = nn.CrossEntropyLoss()
-    
+
     # Training loop with timing
     start_time = time.time()
     train_losses = []
     train_accuracies = []
-    
+
     for epoch in range(int(config["train"]["epochs"])):
         model.train()
-        epoch_start = time.time()
         epoch_loss = 0.0
         correct, total = 0, 0
-        
-        pbar = tqdm(trainloader, desc=f"Epoch {epoch+1}/{config['train']['epochs']}")
-        
+
+        pbar = tqdm(
+            trainloader, desc=f"Epoch {epoch+1}/{config['train']['epochs']}"
+        )
+
         for i, (x, y) in enumerate(pbar):
             x, y = x.to(device), y.to(device)
-            
-            # Convert to half precision if using MPS and mixed precision is enabled
+
+            # Convert to half precision if using MPS and mixed precision is
+            # enabled
             if device.type == "mps" and use_mixed_precision:
                 x = x.half()
 
@@ -109,10 +109,12 @@ def train(config):
                 # ZSharp two-step training
                 loss = criterion(model(x), y)
                 loss.backward()
-                
+
                 # Add gradient clipping for stability
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-                
+                torch.nn.utils.clip_grad_norm_(
+                    model.parameters(), max_norm=1.0
+                )
+
                 optimizer.first_step()
 
                 criterion(model(x), y).backward()
@@ -122,10 +124,12 @@ def train(config):
                 optimizer.zero_grad()
                 loss = criterion(model(x), y)
                 loss.backward()
-                
+
                 # Add gradient clipping for stability
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-                
+                torch.nn.utils.clip_grad_norm_(
+                    model.parameters(), max_norm=1.0
+                )
+
                 optimizer.step()
 
             # Track metrics
@@ -135,51 +139,48 @@ def train(config):
             total += y.size(0)
 
             # Update progress bar
-            pbar.set_postfix({
-                "Loss": f"{loss.item():.4f}", 
-                "Acc": f"{100 * correct / total:.2f}%"
-            })
+            pbar.set_postfix(
+                {
+                    "Loss": f"{loss.item():.4f}",
+                    "Acc": f"{100 * correct / total:.2f}%",
+                }
+            )
 
         # Record epoch metrics
         avg_loss = epoch_loss / len(trainloader)
         train_accuracy = 100 * correct / total
         train_losses.append(avg_loss)
         train_accuracies.append(train_accuracy)
-        
-        epoch_time = time.time() - epoch_start
-        # Removed epoch summary print to keep progress bars clean
 
     total_time = time.time() - start_time
-    # Removed total training time print to keep output clean
 
     # Evaluate on test set
     model.eval()
     test_correct, test_total = 0, 0
     test_loss = 0.0
-    
+
     with torch.no_grad():
         eval_pbar = tqdm(testloader, desc="Evaluating")
         for x, y in eval_pbar:
             x, y = x.to(device), y.to(device)
             if device.type == "mps" and use_mixed_precision:
                 x = x.half()
-            
+
             outputs = model(x)
             loss = criterion(outputs, y)
             test_loss += loss.item()
-            
+
             preds = outputs.argmax(dim=1)
             test_correct += (preds == y).sum().item()
             test_total += y.size(0)
-            
-            eval_pbar.set_postfix({"Test Acc": f"{100 * test_correct / test_total:.2f}%"})
-    
+
+            eval_pbar.set_postfix(
+                {"Test Acc": f"{100 * test_correct / test_total:.2f}%"}
+            )
+
     test_accuracy = 100 * test_correct / test_total
     avg_test_loss = test_loss / len(testloader)
-    
-    print(f"Final Test Accuracy: {test_accuracy:.2f}%")
-    print(f"Final Test Loss: {avg_test_loss:.4f}")
-    
+
     # Save results
     results = {
         "config": config,
@@ -189,17 +190,17 @@ def train(config):
         "train_accuracies": train_accuracies,
         "total_training_time": total_time,
         "device": str(device),
-        "optimizer_type": optimizer_type
+        "optimizer_type": optimizer_type,
     }
-    
+
     # Save results to file
-    results_file = f"results/zsharp_{dataset_name}_{model_name}_{optimizer_type}.json"
+    results_file = (
+        f"results/zsharp_{dataset_name}_{model_name}_{optimizer_type}.json"
+    )
     os.makedirs("results", exist_ok=True)
     with open(results_file, "w") as f:
         json.dump(results, f, indent=2)
-    
-    print(f"Results saved to {results_file}")
-    
+
     return results
 
 
