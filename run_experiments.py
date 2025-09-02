@@ -6,7 +6,6 @@ import time
 import signal
 import sys
 import argparse
-from pathlib import Path
 from tqdm import tqdm
 
 # Import the training function directly
@@ -98,7 +97,9 @@ def run_comparison_experiments(fast_mode=False):
 
 
 def run_hyperparameter_study():
-    """Run hyperparameter study for percentile threshold as mentioned in the paper"""
+    """
+    Run hyperparameter study for percentile threshold as mentioned in the paper
+    """
     percentiles = [50, 60, 70, 80, 90]
     results = {}
     # Add progress bar for hyperparameter study
