@@ -1,0 +1,14 @@
+dataset: cifar10
+model: resnet18
+optimizer:
+  type: zsharp
+  base: sgd
+  lr: 0.1
+  momentum: 0.9
+  weight_decay: 5e-4
+  rho: 0.05
+  percentile: 70
+train:
+  batch_size: 128
+  epochs: 5
+  device: cuda
