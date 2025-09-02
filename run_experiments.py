@@ -2,9 +2,15 @@
 import yaml
 import json
 import os
-import subprocess
 import time
+import signal
+import sys
+import argparse
 from pathlib import Path
+from tqdm import tqdm
+
+# Import the training function directly
+from src.train import train
 
 
 def run_experiment(config_path, results_dir="results"):
@@ -15,29 +21,41 @@ def run_experiment(config_path, results_dir="results"):
     with open(config_path) as f:
         config = yaml.safe_load(f)
     
-    # Run training
-    cmd = f"PYTHONPATH=/Users/bangyen/Documents/repos/zsharp python src/train.py --config {config_path}"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    
-    if result.returncode != 0:
-        print(f"Experiment failed: {result.stderr}")
+    try:
+        # Run training directly using the imported function
+        # This will preserve all progress bars and output
+        train(config)
+        
+        print(f"Experiment completed successfully")
+        return "Experiment completed successfully"
+        
+    except KeyboardInterrupt:
+        print("\nExperiment interrupted by user")
         return None
-    
-    print(f"Experiment completed successfully")
-    return result.stdout
+    except Exception as e:
+        print(f"Experiment failed with error: {e}")
+        return None
 
 
-def run_comparison_experiments():
+def run_comparison_experiments(fast_mode=False):
     """Run comparison experiments as described in the ZSharp paper"""
-    experiments = [
-        ("configs/baseline_sgd.yaml", "SGD Baseline"),
-        ("configs/default.yaml", "ZSharp"),
-        ("configs/cifar100.yaml", "ZSharp CIFAR-100"),
-        ("configs/vit_experiment.yaml", "ZSharp ViT"),
-    ]
+    if fast_mode:
+        experiments = [
+            ("configs/test_sgd.yaml", "SGD Baseline (Test)"),
+            ("configs/test.yaml", "ZSharp (Test)"),
+        ]
+    else:
+        experiments = [
+            ("configs/baseline_sgd.yaml", "SGD Baseline"),
+            ("configs/default.yaml", "ZSharp"),
+            # Temporarily disabled for testing:
+            # ("configs/cifar100.yaml", "ZSharp CIFAR-100"),
+            # ("configs/vit_experiment.yaml", "ZSharp ViT"),
+        ]
     
     results = {}
     
+    # Add progress bar for comparison experiments
     for config_path, experiment_name in experiments:
         print(f"\n{'='*50}")
         print(f"Running: {experiment_name}")
@@ -75,7 +93,8 @@ def run_hyperparameter_study():
     percentiles = [50, 60, 70, 80, 90]
     results = {}
     
-    for percentile in percentiles:
+    # Add progress bar for hyperparameter study
+    for percentile in tqdm(percentiles, desc="Hyperparameter Study", unit="percentile"):
         print(f"\n{'='*50}")
         print(f"Testing percentile: {percentile}")
         print(f"{'='*50}")
@@ -132,17 +151,45 @@ def run_hyperparameter_study():
     return results
 
 
+def signal_handler(sig, frame):
+    """Handle Ctrl+C gracefully"""
+    print('\n\nInterrupted by user. Cleaning up...')
+    sys.exit(0)
+
+
 if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="ZSharp Paper Reproduction Experiments")
+    parser.add_argument("--fast", action="store_true", help="Run in fast mode using test configs")
+    parser.add_argument("--hp-study", action="store_true", help="Run hyperparameter study instead of comparison experiments")
+    args = parser.parse_args()
+    
+    # Set up signal handler for graceful interruption
+    signal.signal(signal.SIGINT, signal_handler)
+    
     print("ZSharp Paper Reproduction Experiments")
     print("="*50)
+    if args.fast:
+        print("Running in FAST MODE (using test configs)")
+        print("="*50)
+    if args.hp_study:
+        print("Running HYPERPARAMETER STUDY")
+        print("="*50)
     
-    # Run comparison experiments
-    print("\n1. Running comparison experiments...")
-    comparison_results = run_comparison_experiments()
-    
-    # Run hyperparameter study
-    print("\n2. Running hyperparameter study...")
-    hp_results = run_hyperparameter_study()
-    
-    print("\nAll experiments completed!")
-    print("Check the 'results' directory for detailed outputs.")
+    try:
+        if args.hp_study:
+            # Run hyperparameter study
+            print("\nRunning hyperparameter study...")
+            hp_results = run_hyperparameter_study()
+            print("\nHyperparameter study completed!")
+        else:
+            # Run comparison experiments
+            print("\n1. Running comparison experiments...")
+            comparison_results = run_comparison_experiments(fast_mode=args.fast)
+            print("\nComparison experiments completed!")
+        
+        print("Check the 'results' directory for detailed outputs.")
+        
+    except KeyboardInterrupt:
+        print('\n\nExperiments interrupted by user.')
+        sys.exit(0)

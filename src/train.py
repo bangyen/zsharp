@@ -147,10 +147,10 @@ def train(config):
         train_accuracies.append(train_accuracy)
         
         epoch_time = time.time() - epoch_start
-        print(f"Epoch {epoch+1}/{config['train']['epochs']}: Loss {avg_loss:.4f}, Train Acc: {train_accuracy:.2f}%, Time: {epoch_time:.2f}s")
+        # Removed epoch summary print to keep progress bars clean
 
     total_time = time.time() - start_time
-    print(f"Total training time: {total_time:.2f}s")
+    # Removed total training time print to keep output clean
 
     # Evaluate on test set
     model.eval()
