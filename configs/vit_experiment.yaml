@@ -1,14 +1,14 @@
 dataset: cifar10
-model: resnet18
+model: vit_b_16
 optimizer:
   type: zsharp
   rho: 0.05
   percentile: 70
-  lr: 0.001  # Reduced learning rate for stability
+  lr: 0.01
   momentum: 0.9
   weight_decay: 5e-4
 train:
-  batch_size: 256
+  batch_size: 128  # Smaller batch size for ViT
   epochs: 10
   device: mps
   num_workers: 4
