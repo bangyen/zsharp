@@ -1,6 +1,7 @@
 # Placeholder for evaluation utilities
+# import torch.nn as nn
 import torch
-import torch.nn as nn
+
 
 def evaluate_model(model, testloader, device):
     """Evaluate model on test set"""

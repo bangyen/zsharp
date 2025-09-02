@@ -1,5 +1,7 @@
-import torch.nn as nn
 import torchvision.models as models
+
+# import torch.nn as nn
+
 
 def get_model(name="resnet18", num_classes=10):
     if name == "resnet18":

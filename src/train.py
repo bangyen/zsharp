@@ -10,19 +10,24 @@ from src.optimizer import ZSharp
 
 
 def train(config):
-    device = config['train']['device'] if torch.cuda.is_available() else 'cpu'
-    trainloader, testloader = get_cifar10(config['train']['batch_size'])
-    model = get_model(config['model']).to(device)
+    device = config["train"]["device"] if torch.cuda.is_available() else "cpu"
+    trainloader, testloader = get_cifar10(config["train"]["batch_size"])
+    model = get_model(config["model"]).to(device)
 
     base_opt = optim.SGD
-    optimizer = ZSharp(model.parameters(), base_optimizer=base_opt, rho=config['optimizer']['rho'],
-                       lr=config['optimizer']['lr'], momentum=config['optimizer']['momentum'],
-                       weight_decay=config['optimizer']['weight_decay'],
-                       percentile=config['optimizer']['percentile'])
+    optimizer = ZSharp(
+        model.parameters(),
+        base_optimizer=base_opt,
+        rho=config["optimizer"]["rho"],
+        lr=config["optimizer"]["lr"],
+        momentum=config["optimizer"]["momentum"],
+        weight_decay=config["optimizer"]["weight_decay"],
+        percentile=config["optimizer"]["percentile"],
+    )
 
     criterion = nn.CrossEntropyLoss()
 
-    for epoch in range(config['train']['epochs']):
+    for epoch in range(config["train"]["epochs"]):
         model.train()
         for i, (x, y) in enumerate(trainloader):
             x, y = x.to(device), y.to(device)
@@ -36,7 +41,10 @@ def train(config):
             criterion(model(x), y).backward()
             optimizer.second_step()
 
-        print(f"Epoch {epoch+1}/{config['train']['epochs']}: Loss {loss.item():.4f}")
+        print(
+            f"Epoch {epoch+1}/{config['train']['epochs']}"
+            f": Loss {loss.item():.4f}"
+        )
 
     # Evaluate
     model.eval()

@@ -5,3 +5,9 @@ scipy
 pyyaml
 tqdm
 matplotlib
+
+# to run checks
+pytest-cov
+pytest
+black
+flake8
