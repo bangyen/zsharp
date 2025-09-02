@@ -81,15 +81,11 @@ class ZSharp(SAM):
         if not layer_grads:
             return
         
-        # Concatenate all gradients for global statistics
-        all_grads = torch.cat(layer_grads)
-        global_mean, global_std = torch.mean(all_grads), torch.std(all_grads) + 1e-12
-        
         # Compute Z-scores layer-wise as described in the paper
         zscores_list = []
         for grad_flat in layer_grads:
             # Layer-wise Z-score normalization with numerical stability
-            layer_mean, layer_std = torch.mean(grad_flat), torch.std(grad_flat) + 1e-12
+            layer_mean, layer_std = torch.mean(grad_flat), torch.std(grad_flat) + 1e-8
             layer_zscores = (grad_flat - layer_mean) / layer_std
             zscores_list.append(layer_zscores)
         
@@ -101,6 +97,7 @@ class ZSharp(SAM):
             # If all Z-scores are the same, use a simple threshold
             threshold = 0.0
         else:
+            # Use absolute Z-scores for percentile computation as per paper
             threshold = torch.quantile(all_zscores.abs(), self.percentile / 100.0).item()
 
         # Apply filtering to each layer
@@ -112,12 +109,12 @@ class ZSharp(SAM):
             layer_zscores = zscores_list[i]
             
             # Create mask based on absolute Z-score threshold
-            mask = layer_zscores.abs() > threshold
+            mask = layer_zscores.abs() >= threshold
             
             # Ensure at least some gradients are kept (numerical stability)
             if not mask.any():
-                # Keep top 10% if no gradients pass threshold
-                top_k = max(1, int(0.1 * mask.numel()))
+                # Keep top 20% if no gradients pass threshold
+                top_k = max(1, int(0.2 * mask.numel()))
                 _, indices = torch.topk(layer_zscores.abs(), top_k)
                 mask = torch.zeros_like(mask)
                 mask[indices] = True

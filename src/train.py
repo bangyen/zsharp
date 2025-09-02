@@ -109,6 +109,10 @@ def train(config):
                 # ZSharp two-step training
                 loss = criterion(model(x), y)
                 loss.backward()
+                
+                # Add gradient clipping for stability
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                
                 optimizer.first_step()
 
                 criterion(model(x), y).backward()
@@ -118,6 +122,10 @@ def train(config):
                 optimizer.zero_grad()
                 loss = criterion(model(x), y)
                 loss.backward()
+                
+                # Add gradient clipping for stability
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                
                 optimizer.step()
 
             # Track metrics

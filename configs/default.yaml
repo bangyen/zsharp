@@ -3,14 +3,14 @@ model: resnet18
 optimizer:
   type: zsharp
   rho: 0.05
-  percentile: 70
-  lr: 0.001  # Reduced learning rate for stability
+  percentile: 50  # Reduced percentile to be less aggressive
+  lr: 0.01  # Reduced learning rate for stability
   momentum: 0.9
   weight_decay: 5e-4
 train:
-  batch_size: 256
-  epochs: 10
+  batch_size: 128
+  epochs: 20  # Reduced epochs for faster testing
   device: mps
   num_workers: 4
   pin_memory: false
-  use_mixed_precision: true
+  use_mixed_precision: false

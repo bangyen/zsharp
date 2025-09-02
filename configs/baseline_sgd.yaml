@@ -1,14 +1,14 @@
 dataset: cifar10
 model: resnet18
 optimizer:
-  type: sgd  # Baseline SGD for comparison
+  type: sgd
   lr: 0.01
   momentum: 0.9
   weight_decay: 5e-4
 train:
-  batch_size: 256
-  epochs: 10
+  batch_size: 128
+  epochs: 20
   device: mps
   num_workers: 4
   pin_memory: false
-  use_mixed_precision: true
+  use_mixed_precision: false
