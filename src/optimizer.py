@@ -4,7 +4,7 @@ This module provides implementations of SAM (Sharpness-Aware Minimization)
 and ZSharp optimizers for deep learning training with gradient filtering.
 """
 
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Tuple
 
 import torch
 
@@ -97,7 +97,7 @@ class SAM(torch.optim.Optimizer):
                     p.sub_(p.state["e"])
         self.base_optimizer.step()
 
-    def step(self, closure: Optional[Callable] = None) -> None:
+    def step(self, closure=None):
         """
         Raises an error since SAM requires two-step calls.
 

@@ -8,6 +8,7 @@ import argparse
 import json
 import os
 import time
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -120,9 +121,11 @@ def train(config):
         TYPE_KEY, ZSHARP_OPTIMIZER
     )
 
+    optimizer: Any
+
     if optimizer_type == SGD_OPTIMIZER:
         optimizer = optim.SGD(
-            model.parameters(),
+            list(model.parameters()),
             lr=float(config[OPTIMIZER_CONFIG_KEY][LR_KEY]),
             momentum=float(config[OPTIMIZER_CONFIG_KEY][MOMENTUM_KEY]),
             weight_decay=float(config[OPTIMIZER_CONFIG_KEY][WEIGHT_DECAY_KEY]),
@@ -131,8 +134,8 @@ def train(config):
     else:
         # ZSharp optimizer
         base_opt = optim.SGD
-        optimizer = ZSharp(
-            model.parameters(),
+        zsharp_optimizer = ZSharp(
+            list(model.parameters()),
             base_optimizer=base_opt,
             rho=float(config[OPTIMIZER_CONFIG_KEY][RHO_KEY]),
             lr=float(config[OPTIMIZER_CONFIG_KEY][LR_KEY]),
@@ -140,6 +143,7 @@ def train(config):
             weight_decay=float(config[OPTIMIZER_CONFIG_KEY][WEIGHT_DECAY_KEY]),
             percentile=int(config[OPTIMIZER_CONFIG_KEY][PERCENTILE_KEY]),
         )
+        optimizer = zsharp_optimizer
         use_zsharp = True
 
     criterion = nn.CrossEntropyLoss()
@@ -175,6 +179,8 @@ def train(config):
                     model.parameters(), max_norm=MAX_GRADIENT_NORM
                 )
 
+                # Type assertion for mypy
+                assert isinstance(optimizer, ZSharp)
                 optimizer.first_step()
 
                 criterion(model(x), y).backward()

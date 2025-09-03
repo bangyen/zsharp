@@ -197,7 +197,7 @@ def run_hyperparameter_study():
 
 
 def signal_handler(sig, frame):
-    """Handle Ctrl+C gracefully"""
+    """Handle Ctrl+C gracefully by logging and exiting cleanly."""
     logger.warning("Interrupted by user. Cleaning up...")
     sys.exit(0)
 

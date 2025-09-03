@@ -33,7 +33,7 @@ class TestSAM:
         model = SimpleModel()
         base_optimizer = optim.SGD
         sam = SAM(
-            model.parameters(),
+            list(model.parameters()),
             base_optimizer,
             rho=DEFAULT_RHO,
             lr=DEFAULT_LEARNING_RATE,
@@ -48,7 +48,7 @@ class TestSAM:
         model = SimpleModel()
         base_optimizer = optim.SGD
         sam = SAM(
-            model.parameters(),
+            list(model.parameters()),
             base_optimizer,
             rho=DEFAULT_RHO,
             lr=DEFAULT_LEARNING_RATE,
@@ -86,7 +86,7 @@ class TestSAM:
         model = SimpleModel()
         base_optimizer = optim.SGD
         sam = SAM(
-            model.parameters(),
+            list(model.parameters()),
             base_optimizer,
             rho=DEFAULT_RHO,
             lr=DEFAULT_LEARNING_RATE,
@@ -132,7 +132,7 @@ class TestSAM:
         model = SimpleModel()
         base_optimizer = optim.SGD
         sam = SAM(
-            model.parameters(),
+            list(model.parameters()),
             base_optimizer,
             rho=DEFAULT_RHO,
             lr=DEFAULT_LEARNING_RATE,
@@ -146,7 +146,7 @@ class TestSAM:
         model = SimpleModel()
         base_optimizer = optim.SGD
         sam = SAM(
-            model.parameters(),
+            list(model.parameters()),
             base_optimizer,
             rho=DEFAULT_RHO,
             lr=DEFAULT_LEARNING_RATE,
@@ -175,7 +175,7 @@ class TestZSharp:
         model = SimpleModel()
         base_optimizer = optim.SGD
         zsharp = ZSharp(
-            model.parameters(),
+            list(model.parameters()),
             base_optimizer,
             rho=DEFAULT_RHO,
             percentile=DEFAULT_PERCENTILE,
@@ -192,7 +192,7 @@ class TestZSharp:
         model = SimpleModel()
         base_optimizer = optim.SGD
         zsharp = ZSharp(
-            model.parameters(),
+            list(model.parameters()),
             base_optimizer,
             rho=0.05,
             percentile=70,
@@ -229,7 +229,7 @@ class TestZSharp:
         model = SimpleModel()
         base_optimizer = optim.SGD
         zsharp = ZSharp(
-            model.parameters(),
+            list(model.parameters()),
             base_optimizer,
             rho=DEFAULT_RHO,
             percentile=DEFAULT_PERCENTILE,
@@ -257,7 +257,7 @@ class TestZSharp:
         model = SimpleModel()
         base_optimizer = optim.SGD
         zsharp = ZSharp(
-            model.parameters(),
+            list(model.parameters()),
             base_optimizer,
             rho=DEFAULT_RHO,
             percentile=DEFAULT_PERCENTILE,
@@ -276,7 +276,7 @@ class TestZSharp:
         model = SimpleModel()
         base_optimizer = optim.SGD
         zsharp = ZSharp(
-            model.parameters(),
+            list(model.parameters()),
             base_optimizer,
             rho=DEFAULT_RHO,
             percentile=80,
@@ -318,7 +318,7 @@ class TestZSharp:
         model = SimpleModel()
         base_optimizer = optim.SGD
         zsharp = ZSharp(
-            model.parameters(),
+            list(model.parameters()),
             base_optimizer,
             rho=DEFAULT_RHO,
             percentile=DEFAULT_PERCENTILE,
@@ -368,7 +368,7 @@ class TestZSharp:
         # Test with different percentiles
         for percentile in [50, 70, 90]:
             zsharp = ZSharp(
-                model.parameters(),
+                list(model.parameters()),
                 base_optimizer,
                 rho=DEFAULT_RHO,
                 percentile=percentile,
@@ -381,7 +381,7 @@ class TestZSharp:
         model = SimpleModel()
         base_optimizer = optim.SGD
         zsharp = ZSharp(
-            model.parameters(),
+            list(model.parameters()),
             base_optimizer,
             rho=DEFAULT_RHO,
             percentile=DEFAULT_PERCENTILE,
@@ -416,7 +416,7 @@ class TestZSharp:
         model = SimpleModel()
         base_optimizer = optim.SGD
         zsharp = ZSharp(
-            model.parameters(),
+            list(model.parameters()),
             base_optimizer,
             rho=DEFAULT_RHO,
             percentile=DEFAULT_PERCENTILE,
@@ -456,13 +456,13 @@ class TestOptimizerIntegration:
 
         # Setup optimizers
         sam = SAM(
-            model1.parameters(),
+            list(model1.parameters()),
             optim.SGD,
             rho=DEFAULT_RHO,
             lr=DEFAULT_LEARNING_RATE,
         )
         zsharp = ZSharp(
-            model2.parameters(),
+            list(model2.parameters()),
             optim.SGD,
             rho=DEFAULT_RHO,
             percentile=DEFAULT_PERCENTILE,

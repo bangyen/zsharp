@@ -95,7 +95,7 @@ class TestUtils:
         if torch.cuda.is_available():
             # The function should have set CUDA seeds without error
             # Verify that CUDA random state is properly initialized
-            cuda_rand = torch.cuda.FloatTensor(5).uniform_()
+            cuda_rand = torch.rand(5, device="cuda")
             assert len(cuda_rand) == 5
 
     def test_set_seed_reproducibility(self):
