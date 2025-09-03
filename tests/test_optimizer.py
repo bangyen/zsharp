@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from src.constants import DEFAULT_LEARNING_RATE, DEFAULT_PERCENTILE, DEFAULT_RHO
 from src.optimizer import SAM, ZSharp
 
 
@@ -27,9 +28,14 @@ class TestSAM:
         """Test SAM optimizer initialization"""
         model = SimpleModel()
         base_optimizer = optim.SGD
-        sam = SAM(model.parameters(), base_optimizer, rho=0.05, lr=0.01)
+        sam = SAM(
+            model.parameters(),
+            base_optimizer,
+            rho=DEFAULT_RHO,
+            lr=DEFAULT_LEARNING_RATE,
+        )
 
-        assert sam.rho == 0.05
+        assert sam.rho == DEFAULT_RHO
         assert hasattr(sam, "base_optimizer")
         assert len(sam.param_groups) > 0
 
@@ -37,7 +43,12 @@ class TestSAM:
         """Test SAM first step (gradient perturbation)"""
         model = SimpleModel()
         base_optimizer = optim.SGD
-        sam = SAM(model.parameters(), base_optimizer, rho=0.05, lr=0.01)
+        sam = SAM(
+            model.parameters(),
+            base_optimizer,
+            rho=DEFAULT_RHO,
+            lr=DEFAULT_LEARNING_RATE,
+        )
 
         # Create dummy data and compute gradients
         x = torch.randn(4, 10)
@@ -70,7 +81,12 @@ class TestSAM:
         """
         model = SimpleModel()
         base_optimizer = optim.SGD
-        sam = SAM(model.parameters(), base_optimizer, rho=0.05, lr=0.01)
+        sam = SAM(
+            model.parameters(),
+            base_optimizer,
+            rho=DEFAULT_RHO,
+            lr=DEFAULT_LEARNING_RATE,
+        )
 
         # Create dummy data and compute gradients
         x = torch.randn(4, 10)
@@ -111,7 +127,12 @@ class TestSAM:
         """Test that calling step() directly raises an error"""
         model = SimpleModel()
         base_optimizer = optim.SGD
-        sam = SAM(model.parameters(), base_optimizer, rho=0.05, lr=0.01)
+        sam = SAM(
+            model.parameters(),
+            base_optimizer,
+            rho=DEFAULT_RHO,
+            lr=DEFAULT_LEARNING_RATE,
+        )
 
         with pytest.raises(RuntimeError, match="SAM requires two-step calls"):
             sam.step()
@@ -120,7 +141,12 @@ class TestSAM:
         """Test SAM behavior with zero gradients"""
         model = SimpleModel()
         base_optimizer = optim.SGD
-        sam = SAM(model.parameters(), base_optimizer, rho=0.05, lr=0.01)
+        sam = SAM(
+            model.parameters(),
+            base_optimizer,
+            rho=DEFAULT_RHO,
+            lr=DEFAULT_LEARNING_RATE,
+        )
 
         # Zero gradients
         for param in model.parameters():
@@ -147,13 +173,13 @@ class TestZSharp:
         zsharp = ZSharp(
             model.parameters(),
             base_optimizer,
-            rho=0.05,
-            percentile=70,
-            lr=0.01,
+            rho=DEFAULT_RHO,
+            percentile=DEFAULT_PERCENTILE,
+            lr=DEFAULT_LEARNING_RATE,
         )
 
-        assert zsharp.rho == 0.05
-        assert zsharp.percentile == 70
+        assert zsharp.rho == DEFAULT_RHO
+        assert zsharp.percentile == DEFAULT_PERCENTILE
         assert hasattr(zsharp, "base_optimizer")
         assert len(zsharp.param_groups) > 0
 
@@ -201,9 +227,9 @@ class TestZSharp:
         zsharp = ZSharp(
             model.parameters(),
             base_optimizer,
-            rho=0.05,
-            percentile=70,
-            lr=0.01,
+            rho=DEFAULT_RHO,
+            percentile=DEFAULT_PERCENTILE,
+            lr=DEFAULT_LEARNING_RATE,
         )
 
         # Create dummy data and compute gradients
@@ -229,9 +255,9 @@ class TestZSharp:
         zsharp = ZSharp(
             model.parameters(),
             base_optimizer,
-            rho=0.05,
-            percentile=70,
-            lr=0.01,
+            rho=DEFAULT_RHO,
+            percentile=DEFAULT_PERCENTILE,
+            lr=DEFAULT_LEARNING_RATE,
         )
 
         # Zero gradients
@@ -248,9 +274,9 @@ class TestZSharp:
         zsharp = ZSharp(
             model.parameters(),
             base_optimizer,
-            rho=0.05,
+            rho=DEFAULT_RHO,
             percentile=80,
-            lr=0.01,
+            lr=DEFAULT_LEARNING_RATE,
         )
 
         # Create dummy data and compute gradients
@@ -290,9 +316,9 @@ class TestZSharp:
         zsharp = ZSharp(
             model.parameters(),
             base_optimizer,
-            rho=0.05,
-            percentile=70,
-            lr=0.01,
+            rho=DEFAULT_RHO,
+            percentile=DEFAULT_PERCENTILE,
+            lr=DEFAULT_LEARNING_RATE,
         )
 
         # Create dummy data and compute gradients
@@ -340,9 +366,9 @@ class TestZSharp:
             zsharp = ZSharp(
                 model.parameters(),
                 base_optimizer,
-                rho=0.05,
+                rho=DEFAULT_RHO,
                 percentile=percentile,
-                lr=0.01,
+                lr=DEFAULT_LEARNING_RATE,
             )
             assert zsharp.percentile == percentile
 
@@ -353,9 +379,9 @@ class TestZSharp:
         zsharp = ZSharp(
             model.parameters(),
             base_optimizer,
-            rho=0.05,
-            percentile=70,
-            lr=0.01,
+            rho=DEFAULT_RHO,
+            percentile=DEFAULT_PERCENTILE,
+            lr=DEFAULT_LEARNING_RATE,
         )
 
         # Create dummy data and compute gradients
@@ -388,9 +414,9 @@ class TestZSharp:
         zsharp = ZSharp(
             model.parameters(),
             base_optimizer,
-            rho=0.05,
-            percentile=70,
-            lr=0.01,
+            rho=DEFAULT_RHO,
+            percentile=DEFAULT_PERCENTILE,
+            lr=DEFAULT_LEARNING_RATE,
         )
 
         # Create dummy data and compute gradients
@@ -425,9 +451,18 @@ class TestOptimizerIntegration:
             param2.data = param1.data.clone()
 
         # Setup optimizers
-        sam = SAM(model1.parameters(), optim.SGD, rho=0.05, lr=0.01)
+        sam = SAM(
+            model1.parameters(),
+            optim.SGD,
+            rho=DEFAULT_RHO,
+            lr=DEFAULT_LEARNING_RATE,
+        )
         zsharp = ZSharp(
-            model2.parameters(), optim.SGD, rho=0.05, percentile=70, lr=0.01
+            model2.parameters(),
+            optim.SGD,
+            rho=DEFAULT_RHO,
+            percentile=DEFAULT_PERCENTILE,
+            lr=DEFAULT_LEARNING_RATE,
         )
 
         # Create dummy data

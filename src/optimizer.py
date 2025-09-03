@@ -2,6 +2,15 @@ from typing import Any, Callable, List, Optional, Tuple
 
 import torch
 
+from src.constants import (
+    DEFAULT_PERCENTILE,
+    DEFAULT_RHO,
+    DEFAULT_TOP_K_RATIO,
+    EPSILON,
+    EPSILON_STD,
+    PERCENTAGE_MULTIPLIER,
+)
+
 
 class SAM(torch.optim.Optimizer):
     """
@@ -22,7 +31,7 @@ class SAM(torch.optim.Optimizer):
         self,
         params: List[torch.nn.Parameter],
         base_optimizer: Callable,
-        rho: float = 0.05,
+        rho: float = DEFAULT_RHO,
         **kwargs: Any
     ) -> None:
         defaults = dict(rho=rho, **kwargs)
@@ -49,7 +58,7 @@ class SAM(torch.optim.Optimizer):
             ),
             p=2,
         )
-        scale = self.rho / (grad_norm + 1e-12)
+        scale = self.rho / (grad_norm + EPSILON)
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is None:
@@ -107,7 +116,7 @@ class ZSharp(SAM):
         params: List[torch.nn.Parameter],
         base_optimizer: Callable,
         rho: float = 0.05,
-        percentile: int = 70,
+        percentile: int = DEFAULT_PERCENTILE,
         **kwargs: Any
     ) -> None:
         super().__init__(params, base_optimizer, rho=rho, **kwargs)
@@ -155,7 +164,7 @@ class ZSharp(SAM):
             # Layer-wise Z-score normalization with numerical stability
             layer_mean, layer_std = (
                 torch.mean(grad_flat),
-                torch.std(grad_flat) + 1e-8,
+                torch.std(grad_flat) + EPSILON_STD,
             )
             layer_zscores = (grad_flat - layer_mean) / layer_std
             zscores_list.append(layer_zscores)
@@ -170,7 +179,7 @@ class ZSharp(SAM):
         else:
             # Use absolute Z-scores for percentile computation as per paper
             threshold = torch.quantile(
-                all_zscores.abs(), self.percentile / 100.0
+                all_zscores.abs(), self.percentile / PERCENTAGE_MULTIPLIER
             ).item()
 
         # Apply filtering to each layer
@@ -187,7 +196,7 @@ class ZSharp(SAM):
             # Ensure at least some gradients are kept (numerical stability)
             if not mask.any():
                 # Keep top 20% if no gradients pass threshold
-                top_k = max(1, int(0.2 * mask.numel()))
+                top_k = max(1, int(DEFAULT_TOP_K_RATIO * mask.numel()))
                 _, indices = torch.topk(layer_zscores.abs(), top_k)
                 mask = torch.zeros_like(mask)
                 mask[indices] = True

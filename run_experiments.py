@@ -8,11 +8,21 @@ import time
 
 import yaml
 
+from src.constants import (
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_LEARNING_RATE,
+    DEFAULT_MOMENTUM,
+    DEFAULT_NUM_WORKERS,
+    DEFAULT_RHO,
+    DEFAULT_WEIGHT_DECAY,
+    RESULTS_DIR,
+)
+
 # Import the training function directly
 from src.train import train
 
 
-def run_experiment(config_path, results_dir="results"):
+def run_experiment(config_path, results_dir=RESULTS_DIR):
     """Run a single experiment and save results"""
     # Load config
     with open(config_path) as f:
@@ -87,8 +97,8 @@ def run_comparison_experiments(fast_mode=False):
             print(f"{exp_name}: Failed")
 
     # Save comparison results
-    comparison_file = "results/comparison_results.json"
-    os.makedirs("results", exist_ok=True)
+    comparison_file = f"{RESULTS_DIR}/comparison_results.json"
+    os.makedirs(RESULTS_DIR, exist_ok=True)
     with open(comparison_file, "w") as f:
         json.dump(results, f, indent=2)
 
@@ -114,17 +124,17 @@ def run_hyperparameter_study():
             "model": "resnet18",
             "optimizer": {
                 "type": "zsharp",
-                "rho": 0.05,
+                "rho": DEFAULT_RHO,
                 "percentile": percentile,
-                "lr": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 5e-4,
+                "lr": DEFAULT_LEARNING_RATE,
+                "momentum": DEFAULT_MOMENTUM,
+                "weight_decay": DEFAULT_WEIGHT_DECAY,
             },
             "train": {
-                "batch_size": 256,
+                "batch_size": DEFAULT_BATCH_SIZE,
                 "epochs": 10,
                 "device": "mps",
-                "num_workers": 4,
+                "num_workers": DEFAULT_NUM_WORKERS,
                 "pin_memory": False,
                 "use_mixed_precision": True,
             },
@@ -164,7 +174,7 @@ def run_hyperparameter_study():
             print(f"Percentile {percentile}%: {acc:.2f}% accuracy")
 
     # Save hyperparameter study results
-    hp_file = "results/hyperparameter_study.json"
+    hp_file = f"{RESULTS_DIR}/hyperparameter_study.json"
     with open(hp_file, "w") as f:
         json.dump(results, f, indent=2)
 

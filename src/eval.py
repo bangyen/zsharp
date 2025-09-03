@@ -2,6 +2,8 @@
 # import torch.nn as nn
 import torch
 
+from src.constants import PERCENTAGE_MULTIPLIER
+
 
 def evaluate_model(model, testloader, device):
     """Evaluate model on test set"""
@@ -13,4 +15,4 @@ def evaluate_model(model, testloader, device):
             preds = model(x).argmax(dim=1)
             correct += (preds == y).sum().item()
             total += y.size(0)
-    return 100 * correct / total
+    return PERCENTAGE_MULTIPLIER * correct / total

@@ -4,8 +4,10 @@ import random
 import numpy as np
 import torch
 
+from src.constants import DEFAULT_SEED
 
-def set_seed(seed=42):
+
+def set_seed(seed=DEFAULT_SEED):
     """Set random seed for reproducibility"""
     random.seed(seed)
     np.random.seed(seed)

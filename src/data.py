@@ -2,29 +2,42 @@ import torch
 import torchvision
 import torchvision.transforms as T
 
+from src.constants import (
+    CIFAR10_MEAN,
+    CIFAR10_STD,
+    CIFAR100_MEAN,
+    CIFAR100_STD,
+    CIFAR_CROP_PADDING,
+    CIFAR_IMAGE_SIZE,
+    DATA_ROOT,
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_NUM_WORKERS,
+    DEFAULT_PIN_MEMORY,
+)
 
-def get_cifar10(batch_size=128, num_workers=2, pin_memory=False):
+
+def get_cifar10(
+    batch_size=DEFAULT_BATCH_SIZE,
+    num_workers=DEFAULT_NUM_WORKERS,
+    pin_memory=DEFAULT_PIN_MEMORY,
+):
     transform_train = T.Compose(
         [
-            T.RandomCrop(32, padding=4),
+            T.RandomCrop(CIFAR_IMAGE_SIZE, padding=CIFAR_CROP_PADDING),
             T.RandomHorizontalFlip(),
             T.ToTensor(),
-            T.Normalize(
-                (0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)
-            ),  # CIFAR-10 normalization
+            T.Normalize(CIFAR10_MEAN, CIFAR10_STD),  # CIFAR-10 normalization
         ]
     )
     transform_test = T.Compose(
         [
             T.ToTensor(),
-            T.Normalize(
-                (0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)
-            ),  # CIFAR-10 normalization
+            T.Normalize(CIFAR10_MEAN, CIFAR10_STD),  # CIFAR-10 normalization
         ]
     )
 
     trainset = torchvision.datasets.CIFAR10(
-        root="./data", train=True, download=True, transform=transform_train
+        root=DATA_ROOT, train=True, download=True, transform=transform_train
     )
     trainloader = torch.utils.data.DataLoader(
         trainset,
@@ -35,7 +48,7 @@ def get_cifar10(batch_size=128, num_workers=2, pin_memory=False):
     )
 
     testset = torchvision.datasets.CIFAR10(
-        root="./data", train=False, download=True, transform=transform_test
+        root=DATA_ROOT, train=False, download=True, transform=transform_test
     )
     testloader = torch.utils.data.DataLoader(
         testset,
@@ -48,14 +61,18 @@ def get_cifar10(batch_size=128, num_workers=2, pin_memory=False):
     return trainloader, testloader
 
 
-def get_cifar100(batch_size=128, num_workers=2, pin_memory=False):
+def get_cifar100(
+    batch_size=DEFAULT_BATCH_SIZE,
+    num_workers=DEFAULT_NUM_WORKERS,
+    pin_memory=DEFAULT_PIN_MEMORY,
+):
     transform_train = T.Compose(
         [
-            T.RandomCrop(32, padding=4),
+            T.RandomCrop(CIFAR_IMAGE_SIZE, padding=CIFAR_CROP_PADDING),
             T.RandomHorizontalFlip(),
             T.ToTensor(),
             T.Normalize(
-                (0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)
+                CIFAR100_MEAN, CIFAR100_STD
             ),  # CIFAR-100 normalization
         ]
     )
@@ -63,13 +80,13 @@ def get_cifar100(batch_size=128, num_workers=2, pin_memory=False):
         [
             T.ToTensor(),
             T.Normalize(
-                (0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)
+                CIFAR100_MEAN, CIFAR100_STD
             ),  # CIFAR-100 normalization
         ]
     )
 
     trainset = torchvision.datasets.CIFAR100(
-        root="./data", train=True, download=True, transform=transform_train
+        root=DATA_ROOT, train=True, download=True, transform=transform_train
     )
     trainloader = torch.utils.data.DataLoader(
         trainset,
@@ -80,7 +97,7 @@ def get_cifar100(batch_size=128, num_workers=2, pin_memory=False):
     )
 
     testset = torchvision.datasets.CIFAR100(
-        root="./data", train=False, download=True, transform=transform_test
+        root=DATA_ROOT, train=False, download=True, transform=transform_test
     )
     testloader = torch.utils.data.DataLoader(
         testset,
@@ -93,7 +110,12 @@ def get_cifar100(batch_size=128, num_workers=2, pin_memory=False):
     return trainloader, testloader
 
 
-def get_dataset(dataset_name, batch_size=128, num_workers=2, pin_memory=False):
+def get_dataset(
+    dataset_name,
+    batch_size=DEFAULT_BATCH_SIZE,
+    num_workers=DEFAULT_NUM_WORKERS,
+    pin_memory=DEFAULT_PIN_MEMORY,
+):
     """Get dataset by name"""
     if dataset_name == "cifar10":
         return get_cifar10(batch_size, num_workers, pin_memory)

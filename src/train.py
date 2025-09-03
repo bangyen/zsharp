@@ -9,6 +9,37 @@ import torch.optim as optim
 import yaml
 from tqdm import tqdm
 
+from src.constants import (
+    BATCH_SIZE_KEY,
+    CIFAR10_DATASET,
+    CIFAR10_NUM_CLASSES,
+    CIFAR100_DATASET,
+    CIFAR100_NUM_CLASSES,
+    CPU_DEVICE,
+    CUDA_DEVICE,
+    DATASET_CONFIG_KEY,
+    DEFAULT_SEED,
+    DEVICE_KEY,
+    EPOCHS_KEY,
+    LR_KEY,
+    MAX_GRADIENT_NORM,
+    MODEL_CONFIG_KEY,
+    MOMENTUM_KEY,
+    MPS_DEVICE,
+    NUM_WORKERS_KEY,
+    OPTIMIZER_CONFIG_KEY,
+    PERCENTAGE_MULTIPLIER,
+    PERCENTILE_KEY,
+    PIN_MEMORY_KEY,
+    RESULTS_DIR,
+    RHO_KEY,
+    SGD_OPTIMIZER,
+    TRAIN_CONFIG_KEY,
+    TYPE_KEY,
+    USE_MIXED_PRECISION_KEY,
+    WEIGHT_DECAY_KEY,
+    ZSHARP_OPTIMIZER,
+)
 from src.data import get_dataset
 from src.models import get_model
 from src.optimizer import ZSharp
@@ -17,30 +48,32 @@ from src.utils import set_seed
 
 def get_device(config):
     """Get the best available device for training"""
-    device_config = config["train"]["device"]
+    device_config = config[TRAIN_CONFIG_KEY][DEVICE_KEY]
 
-    if device_config == "mps" and torch.backends.mps.is_available():
-        return torch.device("mps")
-    elif device_config == "cuda" and torch.cuda.is_available():
-        return torch.device("cuda")
+    if device_config == MPS_DEVICE and torch.backends.mps.is_available():
+        return torch.device(MPS_DEVICE)
+    elif device_config == CUDA_DEVICE and torch.cuda.is_available():
+        return torch.device(CUDA_DEVICE)
     else:
-        return torch.device("cpu")
+        return torch.device(CPU_DEVICE)
 
 
 def train(config):
     # Set seed for reproducibility
-    set_seed(42)
+    set_seed(DEFAULT_SEED)
 
     device = get_device(config)
 
     # Get training parameters
-    batch_size = int(config["train"]["batch_size"])
-    num_workers = int(config["train"].get("num_workers", 2))
-    pin_memory = config["train"].get("pin_memory", False)
-    use_mixed_precision = config["train"].get("use_mixed_precision", False)
+    batch_size = int(config[TRAIN_CONFIG_KEY][BATCH_SIZE_KEY])
+    num_workers = int(config[TRAIN_CONFIG_KEY].get(NUM_WORKERS_KEY, 2))
+    pin_memory = config[TRAIN_CONFIG_KEY].get(PIN_MEMORY_KEY, False)
+    use_mixed_precision = config[TRAIN_CONFIG_KEY].get(
+        USE_MIXED_PRECISION_KEY, False
+    )
 
     # Get dataset
-    dataset_name = config.get("dataset", "cifar10")
+    dataset_name = config.get(DATASET_CONFIG_KEY, CIFAR10_DATASET)
     trainloader, testloader = get_dataset(
         dataset_name=dataset_name,
         batch_size=batch_size,
@@ -49,8 +82,12 @@ def train(config):
     )
 
     # Get model
-    model_name = config.get("model", "resnet18")
-    num_classes = 100 if dataset_name == "cifar100" else 10
+    model_name = config.get(MODEL_CONFIG_KEY, "resnet18")
+    num_classes = (
+        CIFAR100_NUM_CLASSES
+        if dataset_name == CIFAR100_DATASET
+        else CIFAR10_NUM_CLASSES
+    )
     model = get_model(model_name, num_classes=num_classes).to(device)
 
     # Enable mixed precision for faster training on Apple Silicon (optional)
@@ -58,14 +95,16 @@ def train(config):
         model = model.half()  # Use float16 for better performance
 
     # Setup optimizer based on config
-    optimizer_type = config["optimizer"].get("type", "zsharp")
+    optimizer_type = config[OPTIMIZER_CONFIG_KEY].get(
+        TYPE_KEY, ZSHARP_OPTIMIZER
+    )
 
-    if optimizer_type == "sgd":
+    if optimizer_type == SGD_OPTIMIZER:
         optimizer = optim.SGD(
             model.parameters(),
-            lr=float(config["optimizer"]["lr"]),
-            momentum=float(config["optimizer"]["momentum"]),
-            weight_decay=float(config["optimizer"]["weight_decay"]),
+            lr=float(config[OPTIMIZER_CONFIG_KEY][LR_KEY]),
+            momentum=float(config[OPTIMIZER_CONFIG_KEY][MOMENTUM_KEY]),
+            weight_decay=float(config[OPTIMIZER_CONFIG_KEY][WEIGHT_DECAY_KEY]),
         )
         use_zsharp = False
     else:
@@ -74,11 +113,11 @@ def train(config):
         optimizer = ZSharp(
             model.parameters(),
             base_optimizer=base_opt,
-            rho=float(config["optimizer"]["rho"]),
-            lr=float(config["optimizer"]["lr"]),
-            momentum=float(config["optimizer"]["momentum"]),
-            weight_decay=float(config["optimizer"]["weight_decay"]),
-            percentile=int(config["optimizer"]["percentile"]),
+            rho=float(config[OPTIMIZER_CONFIG_KEY][RHO_KEY]),
+            lr=float(config[OPTIMIZER_CONFIG_KEY][LR_KEY]),
+            momentum=float(config[OPTIMIZER_CONFIG_KEY][MOMENTUM_KEY]),
+            weight_decay=float(config[OPTIMIZER_CONFIG_KEY][WEIGHT_DECAY_KEY]),
+            percentile=int(config[OPTIMIZER_CONFIG_KEY][PERCENTILE_KEY]),
         )
         use_zsharp = True
 
@@ -89,12 +128,12 @@ def train(config):
     train_losses = []
     train_accuracies = []
 
-    for epoch in range(int(config["train"]["epochs"])):
+    for epoch in range(int(config[TRAIN_CONFIG_KEY][EPOCHS_KEY])):
         model.train()
         epoch_loss = 0.0
         correct, total = 0, 0
 
-        desc = f"Epoch {epoch+1}/{config['train']['epochs']}"
+        desc = f"Epoch {epoch+1}/{config[TRAIN_CONFIG_KEY][EPOCHS_KEY]}"
         pbar = tqdm(trainloader, desc=desc)
 
         for i, (x, y) in enumerate(pbar):
@@ -112,7 +151,7 @@ def train(config):
 
                 # Add gradient clipping for stability
                 torch.nn.utils.clip_grad_norm_(
-                    model.parameters(), max_norm=1.0
+                    model.parameters(), max_norm=MAX_GRADIENT_NORM
                 )
 
                 optimizer.first_step()
@@ -127,7 +166,7 @@ def train(config):
 
                 # Add gradient clipping for stability
                 torch.nn.utils.clip_grad_norm_(
-                    model.parameters(), max_norm=1.0
+                    model.parameters(), max_norm=MAX_GRADIENT_NORM
                 )
 
                 optimizer.step()
@@ -142,13 +181,13 @@ def train(config):
             pbar.set_postfix(
                 {
                     "Loss": f"{loss.item():.4f}",
-                    "Acc": f"{100 * correct / total:.2f}%",
+                    "Acc": (f"{PERCENTAGE_MULTIPLIER * correct / total:.2f}%"),
                 }
             )
 
         # Record epoch metrics
         avg_loss = epoch_loss / len(trainloader)
-        train_accuracy = 100 * correct / total
+        train_accuracy = PERCENTAGE_MULTIPLIER * correct / total
         train_losses.append(avg_loss)
         train_accuracies.append(train_accuracy)
 
@@ -174,11 +213,10 @@ def train(config):
             test_correct += (preds == y).sum().item()
             test_total += y.size(0)
 
-            eval_pbar.set_postfix(
-                {"Test Acc": f"{100 * test_correct / test_total:.2f}%"}
-            )
+            acc = PERCENTAGE_MULTIPLIER * test_correct / test_total
+            eval_pbar.set_postfix({"Test Acc": f"{acc:.2f}%"})
 
-    test_accuracy = 100 * test_correct / test_total
+    test_accuracy = PERCENTAGE_MULTIPLIER * test_correct / test_total
     avg_test_loss = test_loss / len(testloader)
 
     # Save results
@@ -195,10 +233,11 @@ def train(config):
 
     # Save results to file
     results_file = (
-        f"results/zsharp_{dataset_name}_{model_name}_{optimizer_type}.json"
+        f"{RESULTS_DIR}/zsharp_{dataset_name}"
+        f"_{model_name}_{optimizer_type}.json"
     )
 
-    os.makedirs("results", exist_ok=True)
+    os.makedirs(RESULTS_DIR, exist_ok=True)
     with open(results_file, "w") as f:
         json.dump(results, f, indent=2)
 

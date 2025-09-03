@@ -1,8 +1,10 @@
 import torchvision.models as models
 from torchvision.models import vit_b_16
 
+from src.constants import CIFAR10_NUM_CLASSES, RESNET18_NAME
 
-def get_model(name="resnet18", num_classes=10):
+
+def get_model(name=RESNET18_NAME, num_classes=CIFAR10_NUM_CLASSES):
     if name == "resnet18":
         model = models.resnet18(num_classes=num_classes)
     elif name == "resnet56":
