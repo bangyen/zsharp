@@ -1,3 +1,5 @@
+"""Test suite for training functions and utilities."""
+
 from unittest.mock import MagicMock, patch
 
 import torch
@@ -10,6 +12,7 @@ class SimpleTestModel(nn.Module):
     """Simple model for testing training"""
 
     def __init__(self, num_classes=10):
+        """Initialize SimpleTestModel with convolutional and linear layers"""
         super().__init__()
         # Use a model that can handle image input (3x32x32)
         self.conv = nn.Conv2d(3, 16, 3, padding=1)
@@ -17,6 +20,7 @@ class SimpleTestModel(nn.Module):
         self.linear = nn.Linear(16, num_classes)
 
     def forward(self, x):
+        """Forward pass through the model"""
         x = self.conv(x)
         x = self.pool(x)
         x = x.view(x.size(0), -1)

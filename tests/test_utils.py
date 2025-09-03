@@ -1,3 +1,5 @@
+"""Test suite for utility functions."""
+
 import random
 from unittest.mock import patch
 

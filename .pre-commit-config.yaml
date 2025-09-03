@@ -39,5 +39,5 @@ repos:
         name: interrogate
         entry: interrogate
         language: system
-        types: [python]
-        args: [--fail-under=100, src/, run_experiments.py]
+        files: ^(src/|run_experiments\.py)$
+        args: [--config=pyproject.toml, --fail-under=100, src/, run_experiments.py]

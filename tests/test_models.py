@@ -1,3 +1,5 @@
+"""Test suite for model creation and management functions."""
+
 import pytest
 import torch
 import torch.nn as nn

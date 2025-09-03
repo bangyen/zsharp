@@ -1,3 +1,5 @@
+"""Test suite for optimizer implementations (SAM and ZSharp)."""
+
 import pytest
 import torch
 import torch.nn as nn
@@ -15,11 +17,13 @@ class SimpleModel(nn.Module):
     """Simple model for testing optimizers"""
 
     def __init__(self):
+        """Initialize SimpleModel with two linear layers"""
         super().__init__()
         self.linear1 = nn.Linear(10, 5)
         self.linear2 = nn.Linear(5, 2)
 
     def forward(self, x):
+        """Forward pass through the model"""
         x = torch.relu(self.linear1(x))
         x = self.linear2(x)
         return x

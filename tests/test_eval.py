@@ -1,3 +1,5 @@
+"""Test suite for model evaluation functions."""
+
 import torch
 import torch.nn as nn
 
@@ -8,10 +10,12 @@ class SimpleTestModel(nn.Module):
     """Simple model for testing evaluation"""
 
     def __init__(self, num_classes=10):
+        """Initialize SimpleTestModel with specified number of classes"""
         super().__init__()
         self.linear = nn.Linear(10, num_classes)
 
     def forward(self, x):
+        """Forward pass through the model"""
         return self.linear(x)
 
 
@@ -29,11 +33,15 @@ class TestEval:
 
         # Create DataLoader-like object
         class MockDataLoader:
+            """Mock DataLoader for testing purposes"""
+
             def __init__(self, x, y):
+                """Initialize with data and targets"""
                 self.x = x
                 self.y = y
 
             def __iter__(self):
+                """Return iterator over data batches"""
                 return iter([(self.x, self.y)])
 
         testloader = MockDataLoader(x, y)
@@ -62,11 +70,15 @@ class TestEval:
         y = torch.arange(10)  # Targets: 0, 1, 2, ..., 9
 
         class MockDataLoader:
+            """Mock DataLoader for testing purposes"""
+
             def __init__(self, x, y):
+                """Initialize with data and targets"""
                 self.x = x
                 self.y = y
 
             def __iter__(self):
+                """Return iterator over data batches"""
                 return iter([(self.x, self.y)])
 
         testloader = MockDataLoader(x, y)
@@ -96,11 +108,15 @@ class TestEval:
             model.linear.bias[9] = 100.0  # Always predict class 9
 
         class MockDataLoader:
+            """Mock DataLoader for testing zero accuracy scenario"""
+
             def __init__(self, x, y):
+                """Initialize with data and targets"""
                 self.x = x
                 self.y = y
 
             def __iter__(self):
+                """Return iterator over data batches"""
                 return iter([(self.x, self.y)])
 
         testloader = MockDataLoader(x, y)
@@ -123,10 +139,14 @@ class TestEval:
         batch2_y = torch.randint(0, 10, (5,))
 
         class MockDataLoader:
+            """Mock DataLoader for testing with multiple batches"""
+
             def __init__(self, batches):
+                """Initialize with list of batches"""
                 self.batches = batches
 
             def __iter__(self):
+                """Return iterator over batches"""
                 return iter(self.batches)
 
         testloader = MockDataLoader(
@@ -148,11 +168,15 @@ class TestEval:
         y = torch.randint(0, 10, (10,))
 
         class MockDataLoader:
+            """Mock DataLoader for testing different devices"""
+
             def __init__(self, x, y):
+                """Initialize with data and targets"""
                 self.x = x
                 self.y = y
 
             def __iter__(self):
+                """Return iterator over data batches"""
                 return iter([(self.x, self.y)])
 
         testloader = MockDataLoader(x, y)
@@ -180,11 +204,15 @@ class TestEval:
         y = torch.empty(0, dtype=torch.long)
 
         class MockDataLoader:
+            """Mock DataLoader for testing with empty batch"""
+
             def __init__(self, x, y):
+                """Initialize with empty data and targets"""
                 self.x = x
                 self.y = y
 
             def __iter__(self):
+                """Return iterator over empty batch"""
                 return iter([(self.x, self.y)])
 
         testloader = MockDataLoader(x, y)
@@ -213,11 +241,15 @@ class TestEval:
         y = torch.randint(0, 10, (1,))
 
         class MockDataLoader:
+            """Mock DataLoader for testing with single sample"""
+
             def __init__(self, x, y):
+                """Initialize with single sample data and target"""
                 self.x = x
                 self.y = y
 
             def __iter__(self):
+                """Return iterator over single sample"""
                 return iter([(self.x, self.y)])
 
         testloader = MockDataLoader(x, y)
@@ -237,11 +269,15 @@ class TestEval:
         y = torch.randint(0, 10, (1000,))
 
         class MockDataLoader:
+            """Mock DataLoader for testing with large batch"""
+
             def __init__(self, x, y):
+                """Initialize with large batch data and targets"""
                 self.x = x
                 self.y = y
 
             def __iter__(self):
+                """Return iterator over large batch"""
                 return iter([(self.x, self.y)])
 
         testloader = MockDataLoader(x, y)
@@ -262,11 +298,15 @@ class TestEval:
             y = torch.randint(0, num_classes, (10,))
 
             class MockDataLoader:
+                """Mock DataLoader for testing with different num_classes"""
+
                 def __init__(self, x, y):
+                    """Initialize with data and targets for num_classes"""
                     self.x = x
                     self.y = y
 
                 def __iter__(self):
+                    """Return iterator over data for specific num_classes"""
                     return iter([(self.x, self.y)])
 
             testloader = MockDataLoader(x, y)
