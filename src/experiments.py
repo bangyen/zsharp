@@ -4,20 +4,19 @@ This module provides utilities for running experiments with different
 configurations and saving results to JSON files.
 """
 
-# Experiments module for running different configurations
 import json
 import os
-from typing import Any
 
 import yaml
 
+from src.constants import ExperimentResults, TrainingConfig
 from src.train import train
 
 
 def run_experiment(
     config_path: str,
     results_path: str = "results/experiment.json",
-) -> dict[str, Any]:
+) -> ExperimentResults:
     """Run a single experiment and save results.
 
     Args:
@@ -28,7 +27,7 @@ def run_experiment(
         dict: Experiment results and configuration
     """
     with open(config_path) as f:
-        config: dict[str, Any] = yaml.safe_load(f)
+        config: TrainingConfig = yaml.safe_load(f)
 
     # Run training
     train(config)

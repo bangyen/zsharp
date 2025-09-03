@@ -5,6 +5,8 @@ This module defines all the magic numbers and configuration values
 that were previously hardcoded throughout the codebase.
 """
 
+from typing import Any
+
 # Random seed for reproducibility
 DEFAULT_SEED = 42
 
@@ -89,3 +91,10 @@ MOMENTUM_KEY = "momentum"
 WEIGHT_DECAY_KEY = "weight_decay"
 RHO_KEY = "rho"
 PERCENTILE_KEY = "percentile"
+
+# Type definitions for configuration
+TrainingConfig = dict[str, Any]
+"""Type alias for training configuration dictionary."""
+
+ExperimentResults = dict[str, Any]
+"""Type alias for experiment results dictionary."""

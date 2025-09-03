@@ -22,6 +22,11 @@ from src.constants import (
 
 # Type for optimizer kwargs
 OptimizerKwargs = Union[float, int, bool]
+"""Type alias for optimizer keyword arguments."""
+
+# Type for base optimizer constructor
+BaseOptimizerConstructor = Callable[..., Optimizer]
+"""Type alias for base optimizer constructor functions."""
 
 
 class SAM(Optimizer):
@@ -42,7 +47,7 @@ class SAM(Optimizer):
     def __init__(
         self,
         params: list[torch.nn.Parameter],
-        base_optimizer: Callable[..., Optimizer],
+        base_optimizer: BaseOptimizerConstructor,
         rho: float = DEFAULT_RHO,
         **kwargs: OptimizerKwargs,
     ) -> None:
@@ -108,10 +113,12 @@ class SAM(Optimizer):
 
     @overload
     def step(self, closure: None = None) -> None:
+        """Overload for step method with no closure."""
         ...
 
     @overload
     def step(self, closure: Callable[[], float]) -> float:
+        """Overload for step method with closure returning float."""
         ...
 
     def step(
@@ -148,7 +155,7 @@ class ZSharp(SAM):
     def __init__(
         self,
         params: list[torch.nn.Parameter],
-        base_optimizer: Callable[..., Optimizer],
+        base_optimizer: BaseOptimizerConstructor,
         rho: float = 0.05,
         percentile: int = DEFAULT_PERCENTILE,
         **kwargs: OptimizerKwargs,

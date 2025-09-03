@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, cast
 
 import torch
 import torch.nn
@@ -46,6 +46,7 @@ from src.constants import (
     USE_MIXED_PRECISION_KEY,
     WEIGHT_DECAY_KEY,
     ZSHARP_OPTIMIZER,
+    TrainingConfig,
 )
 from src.data import get_dataset
 from src.models import get_model
@@ -55,7 +56,7 @@ from src.utils import set_seed
 logger = logging.getLogger(__name__)
 
 
-def get_device(config: dict[str, Any]) -> torch.device:
+def get_device(config: TrainingConfig) -> torch.device:
     """Get the best available device for training.
 
     Args:
@@ -73,7 +74,7 @@ def get_device(config: dict[str, Any]) -> torch.device:
     return torch.device(CPU_DEVICE)
 
 
-def train(config: dict[str, Any]) -> Optional[dict[str, Any]]:
+def train(config: TrainingConfig) -> Optional[dict[str, Any]]:
     """Train a model using the provided configuration.
 
     Args:
@@ -124,7 +125,7 @@ def train(config: dict[str, Any]) -> Optional[dict[str, Any]]:
         ZSHARP_OPTIMIZER,
     )
 
-    optimizer: Union[torch.optim.Optimizer, ZSharp]
+    optimizer: Union[torch.optim.SGD, ZSharp]
 
     if optimizer_type == SGD_OPTIMIZER:
         optimizer = optim.SGD(
@@ -187,12 +188,12 @@ def train(config: dict[str, Any]) -> Optional[dict[str, Any]]:
                             max_norm=MAX_GRADIENT_NORM,
                         )
 
-                        # Type check to ensure optimizer is ZSharp
-                        if isinstance(optimizer, ZSharp):
-                            optimizer.first_step()
+                        # ZSharp two-step training
+                        zsharp_optimizer = cast(ZSharp, optimizer)
+                        zsharp_optimizer.first_step()
 
-                            criterion(model(x), y).backward()
-                            optimizer.second_step()
+                        criterion(model(x), y).backward()
+                        zsharp_optimizer.second_step()
                     else:
                         # Standard SGD training
                         optimizer.zero_grad()
