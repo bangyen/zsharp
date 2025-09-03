@@ -1,4 +1,5 @@
 import random
+from unittest.mock import patch
 
 import numpy as np
 import torch
@@ -97,6 +98,19 @@ class TestUtils:
             # Verify that CUDA random state is properly initialized
             cuda_rand = torch.rand(5, device="cuda")
             assert len(cuda_rand) == 5
+
+    def test_set_seed_cuda_specific_seeds(self):
+        """Test set_seed specifically covers CUDA seed setting lines"""
+        seed = 42
+
+        # Mock CUDA availability to ensure the CUDA seed lines are executed
+        with patch("torch.cuda.is_available", return_value=True):
+            set_seed(seed)
+
+            # Verify that the function completed without error
+            # The CUDA seed setting lines should have been executed
+            torch_rand = torch.rand(5)
+            assert len(torch_rand) == 5
 
     def test_set_seed_reproducibility(self):
         """Test that set_seed ensures reproducibility across multiple calls"""

@@ -179,8 +179,6 @@ def train(config):
                     model.parameters(), max_norm=MAX_GRADIENT_NORM
                 )
 
-                # Type assertion for mypy
-                assert isinstance(optimizer, ZSharp)
                 optimizer.first_step()
 
                 criterion(model(x), y).backward()

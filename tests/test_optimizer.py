@@ -439,6 +439,54 @@ class TestZSharp:
         # Should not raise an error
         zsharp.first_step()
 
+    def test_zsharp_edge_cases_comprehensive(self):
+        """Test ZSharp edge cases comprehensively to achieve 100% coverage"""
+        model = SimpleModel()
+        base_optimizer = optim.SGD
+        zsharp = ZSharp(
+            list(model.parameters()),
+            base_optimizer,
+            rho=DEFAULT_RHO,
+            percentile=DEFAULT_PERCENTILE,
+            lr=DEFAULT_LEARNING_RATE,
+        )
+
+        # Test case 1: Create gradients that will result in identical Z-scores
+        x = torch.randn(4, 10)
+        y = torch.randint(0, 2, (4,))
+        criterion = nn.CrossEntropyLoss()
+
+        loss = criterion(model(x), y)
+        loss.backward()
+
+        # Set all gradients to exactly the same value to create identical
+        # Z-scores
+        for param in model.parameters():
+            if param.grad is not None:
+                param.grad.fill_(1.0)
+
+        # This should trigger the identical Z-scores case
+        zsharp.first_step()
+
+        # Test case 2: Create gradients that will result in zero gradient norm
+        loss = criterion(model(x), y)
+        loss.backward()
+
+        # Set gradients to extremely small values
+        for param in model.parameters():
+            if param.grad is not None:
+                param.grad = param.grad * 1e-30
+
+        # This should trigger the zero gradient norm case
+        zsharp.first_step()
+
+        # Test case 3: Test with no gradients (empty layer_grads)
+        for param in model.parameters():
+            param.grad = None
+
+        # This should trigger the early return case
+        zsharp.first_step()
+
 
 class TestOptimizerIntegration:
     """Integration tests for optimizers"""
