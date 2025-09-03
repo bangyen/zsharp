@@ -27,23 +27,23 @@ optimizer.second_step()  # Parameter update
 
 ### Mathematical Formulation
 
-For each layer \(l\) with gradients \(g_l\):
+For each layer $l$ with gradients $g_l$:
 
 1. **Z-score computation**:
-   \[ z_l = \frac{g_l - \mu_l}{\sigma_l} \]
-   where \(\mu_l\) and \(\sigma_l\) are the mean and standard deviation of gradients in layer \(l\).
+   $$z_l = \frac{g_l - \mu_l}{\sigma_l}$$
+   where $\mu_l$ and $\sigma_l$ are the mean and standard deviation of gradients in layer $l$.
 
 2. **Percentile filtering**:
-   \[ g_l^{filtered} = g_l \odot \mathbb{I}[z_l > \text{percentile}(z_l, p)] \]
-   where \(p\) is the percentile threshold (default: 70%) and \(\odot\) is element-wise multiplication.
+   $$g_l^{filtered} = g_l \odot \mathbb{I}[z_l > \text{percentile}(z_l, p)]$$
+   where $p$ is the percentile threshold (default: 70%) and $\odot$ is element-wise multiplication.
 
 3. **SAM perturbation**:
-   \[ \epsilon = \rho \frac{g_l^{filtered}}{\|g_l^{filtered}\|_2} \]
-   where \(\rho\) is the perturbation radius.
+   $$\epsilon = \rho \frac{g_l^{filtered}}{\|g_l^{filtered}\|_2}$$
+   where $\rho$ is the perturbation radius.
 
 4. **Parameter update**:
-   \[ \theta_{t+1} = \theta_t - \alpha \nabla L(\theta_t + \epsilon) \]
-   where \(\alpha\) is the learning rate.
+   $$\theta_{t+1} = \theta_t - \alpha \nabla L(\theta_t + \epsilon)$$
+   where $\alpha$ is the learning rate.
 
 ## Hyperparameters
 

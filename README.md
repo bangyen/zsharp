@@ -6,28 +6,32 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Paper](https://img.shields.io/badge/Paper-arXiv%3A2505.02369-brightgreen.svg)](https://arxiv.org/html/2505.02369v3)
 
-A faithful PyTorch implementation of **ZSharp: Sharpness-Aware Minimization with Z-Score Gradient Filtering**, optimized for Apple Silicon and featuring comprehensive experimental validation.
+A PyTorch implementation of **ZSharp: Sharpness-Aware Minimization with Z-Score Gradient Filtering**, optimized for Apple Silicon and featuring comprehensive experimental validation.
 
-## 🚀 Key Features
+## Key Features
 
-- **📊 Faithful Paper Reproduction**: Implements the exact ZSharp algorithm with 21.08% improvement over SGD
-- **🍎 Apple Silicon Optimized**: 4.39x speedup using MPS (Metal Performance Shaders)
-- **🧪 Comprehensive Testing**: 100% test coverage with 92 unit tests
-- **📈 Experimental Validation**: Multiple datasets (CIFAR-10/100) and architectures (ResNet, VGG, ViT)
-- **⚡ Production Ready**: Type hints, documentation, and reproducible results
-- **🐍 Virtual Environment Ready**: Includes pre-configured virtual environment for easy setup
+- **Paper Reproduction**: Implements the ZSharp algorithm with 21.08% improvement over SGD
+- **Apple Silicon Optimized**: 4.39x speedup using MPS (Metal Performance Shaders)
+- **Comprehensive Testing**: 100% test coverage with 92 unit tests
+- **Experimental Validation**: Multiple datasets (CIFAR-10/100) and architectures (ResNet, VGG, ViT)
+- **Production Ready**: Type hints, documentation, and reproducible results
+- **Virtual Environment Ready**: Includes pre-configured virtual environment for easy setup
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Quickstart](#quickstart)
 - [Architecture](#architecture)
 - [Experimental Results](#experimental-results)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Testing](#testing)
+- [Project Structure](#project-structure)
 - [Contributing](#contributing)
 - [Citation](#citation)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
 
-## 🏃‍♂️ Quickstart
+## Quickstart
 
 ```bash
 # Clone and setup
@@ -51,7 +55,7 @@ python -m scripts.train --config configs/sgd_baseline.yaml
 python -m scripts.experiment
 ```
 
-## 🏗️ Architecture
+## Architecture
 
 ### ZSharp Algorithm
 
@@ -82,7 +86,7 @@ criterion(model(x), y).backward()
 optimizer.second_step()  # Update parameters
 ```
 
-## 📊 Experimental Results
+## Experimental Results
 
 ### Performance Comparison (CIFAR-10, ResNet18, 20 epochs)
 
@@ -105,7 +109,7 @@ optimizer.second_step()  # Update parameters
 - **ZSharp**: ~60% training accuracy → 50.16% test accuracy
 - **SGD**: ~35% training accuracy → 29.08% test accuracy
 
-## 📦 Installation
+## Installation
 
 ```bash
 # Clone repository
@@ -123,7 +127,7 @@ pip install -r requirements.txt
 python -m pytest tests/ -v
 ```
 
-## 🎯 Usage
+## Usage
 
 ### Basic Training
 
@@ -179,7 +183,7 @@ python -m scripts.experiment --hp-study
 python -m scripts.experiment --fast
 ```
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Run all tests
@@ -192,7 +196,7 @@ python -m pytest tests/ --cov=src --cov-report=html
 python -m pytest tests/test_optimizer.py::TestZSharp::test_zsharp_gradient_filtering -v
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 zsharp/
@@ -223,7 +227,7 @@ zsharp/
 └── requirements.txt       # Dependencies
 ```
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -248,7 +252,7 @@ python -m pytest tests/ -v
 make check-all
 ```
 
-## 📚 Citation
+## Citation
 
 If you use this implementation in your research, please cite:
 
@@ -261,11 +265,11 @@ If you use this implementation in your research, please cite:
 }
 ```
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Original ZSharp paper authors for the innovative algorithm
 - PyTorch team for the excellent framework

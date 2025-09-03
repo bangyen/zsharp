@@ -1,6 +1,6 @@
 # Scripts Directory
 
-This directory contains executable scripts for training and running experiments with the ZSharp algorithm.
+This directory contains executable scripts for training and running experiments with the ZSharp algorithm. For detailed usage instructions, see the [main README](../README.md) and [API documentation](../docs/api.md).
 
 ## Available Scripts
 

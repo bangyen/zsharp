@@ -1,5 +1,7 @@
 # ZSharp API Documentation
 
+This document provides a comprehensive API reference for the ZSharp project. For algorithm details, see [algorithm.md](algorithm.md). For quickstart instructions, see the [main README](../README.md).
+
 ## Core Modules
 
 ### `src.optimizer`
