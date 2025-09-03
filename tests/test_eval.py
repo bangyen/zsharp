@@ -1,6 +1,7 @@
-from src.eval import evaluate_model
-import torch.nn as nn
 import torch
+import torch.nn as nn
+
+from src.eval import evaluate_model
 
 
 class SimpleTestModel(nn.Module):
@@ -128,9 +129,7 @@ class TestEval:
             def __iter__(self):
                 return iter(self.batches)
 
-        testloader = MockDataLoader(
-            [(batch1_x, batch1_y), (batch2_x, batch2_y)]
-        )
+        testloader = MockDataLoader([(batch1_x, batch1_y), (batch2_x, batch2_y)])
         device = torch.device("cpu")
 
         accuracy = evaluate_model(model, testloader, device)

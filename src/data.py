@@ -1,6 +1,6 @@
+import torch
 import torchvision
 import torchvision.transforms as T
-import torch
 
 
 def get_cifar10(batch_size=128, num_workers=2, pin_memory=False):

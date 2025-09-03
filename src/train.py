@@ -1,15 +1,16 @@
+import argparse
+import json
+import os
+import time
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import yaml
-import argparse
 from tqdm import tqdm
-import time
-import json
-import os
 
-from src.models import get_model
 from src.data import get_dataset
+from src.models import get_model
 from src.optimizer import ZSharp
 from src.utils import set_seed
 
@@ -93,9 +94,7 @@ def train(config):
         epoch_loss = 0.0
         correct, total = 0, 0
 
-        pbar = tqdm(
-            trainloader, desc=f"Epoch {epoch+1}/{config['train']['epochs']}"
-        )
+        pbar = tqdm(trainloader, desc=f"Epoch {epoch+1}/{config['train']['epochs']}")
 
         for i, (x, y) in enumerate(pbar):
             x, y = x.to(device), y.to(device)
@@ -111,9 +110,7 @@ def train(config):
                 loss.backward()
 
                 # Add gradient clipping for stability
-                torch.nn.utils.clip_grad_norm_(
-                    model.parameters(), max_norm=1.0
-                )
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
                 optimizer.first_step()
 
@@ -126,9 +123,7 @@ def train(config):
                 loss.backward()
 
                 # Add gradient clipping for stability
-                torch.nn.utils.clip_grad_norm_(
-                    model.parameters(), max_norm=1.0
-                )
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
                 optimizer.step()
 
@@ -194,9 +189,7 @@ def train(config):
     }
 
     # Save results to file
-    results_file = (
-        f"results/zsharp_{dataset_name}_{model_name}_{optimizer_type}.json"
-    )
+    results_file = f"results/zsharp_{dataset_name}_{model_name}_{optimizer_type}.json"
     os.makedirs("results", exist_ok=True)
     with open(results_file, "w") as f:
         json.dump(results, f, indent=2)

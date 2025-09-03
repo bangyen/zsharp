@@ -1,7 +1,9 @@
 # Experiments module for running different configurations
-import yaml
 import json
 import os
+
+import yaml
+
 from src.train import train
 
 

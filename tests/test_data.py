@@ -1,6 +1,7 @@
-from src.data import get_cifar10, get_cifar100, get_dataset
 import pytest
 import torch
+
+from src.data import get_cifar10, get_cifar100, get_dataset
 
 
 class TestDataModule:
@@ -16,9 +17,7 @@ class TestDataModule:
     def test_get_cifar10_batch_size(self):
         """Test that get_cifar10 respects batch_size parameter"""
         batch_size = 64
-        trainloader, testloader = get_cifar10(
-            batch_size=batch_size, num_workers=0
-        )
+        trainloader, testloader = get_cifar10(batch_size=batch_size, num_workers=0)
 
         # Check first batch size
         for batch_idx, (data, target) in enumerate(trainloader):
@@ -69,9 +68,7 @@ class TestDataModule:
     def test_get_cifar100_batch_size(self):
         """Test that get_cifar100 respects batch_size parameter"""
         batch_size = 64
-        trainloader, testloader = get_cifar100(
-            batch_size=batch_size, num_workers=0
-        )
+        trainloader, testloader = get_cifar100(batch_size=batch_size, num_workers=0)
 
         # Check first batch size
         for batch_idx, (data, target) in enumerate(trainloader):
@@ -118,9 +115,7 @@ class TestDataModule:
 
     def test_get_dataset_cifar10(self):
         """Test get_dataset function with cifar10"""
-        trainloader, testloader = get_dataset(
-            "cifar10", batch_size=32, num_workers=0
-        )
+        trainloader, testloader = get_dataset("cifar10", batch_size=32, num_workers=0)
 
         assert isinstance(trainloader, torch.utils.data.DataLoader)
         assert isinstance(testloader, torch.utils.data.DataLoader)
@@ -132,9 +127,7 @@ class TestDataModule:
 
     def test_get_dataset_cifar100(self):
         """Test get_dataset function with cifar100"""
-        trainloader, testloader = get_dataset(
-            "cifar100", batch_size=32, num_workers=0
-        )
+        trainloader, testloader = get_dataset("cifar100", batch_size=32, num_workers=0)
 
         assert isinstance(trainloader, torch.utils.data.DataLoader)
         assert isinstance(testloader, torch.utils.data.DataLoader)
@@ -181,9 +174,7 @@ class TestDataModule:
         """Test num_workers parameter is respected"""
         # Test with different num_workers values - use smaller batch size and
         # fewer workers for faster testing
-        for num_workers in [
-            0
-        ]:  # Further reduced from [0, 1] to [0] for maximum speed
+        for num_workers in [0]:  # Further reduced from [0, 1] to [0] for maximum speed
             trainloader, testloader = get_cifar10(
                 batch_size=8,
                 num_workers=num_workers,

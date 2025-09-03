@@ -1,11 +1,12 @@
 # Comprehensive experiment runner for ZSharp paper reproduction
-import yaml
+import argparse
 import json
 import os
-import time
 import signal
 import sys
-import argparse
+import time
+
+import yaml
 
 # Import the training function directly
 from src.train import train
@@ -203,9 +204,7 @@ if __name__ == "__main__":
             hp_results = run_hyperparameter_study()
         else:
             # Run comparison experiments
-            comparison_results = run_comparison_experiments(
-                fast_mode=args.fast
-            )
+            comparison_results = run_comparison_experiments(fast_mode=args.fast)
 
     except KeyboardInterrupt:
         print("\n\nExperiments interrupted by user.")
