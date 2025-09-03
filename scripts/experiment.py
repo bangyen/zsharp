@@ -1,6 +1,5 @@
 """Comprehensive experiment runner for ZSharp paper reproduction."""
 
-# Comprehensive experiment runner for ZSharp paper reproduction
 import argparse
 import json
 import logging
@@ -24,10 +23,10 @@ from src.constants import (
 # Import the training function directly
 from src.train import train
 
-# Configure logging
+# Configure logging without prefix
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
         logging.FileHandler("experiments.log"),

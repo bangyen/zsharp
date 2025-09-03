@@ -74,13 +74,13 @@ jobs:
         pip install types-PyYAML
 
     - name: Run black check
-      run: black --check --line-length=79 src/ tests/ run_experiments.py
+      run: black --check --line-length=79 src/ tests/ scripts/
 
     - name: Run flake8
-      run: flake8 src/ tests/ run_experiments.py
+      run: flake8 src/ tests/ scripts/
 
     - name: Run mypy type checking
-      run: mypy src/ tests/ run_experiments.py
+      run: mypy src/ tests/ scripts/
 
     - name: Run interrogate doc coverage
       run: interrogate src/ --fail-under=100

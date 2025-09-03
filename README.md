@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
-[![Tests](https://img.shields.io/badge/Tests-89%25%20Coverage-green.svg)](https://pytest.org/)
+[![Tests](https://img.shields.io/badge/Tests-100%25%20Coverage-green.svg)](https://pytest.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Paper](https://img.shields.io/badge/Paper-arXiv%3A2505.02369-brightgreen.svg)](https://arxiv.org/html/2505.02369v3)
 
@@ -12,7 +12,7 @@ A faithful PyTorch implementation of **ZSharp: Sharpness-Aware Minimization with
 
 - **📊 Faithful Paper Reproduction**: Implements the exact ZSharp algorithm with 21.08% improvement over SGD
 - **🍎 Apple Silicon Optimized**: 4.39x speedup using MPS (Metal Performance Shaders)
-- **🧪 Comprehensive Testing**: 89% test coverage with 87 unit tests
+- **🧪 Comprehensive Testing**: 100% test coverage with 92 unit tests
 - **📈 Experimental Validation**: Multiple datasets (CIFAR-10/100) and architectures (ResNet, VGG, ViT)
 - **⚡ Production Ready**: Type hints, documentation, and reproducible results
 - **🐍 Virtual Environment Ready**: Includes pre-configured virtual environment for easy setup
@@ -42,13 +42,13 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Train with ZSharp (default)
-python -m src.train --config configs/default.yaml
+python -m scripts.train --config configs/zsharp_baseline.yaml
 
 # Train with baseline SGD for comparison
-python -m src.train --config configs/baseline_sgd.yaml
+python -m scripts.train --config configs/sgd_baseline.yaml
 
 # Run comprehensive experiments
-python run_experiments.py
+python -m scripts.experiment
 ```
 
 ## 🏗️ Architecture
@@ -63,11 +63,13 @@ ZSharp extends SAM (Sharpness-Aware Minimization) with intelligent gradient filt
 
 ```python
 # Example usage
+from src.optimizer import ZSharp
+
 optimizer = ZSharp(
     model.parameters(),
     base_optimizer=torch.optim.SGD,
     rho=0.05,           # SAM perturbation radius
-    percentile=50,      # Gradient filtering threshold (default)
+    percentile=70,      # Gradient filtering threshold (default)
     lr=0.01,
     momentum=0.9
 )
@@ -135,10 +137,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Load configuration
-with open('configs/default.yaml') as f:
+with open('configs/zsharp_baseline.yaml') as f:
     config = yaml.safe_load(f)
 
 # Train model
+from src.train import train
 results = train(config)
 logger.info(f"Final accuracy: {results['final_test_accuracy']:.2f}%")
 ```
@@ -152,28 +155,28 @@ model: resnet18
 optimizer:
   type: zsharp
   rho: 0.05
-  percentile: 50      # Default gradient filtering threshold
+  percentile: 70      # Gradient filtering threshold
   lr: 0.01
   momentum: 0.9
-  weight_decay: 5e-4
+  weight_decay: 1e-4
 train:
-  batch_size: 128     # Updated to match actual config
+  batch_size: 32
   epochs: 20
   device: mps  # Apple Silicon GPU
-  use_mixed_precision: false  # Updated to match actual config
+  num_workers: 0
 ```
 
 ### Running Experiments
 
 ```bash
 # Run comparison experiments
-python run_experiments.py
+python -m scripts.experiment
 
 # Run hyperparameter study
-python run_experiments.py --hp-study
+python -m scripts.experiment --hp-study
 
 # Fast mode for testing
-python run_experiments.py --fast
+python -m scripts.experiment --fast
 ```
 
 ## 🧪 Testing
@@ -199,14 +202,24 @@ zsharp/
 │   ├── data.py            # Data loading utilities
 │   ├── train.py           # Training loop
 │   ├── eval.py            # Evaluation utilities
+│   ├── experiments.py     # Experiment management
+│   ├── constants.py       # Constants and configuration
 │   └── utils.py           # Utility functions
 ├── tests/                 # Comprehensive test suite
 │   ├── test_optimizer.py  # Optimizer tests
 │   ├── test_models.py     # Model tests
-│   └── ...               # 87 total tests
+│   └── ...               # 92 total tests
 ├── configs/               # Configuration files
+│   ├── zsharp_baseline.yaml
+│   ├── sgd_baseline.yaml
+│   ├── zsharp_quick.yaml
+│   └── ...
 ├── results/               # Experimental results
 ├── data/                  # Dataset storage
+├── docs/                  # Documentation
+├── scripts/               # Training and experiment scripts
+│   ├── train.py          # Individual training script
+│   └── experiment.py     # Comprehensive experiment runner
 └── requirements.txt       # Dependencies
 ```
 
@@ -230,6 +243,9 @@ flake8 src/ --max-line-length=79
 
 # Run tests
 python -m pytest tests/ -v
+
+# Run all checks
+make check-all
 ```
 
 ## 📚 Citation
@@ -257,4 +273,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Note**: This is a faithful reproduction of the ZSharp paper optimized for Apple Silicon. For the original paper, see [arXiv:2505.02369](https://arxiv.org/html/2505.02369v3).
+**Note**: This is a reproduction of the ZSharp paper optimized for Apple Silicon. For the original paper, see [arXiv:2505.02369](https://arxiv.org/html/2505.02369v3).
