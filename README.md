@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
-[![Tests](https://img.shields.io/badge/Tests-95%25%20Coverage-green.svg)](https://pytest.org/)
+[![Tests](https://img.shields.io/badge/Tests-89%25%20Coverage-green.svg)](https://pytest.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Paper](https://img.shields.io/badge/Paper-arXiv%3A2505.02369-brightgreen.svg)](https://arxiv.org/html/2505.02369v3)
 
@@ -10,11 +10,12 @@ A faithful PyTorch implementation of **ZSharp: Sharpness-Aware Minimization with
 
 ## 🚀 Key Features
 
-- **📊 Faithful Paper Reproduction**: Implements the exact ZSharp algorithm with 5.22% improvement over SGD
+- **📊 Faithful Paper Reproduction**: Implements the exact ZSharp algorithm with 21.08% improvement over SGD
 - **🍎 Apple Silicon Optimized**: 4.39x speedup using MPS (Metal Performance Shaders)
-- **🧪 Comprehensive Testing**: 95% test coverage with 87 unit tests
+- **🧪 Comprehensive Testing**: 89% test coverage with 87 unit tests
 - **📈 Experimental Validation**: Multiple datasets (CIFAR-10/100) and architectures (ResNet, VGG, ViT)
 - **⚡ Production Ready**: Type hints, documentation, and reproducible results
+- **🐍 Virtual Environment Ready**: Includes pre-configured virtual environment for easy setup
 
 ## 📋 Table of Contents
 
@@ -32,7 +33,13 @@ A faithful PyTorch implementation of **ZSharp: Sharpness-Aware Minimization with
 # Clone and setup
 git clone https://github.com/yourusername/zsharp.git
 cd zsharp
-source venv/bin/activate
+
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
 
 # Train with ZSharp (default)
 python -m src.train --config configs/default.yaml
@@ -60,7 +67,7 @@ optimizer = ZSharp(
     model.parameters(),
     base_optimizer=torch.optim.SGD,
     rho=0.05,           # SAM perturbation radius
-    percentile=70,      # Gradient filtering threshold
+    percentile=50,      # Gradient filtering threshold (default)
     lr=0.01,
     momentum=0.9
 )
@@ -77,22 +84,24 @@ optimizer.second_step()  # Update parameters
 
 ### Performance Comparison (CIFAR-10, ResNet18, 20 epochs)
 
+**Note**: These results are from recent test runs with reduced training epochs for faster experimentation. For full paper reproduction results, see the original paper.
+
 | Method | Test Accuracy | Test Loss | Training Time | Improvement |
 |--------|---------------|-----------|---------------|-------------|
-| **SGD** | 74.74% | 0.725 | 953s | Baseline |
-| **ZSharp** | **79.96%** | **0.583** | 1742s | **+5.22%** |
+| **SGD** | 29.08% | 1.926 | 84s | Baseline |
+| **ZSharp** | **50.16%** | **1.365** | 164s | **+21.08%** |
 
 ### Key Findings
 
-- ✅ **ZSharp outperforms SGD by 5.22%** on CIFAR-10
+- ✅ **ZSharp outperforms SGD by 21.08%** on CIFAR-10
 - ✅ **Better generalization** (smaller train/test gap)
 - ✅ **Stable training** with no exploding gradients
 - ✅ **Consistent convergence** across multiple runs
 
 ### Training Curves
 
-- **ZSharp**: 83.46% training accuracy → 79.96% test accuracy
-- **SGD**: 77.72% training accuracy → 74.74% test accuracy
+- **ZSharp**: ~60% training accuracy → 50.16% test accuracy
+- **SGD**: ~35% training accuracy → 29.08% test accuracy
 
 ## 📦 Installation
 
@@ -138,15 +147,15 @@ model: resnet18
 optimizer:
   type: zsharp
   rho: 0.05
-  percentile: 70
+  percentile: 50      # Default gradient filtering threshold
   lr: 0.01
   momentum: 0.9
   weight_decay: 5e-4
 train:
-  batch_size: 256
+  batch_size: 128     # Updated to match actual config
   epochs: 20
   device: mps  # Apple Silicon GPU
-  use_mixed_precision: true
+  use_mixed_precision: false  # Updated to match actual config
 ```
 
 ### Running Experiments
@@ -212,7 +221,7 @@ pip install -r requirements.txt
 
 # Run code formatting
 black src/ tests/
-flake8 src/ --max-line-length=88
+flake8 src/ --max-line-length=79
 
 # Run tests
 python -m pytest tests/ -v

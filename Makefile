@@ -17,11 +17,11 @@ test-fast: ## Run tests without coverage
 	python -m pytest tests/ -v
 
 lint: ## Run linting checks
-	flake8 src/ --max-line-length=88 --extend-ignore=E203,W503
-	black --check src/ tests/ run_experiments.py
+	flake8 src/ tests/ run_experiments.py
+	black --check --line-length=79 src/ tests/ run_experiments.py
 
 format: ## Format code with black
-	black src/ tests/ run_experiments.py
+	black --line-length=79 src/ tests/ run_experiments.py
 
 clean: ## Clean up generated files
 	rm -rf htmlcov/

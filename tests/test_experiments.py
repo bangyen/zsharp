@@ -32,7 +32,9 @@ class TestExperiments:
             },
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
             yaml.dump(config, f)
             config_path = f.name
 
@@ -94,7 +96,9 @@ class TestExperiments:
             },
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
             yaml.dump(config, f)
             config_path = f.name
 
@@ -121,7 +125,9 @@ class TestExperiments:
 
     def test_run_experiment_invalid_config_file(self):
         """Test experiment execution with invalid config file"""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
             f.write("invalid: yaml: content: [")
             config_path = f.name
 
@@ -143,7 +149,9 @@ class TestExperiments:
 
     def test_run_experiment_nonexistent_config_file(self):
         """Test experiment execution with nonexistent config file"""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as f:
             results_path = f.name
 
         try:
@@ -174,7 +182,9 @@ class TestExperiments:
             },
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
             yaml.dump(config, f)
             config_path = f.name
 
@@ -222,7 +232,9 @@ class TestExperiments:
             },
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
             yaml.dump(config, f)
             config_path = f.name
 
@@ -275,7 +287,9 @@ class TestExperiments:
             },
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
             yaml.dump(config, f)
             config_path = f.name
 
@@ -334,7 +348,9 @@ class TestExperiments:
             },
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
             yaml.dump(config, f)
             config_path = f.name
 

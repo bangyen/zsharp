@@ -74,7 +74,9 @@ class TestTrain:
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
     @patch("src.train.set_seed")
-    def test_train_basic_sgd(self, mock_set_seed, mock_get_model, mock_get_dataset):
+    def test_train_basic_sgd(
+        self, mock_set_seed, mock_get_model, mock_get_dataset
+    ):
         """Test basic training with SGD optimizer"""
         # Mock dataset
         mock_trainloader = MagicMock()
@@ -243,7 +245,9 @@ class TestTrain:
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
     @patch("src.train.set_seed")
-    def test_train_cifar100(self, mock_set_seed, mock_get_model, mock_get_dataset):
+    def test_train_cifar100(
+        self, mock_set_seed, mock_get_model, mock_get_dataset
+    ):
         """Test training with CIFAR-100 dataset"""
         # Mock dataset
         mock_trainloader = MagicMock()
@@ -454,7 +458,9 @@ class TestTrain:
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
     @patch("src.train.set_seed")
-    def test_train_progress_bar(self, mock_set_seed, mock_get_model, mock_get_dataset):
+    def test_train_progress_bar(
+        self, mock_set_seed, mock_get_model, mock_get_dataset
+    ):
         """Test that progress bars are used during training"""
         # Mock dataset
         mock_trainloader = MagicMock()

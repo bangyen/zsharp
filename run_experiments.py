@@ -204,7 +204,9 @@ if __name__ == "__main__":
             hp_results = run_hyperparameter_study()
         else:
             # Run comparison experiments
-            comparison_results = run_comparison_experiments(fast_mode=args.fast)
+            comparison_results = run_comparison_experiments(
+                fast_mode=args.fast
+            )
 
     except KeyboardInterrupt:
         print("\n\nExperiments interrupted by user.")

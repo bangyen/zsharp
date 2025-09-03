@@ -81,7 +81,8 @@ class SAM(torch.optim.Optimizer):
         SAM must be used with explicit first_step() and second_step() calls
         rather than the standard step() method.
         """
-        raise RuntimeError("SAM requires two-step calls: first_step and second_step")
+        msg = "SAM requires two-step calls: first_step and second_step"
+        raise RuntimeError(msg)
 
 
 class ZSharp(SAM):
@@ -124,10 +125,10 @@ class ZSharp(SAM):
         """
         # Collect gradients by layer/parameter group for layer-wise Z-score
         # computation
+        info_type = Tuple[torch.nn.Parameter, torch.Tensor, int, int]
+        layer_grad_info: List[info_type] = []
         layer_grads: List[torch.Tensor] = []
-        layer_grad_info: List[
-            Tuple[torch.nn.Parameter, torch.Tensor, int, int]
-        ] = []  # Store (param, grad, start_idx, end_idx) for each layer
+        # Store (param, grad, start_idx, end_idx) for each layer
 
         start_idx = 0
         for group in self.param_groups:
@@ -173,7 +174,7 @@ class ZSharp(SAM):
             ).item()
 
         # Apply filtering to each layer
-        for i, (p, original_grad, start_idx, end_idx) in enumerate(layer_grad_info):
+        for i, (p, original_grad, _, _) in enumerate(layer_grad_info):
             if p.grad is None:
                 continue
 

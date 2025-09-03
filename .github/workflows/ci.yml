@@ -64,10 +64,10 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run black check
-      run: black --check src/ tests/ run_experiments.py
+      run: black --check --line-length=79 src/ tests/ run_experiments.py
 
     - name: Run flake8
-      run: flake8 src/ --max-line-length=88 --extend-ignore=E203,W503
+      run: flake8 src/ tests/ run_experiments.py
 
   format:
     runs-on: ubuntu-latest
@@ -86,7 +86,7 @@ jobs:
         pip install -r requirements.txt
 
     - name: Format code with black
-      run: black src/ tests/ run_experiments.py
+      run: black --line-length=79 src/ tests/ run_experiments.py
 
     - name: Commit changes if formatting was applied
       run: |
