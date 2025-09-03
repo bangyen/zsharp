@@ -3,7 +3,7 @@ name = "zsharp"
 version = "0.1.0"
 description = "Sharpness-Aware Minimization with Z-Score Gradient Filtering"
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Bangyen Pham", email = "bangyen99@gmail.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.9"
@@ -52,7 +52,7 @@ ignore-property-decorators = false
 ignore-nested-functions = false
 ignore-nested-classes = false
 ignore-regex = ["^_"]
-exclude = ["venv", ".git", "__pycache__", ".pytest_cache"]
+exclude = ["venv", ".git", "__pycache__", ".pytest_cache", "tests", "scripts"]
 
 [tool.pytest.ini_options]
 addopts = "-v --tb=short"
@@ -156,7 +156,14 @@ line-ending = "auto"
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**/*.py" = ["PLR2004"]  # Magic numbers acceptable in tests
+"tests/**/*.py" = [
+    "PLR2004",  # Magic numbers acceptable in tests
+    "S101",     # Assert statements are acceptable in tests
+    "S311",     # Standard random generators are acceptable in tests
+]
+"scripts/**/*.py" = [
+    "BLE001",   # Blind exception catching is acceptable in scripts
+]
 
 # Type checking configuration
 [tool.mypy]

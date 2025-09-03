@@ -335,12 +335,13 @@ class TestZSharp:
         # Check that gradients have been modified by the ZSharp optimizer
         gradients_modified = False
         for name, param in model.named_parameters():
-            if param.grad is not None and name in original_grads:
-                # Check if gradients have been modified
-                # (either filtered or scaled)
-                if not torch.allclose(param.grad, original_grads[name]):
-                    gradients_modified = True
-                    break
+            if (
+                param.grad is not None
+                and name in original_grads
+                and not torch.allclose(param.grad, original_grads[name])
+            ):
+                gradients_modified = True
+                break
 
         # The ZSharp optimizer should modify gradients in some way
         assert gradients_modified, "ZSharp optimizer should modify gradients"

@@ -11,12 +11,14 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [types-PyYAML]
+        files: ^src/
 
   - repo: https://github.com/econchick/interrogate
     rev: 1.5.0
     hooks:
       - id: interrogate
         args: [--fail-under=100]
+        files: ^src/
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0

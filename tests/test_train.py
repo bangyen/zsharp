@@ -239,12 +239,14 @@ class TestTrain:
             },
         }
 
-        with patch("torch.device", return_value=torch.device("mps")):
-            with patch("torch.backends.mps.is_available", return_value=True):
-                results = train(config)
+        with (
+            patch("torch.device", return_value=torch.device("mps")),
+            patch("torch.backends.mps.is_available", return_value=True),
+        ):
+            results = train(config)
 
-                assert isinstance(results, dict)
-                assert results["device"] == "mps"
+            assert isinstance(results, dict)
+            assert results["device"] == "mps"
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
@@ -388,16 +390,18 @@ class TestTrain:
             },
         }
 
-        with patch("torch.device", return_value=torch.device("cpu")):
-            with patch("builtins.open", create=True) as mock_open:
-                mock_file = MagicMock()
-                mock_open.return_value.__enter__.return_value = mock_file
+        with (
+            patch("torch.device", return_value=torch.device("cpu")),
+            patch("builtins.open", create=True) as mock_open,
+        ):
+            mock_file = MagicMock()
+            mock_open.return_value.__enter__.return_value = mock_file
 
-                train(config)
+            train(config)
 
-                # Check that file was opened for writing
-                mock_open.assert_called()
-                assert mock_file.write.called
+            # Check that file was opened for writing
+            mock_open.assert_called()
+            assert mock_file.write.called
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
@@ -440,12 +444,14 @@ class TestTrain:
             },
         }
 
-        with patch("torch.device", return_value=torch.device("cpu")):
-            with patch("torch.nn.utils.clip_grad_norm_") as mock_clip:
-                train(config)
+        with (
+            patch("torch.device", return_value=torch.device("cpu")),
+            patch("torch.nn.utils.clip_grad_norm_") as mock_clip,
+        ):
+            train(config)
 
-                # Check that gradient clipping was called
-                mock_clip.assert_called()
+            # Check that gradient clipping was called
+            mock_clip.assert_called()
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
@@ -493,21 +499,23 @@ class TestTrain:
             },
         }
 
-        with patch("torch.device", return_value=torch.device("cpu")):
-            with patch("src.train.tqdm") as mock_tqdm:
-                mock_pbar = MagicMock()
-                mock_tqdm.return_value = mock_pbar
+        with (
+            patch("torch.device", return_value=torch.device("cpu")),
+            patch("src.train.tqdm") as mock_tqdm,
+        ):
+            mock_pbar = MagicMock()
+            mock_tqdm.return_value = mock_pbar
 
-                # Ensure the mock pbar iterates over the data
-                mock_pbar.__iter__ = lambda self: iter(
-                    [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
-                )
+            # Ensure the mock pbar iterates over the data
+            mock_pbar.__iter__ = lambda self: iter(
+                [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+            )
 
-                train(config)
+            train(config)
 
-                # Check that tqdm was called for progress bars
-                assert mock_tqdm.called
-                assert mock_pbar.set_postfix.called
+            # Check that tqdm was called for progress bars
+            assert mock_tqdm.called
+            assert mock_pbar.set_postfix.called
 
     def test_train_main_block(self):
         """Test the main block of train.py"""
