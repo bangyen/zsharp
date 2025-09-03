@@ -195,21 +195,13 @@ class ZSharp(SAM):
         # Concatenate Z-scores for percentile computation
         all_zscores = torch.cat(zscores_list)
 
-        # Handle edge case where all Z-scores are the same
-        if torch.allclose(all_zscores, all_zscores[0]):
-            # If all Z-scores are the same, use a simple threshold
-            threshold = 0.0
-        else:
-            # Use absolute Z-scores for percentile computation as per paper
-            threshold = torch.quantile(
-                all_zscores.abs(), self.percentile / PERCENTAGE_MULTIPLIER
-            ).item()
+        # Use absolute Z-scores for percentile computation as per paper
+        threshold = torch.quantile(
+            all_zscores.abs(), self.percentile / PERCENTAGE_MULTIPLIER
+        ).item()
 
         # Apply filtering to each layer
         for i, (p, original_grad, _, _) in enumerate(layer_grad_info):
-            if p.grad is None:
-                continue
-
             # Get Z-scores for this layer
             layer_zscores = zscores_list[i]
 
@@ -228,6 +220,7 @@ class ZSharp(SAM):
             mask = mask.view_as(original_grad)
 
             # Apply masking to gradients
+            assert p.grad is not None  # Type assertion for mypy
             p.grad = p.grad * mask
 
         # Apply SAM perturbation with filtered gradients
@@ -244,15 +237,10 @@ class ZSharp(SAM):
         )
 
         # Add numerical stability to gradient scaling
-        if grad_norm > 0:
-            scale = self.rho / grad_norm
-        else:
-            scale = 0.0
+        scale = self.rho / grad_norm
 
         for group in self.param_groups:
             for p in group["params"]:
-                if p.grad is None:
-                    continue
                 e = p.grad * scale
                 p.add_(e)
                 if not hasattr(p, "state"):

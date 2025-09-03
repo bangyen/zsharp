@@ -166,6 +166,36 @@ class TestSAM:
             # Test that the optimizer is still in a valid state
             assert len(sam.param_groups) > 0
 
+    def test_sam_with_none_gradients(self):
+        """Test SAM behavior when some parameters have None gradients"""
+        model = SimpleModel()
+        base_optimizer = optim.SGD
+        sam = SAM(
+            list(model.parameters()),
+            base_optimizer,
+            rho=DEFAULT_RHO,
+            lr=DEFAULT_LEARNING_RATE,
+        )
+
+        # Create dummy data and compute gradients
+        x = torch.randn(4, 10)
+        y = torch.randint(0, 2, (4,))
+        criterion = nn.CrossEntropyLoss()
+
+        loss = criterion(model(x), y)
+        loss.backward()
+
+        # Set some gradients to None
+        params = list(model.parameters())
+        params[0].grad = None  # Set first parameter's gradient to None
+
+        # Should handle None gradients gracefully
+        sam.first_step()
+        sam.second_step()
+
+        # Verify optimizer is still in valid state
+        assert len(sam.param_groups) > 0
+
 
 class TestZSharp:
     """Test cases for ZSharp optimizer"""
@@ -410,6 +440,38 @@ class TestZSharp:
             # Verify that the error is properly handled
             # Test that the optimizer is still in a valid state
             assert len(zsharp.param_groups) > 0
+
+    def test_zsharp_mixed_precision_float16_conversion(self):
+        """Test ZSharp specifically handles float16 gradient conversion"""
+        # Create a model with float16 parameters to test the conversion
+        model = SimpleModel()
+        # Convert model parameters to float16
+        for param in model.parameters():
+            param.data = param.data.half()
+
+        base_optimizer = optim.SGD
+        zsharp = ZSharp(
+            list(model.parameters()),
+            base_optimizer,
+            rho=DEFAULT_RHO,
+            percentile=DEFAULT_PERCENTILE,
+            lr=DEFAULT_LEARNING_RATE,
+        )
+
+        # Create dummy data and compute gradients
+        x = torch.randn(4, 10).half()  # Use float16 input
+        y = torch.randint(0, 2, (4,))
+        criterion = nn.CrossEntropyLoss()
+
+        loss = criterion(model(x), y)
+        loss.backward()
+
+        # Now the gradients should be float16 and the conversion code should
+        # be triggered
+        zsharp.first_step()
+
+        # Verify optimizer is still in valid state
+        assert len(zsharp.param_groups) > 0
 
     def test_zsharp_numerical_stability(self):
         """Test ZSharp numerical stability with very small gradients"""

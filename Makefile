@@ -17,14 +17,9 @@ test-fast: ## Run tests without coverage
 	python -m pytest tests/ -v
 
 lint: ## Run linting checks
-	flake8 src/ tests/ run_experiments.py
 	black --check --line-length=79 src/ tests/ run_experiments.py
+	flake8 src/ tests/ run_experiments.py
 	mypy src/ tests/ run_experiments.py
-
-type-check: ## Run type checking with mypy
-	mypy src/ tests/ run_experiments.py
-
-doc-check: ## Check documentation coverage with interrogate
 	interrogate src/ --fail-under=100
 
 format: ## Format code with black
@@ -36,9 +31,6 @@ clean: ## Clean up generated files
 	rm -rf __pycache__/
 	find . -name "*.pyc" -delete
 	find . -name "__pycache__" -delete
-
-run-train: ## Run training with default config
-	python -m src.train --config configs/default.yaml
 
 run-experiments: ## Run comprehensive experiments
 	python run_experiments.py
@@ -53,7 +45,7 @@ setup-dev: install ## Setup development environment
 	pip install pre-commit
 	pre-commit install
 
-check-all: lint test type-check doc-check ## Run all checks (lint + test + type-check + doc-check)
+check-all: lint test ## Run all checks
 
 # Development shortcuts
 dev: setup-dev ## Setup development environment

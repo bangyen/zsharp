@@ -4,7 +4,6 @@ This module provides comprehensive training functionality including
 device management, data loading, model training, and result saving.
 """
 
-import argparse
 import json
 import os
 import time
@@ -13,7 +12,6 @@ from typing import Any
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import yaml
 from tqdm import tqdm
 
 from src.constants import (
@@ -267,16 +265,3 @@ def train(config):
         json.dump(results, f, indent=2)
 
     return results
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--config", type=str, default="configs/zsharp_baseline.yaml"
-    )
-    args = parser.parse_args()
-
-    with open(args.config) as f:
-        config = yaml.safe_load(f)
-
-    train(config)
