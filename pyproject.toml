@@ -5,7 +5,6 @@ ignore-init-module = false
 ignore-semiprivate = false
 ignore-private = false
 ignore-property-decorators = false
-ignore-module = ["tests"]
 ignore-nested-functions = false
 ignore-nested-classes = false
 ignore-regex = ["^_"]
