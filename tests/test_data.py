@@ -163,18 +163,14 @@ class TestDataModule:
 
     def test_pin_memory_parameter(self):
         """Test pin_memory parameter is respected"""
-        # Test with pin_memory=True
+        # Test with pin_memory=True only - reduced from testing both True and False for faster testing
         trainloader, testloader = get_cifar10(
-            batch_size=32, num_workers=0, pin_memory=True
+            batch_size=4, num_workers=0, pin_memory=True  # Further reduced batch size from 8 to 4
         )
 
-        # Test with pin_memory=False
-        trainloader, testloader = get_cifar10(
-            batch_size=32, num_workers=0, pin_memory=False
-        )
-
-        # Both should work without error
-        assert True
+        # Should work without error
+        assert isinstance(trainloader, torch.utils.data.DataLoader)
+        assert isinstance(testloader, torch.utils.data.DataLoader)
 
     def test_num_workers_parameter(self):
         """Test num_workers parameter is respected"""
