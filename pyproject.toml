@@ -18,8 +18,10 @@ markers = [
     "mps: marks tests that require MPS support",
 ]
 filterwarnings = [
-    "ignore::DeprecationWarning",
-    "ignore::PendingDeprecationWarning",
+    "ignore::DeprecationWarning:torch.*",
+    "ignore::PendingDeprecationWarning:torch.*",
+    "ignore::DeprecationWarning:numpy.*",
+    "ignore::PendingDeprecationWarning:numpy.*",
 ]
 
 [tool.ruff]
@@ -81,20 +83,24 @@ select = [
     "SLOT", # flake8-slots
     "TID", # flake8-tidy-imports
     "YTT", # flake8-2020
+    "A",   # flake8-builtins
+    "COM", # flake8-commas
+    "DTZ", # flake8-datetimez
+    "EM",  # flake8-errmsg
+    "ISC", # flake8-implicit-str-concat
+    "ICN", # flake8-import-conventions
+    "G",   # flake8-logging-format
+    "S",   # flake8-bandit
+    "BLE", # flake8-blind-except
+    "FBT", # flake8-boolean-trap
+    "CSE", # flake8-commas
 ]
 ignore = [
     "E501",  # line too long (handled by ruff format)
-    "PLR0913", # Too many arguments to function call
-    "PLR0915", # Too many statements
-    "PLR0912", # Too many branches
     "PLW2901", # Loop variable overwrites (common in ML code)
-    "PLR2004", # Magic numbers (acceptable in tests)
     "ARG001",  # Unused function arguments (some are required by APIs)
     "ARG002",  # Unused method arguments (some are required by APIs)
     "ARG005",  # Unused lambda arguments
-    "C901",    # Function too complex (acceptable for complex algorithms)
-    "SIM102",  # Nested if statements (acceptable in some cases)
-    "SIM117",  # Nested with statements (acceptable in some cases)
     "N812",    # Lowercase imported as non-lowercase (allow common aliases)
 ]
 
@@ -117,6 +123,7 @@ line-ending = "auto"
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+"tests/**/*.py" = ["PLR2004"]  # Magic numbers acceptable in tests
 
 # Type checking configuration
 [tool.mypy]
@@ -134,16 +141,16 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 ignore_missing_imports = true
-disallow_any_generics = false  # Relaxed for now
-disallow_subclassing_any = false  # Relaxed for now
-disallow_untyped_calls = false  # Relaxed for test files
-disallow_any_explicit = false  # Relaxed for now
-disallow_any_unimported = false  # Relaxed for now
-no_implicit_reexport = false  # Relaxed for now
-strict_optional = false  # Relaxed for now
+disallow_any_generics = true  # Stricter - disallow Any in generics
+disallow_subclassing_any = true  # Stricter - disallow subclassing Any
+disallow_untyped_calls = true  # Stricter - require type annotations
+disallow_any_explicit = false  # Keep relaxed for gradual migration
+disallow_any_unimported = true  # Stricter - disallow unimported Any
+no_implicit_reexport = true  # Stricter - require explicit re-exports
+strict_optional = true  # Stricter - handle None properly
 
 # Exclude test files from strict type checking
-exclude = ["tests/", "tests/.*", "scripts/", "scripts/.*"]
+exclude = ["tests/", "scripts/"]
 
 # Add type annotations gradually to improve code quality
 # Priority order:
