@@ -12,7 +12,8 @@ from src.constants import CIFAR10_NUM_CLASSES, RESNET18_NAME
 
 
 def get_model(
-    name: str = RESNET18_NAME, num_classes: int = CIFAR10_NUM_CLASSES
+    name: str = RESNET18_NAME,
+    num_classes: int = CIFAR10_NUM_CLASSES,
 ) -> nn.Module:
     """Get a PyTorch model by name.
 
@@ -31,7 +32,7 @@ def get_model(
     elif name == "resnet56":
         # ResNet-56 implementation (simplified)
         model = models.resnet18(
-            num_classes=num_classes
+            num_classes=num_classes,
         )  # Using ResNet18 as proxy
     elif name == "vgg11":
         model = models.vgg11(num_classes=num_classes)
@@ -41,5 +42,6 @@ def get_model(
         # Use ViT-B/16 as proxy for ViT-S/16
         model = vit_b_16(num_classes=num_classes)
     else:
-        raise ValueError(f"Unknown model {name}")
+        error_msg = f"Unknown model {name}"
+        raise ValueError(error_msg)
     return model

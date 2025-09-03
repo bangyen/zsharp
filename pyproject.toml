@@ -93,7 +93,6 @@ select = [
     "S",   # flake8-bandit
     "BLE", # flake8-blind-except
     "FBT", # flake8-boolean-trap
-    "CSE", # flake8-commas
 ]
 ignore = [
     "E501",  # line too long (handled by ruff format)
@@ -102,6 +101,9 @@ ignore = [
     "ARG002",  # Unused method arguments (some are required by APIs)
     "ARG005",  # Unused lambda arguments
     "N812",    # Lowercase imported as non-lowercase (allow common aliases)
+    "C901",    # Function too complex (acceptable for complex ML algorithms)
+    "PLR0912", # Too many branches (acceptable for training configs)
+    "PLR0915", # Too many statements (acceptable for training loops)
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
@@ -142,10 +144,10 @@ warn_unreachable = true
 strict_equality = true
 ignore_missing_imports = true
 disallow_any_generics = true  # Stricter - disallow Any in generics
-disallow_subclassing_any = true  # Stricter - disallow subclassing Any
+disallow_subclassing_any = false  # Relaxed for torch optimizers
 disallow_untyped_calls = true  # Stricter - require type annotations
 disallow_any_explicit = false  # Keep relaxed for gradual migration
-disallow_any_unimported = true  # Stricter - disallow unimported Any
+disallow_any_unimported = false  # Relaxed for torch imports
 no_implicit_reexport = true  # Stricter - require explicit re-exports
 strict_optional = true  # Stricter - handle None properly
 

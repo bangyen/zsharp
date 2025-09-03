@@ -15,7 +15,7 @@ from src.constants import PERCENTAGE_MULTIPLIER
 
 def evaluate_model(
     model: torch.nn.Module,
-    testloader: torch.utils.data.DataLoader,
+    testloader: torch.utils.data.DataLoader[torch.Tensor],
     device: Union[torch.device, str],
 ) -> float:
     """Evaluate model on test set.

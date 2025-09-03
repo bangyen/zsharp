@@ -92,7 +92,8 @@ def train(config: dict[str, Any]) -> Optional[dict[str, Any]]:
     num_workers = int(config[TRAIN_CONFIG_KEY].get(NUM_WORKERS_KEY, 2))
     pin_memory = config[TRAIN_CONFIG_KEY].get(PIN_MEMORY_KEY, False)
     use_mixed_precision = config[TRAIN_CONFIG_KEY].get(
-        USE_MIXED_PRECISION_KEY, False
+        USE_MIXED_PRECISION_KEY,
+        False,
     )
 
     # Get dataset
@@ -119,7 +120,8 @@ def train(config: dict[str, Any]) -> Optional[dict[str, Any]]:
 
     # Setup optimizer based on config
     optimizer_type = config[OPTIMIZER_CONFIG_KEY].get(
-        TYPE_KEY, ZSHARP_OPTIMIZER
+        TYPE_KEY,
+        ZSHARP_OPTIMIZER,
     )
 
     optimizer: Union[torch.optim.Optimizer, ZSharp]
@@ -160,7 +162,10 @@ def train(config: dict[str, Any]) -> Optional[dict[str, Any]]:
             correct, total = 0, 0
 
             desc = f"Epoch {epoch + 1}/{config[TRAIN_CONFIG_KEY][EPOCHS_KEY]}"
-            pbar: tqdm = tqdm(trainloader, desc=desc)
+            pbar: tqdm[tuple[torch.Tensor, torch.Tensor]] = tqdm(
+                trainloader,
+                desc=desc,
+            )
 
             try:
                 for _i, (x, y) in enumerate(pbar):
@@ -178,7 +183,8 @@ def train(config: dict[str, Any]) -> Optional[dict[str, Any]]:
 
                         # Add gradient clipping for stability
                         torch.nn.utils.clip_grad_norm_(
-                            model.parameters(), max_norm=MAX_GRADIENT_NORM
+                            model.parameters(),
+                            max_norm=MAX_GRADIENT_NORM,
                         )
 
                         # Type check to ensure optimizer is ZSharp
@@ -195,7 +201,8 @@ def train(config: dict[str, Any]) -> Optional[dict[str, Any]]:
 
                         # Add gradient clipping for stability
                         torch.nn.utils.clip_grad_norm_(
-                            model.parameters(), max_norm=MAX_GRADIENT_NORM
+                            model.parameters(),
+                            max_norm=MAX_GRADIENT_NORM,
                         )
 
                         optimizer.step()
@@ -213,7 +220,7 @@ def train(config: dict[str, Any]) -> Optional[dict[str, Any]]:
                             "Acc": (
                                 f"{PERCENTAGE_MULTIPLIER * correct / total:.2f}%"
                             ),
-                        }
+                        },
                     )
 
             except KeyboardInterrupt:
@@ -240,7 +247,10 @@ def train(config: dict[str, Any]) -> Optional[dict[str, Any]]:
 
     try:
         with torch.no_grad():
-            eval_pbar: tqdm = tqdm(testloader, desc="Evaluating")
+            eval_pbar: tqdm[tuple[torch.Tensor, torch.Tensor]] = tqdm(
+                testloader,
+                desc="Evaluating",
+            )
             try:
                 for x, y in eval_pbar:
                     x, y = x.to(device), y.to(device)

@@ -15,7 +15,8 @@ from src.train import train
 
 
 def run_experiment(
-    config_path: str, results_path: str = "results/experiment.json"
+    config_path: str,
+    results_path: str = "results/experiment.json",
 ) -> dict[str, Any]:
     """Run a single experiment and save results.
 
