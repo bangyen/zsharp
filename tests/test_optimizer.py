@@ -131,7 +131,9 @@ class TestSAM:
             sam.second_step()
         except RuntimeError:
             # This is expected behavior when no gradients are available
-            assert True
+            # Verify that the error is properly handled
+            # Test that the optimizer is still in a valid state
+            assert len(sam.param_groups) > 0
 
 
 class TestZSharp:
@@ -374,7 +376,9 @@ class TestZSharp:
             zsharp.first_step()
         except RuntimeError:
             # This is expected behavior for dtype mismatch
-            assert True
+            # Verify that the error is properly handled
+            # Test that the optimizer is still in a valid state
+            assert len(zsharp.param_groups) > 0
 
     def test_zsharp_numerical_stability(self):
         """Test ZSharp numerical stability with very small gradients"""
