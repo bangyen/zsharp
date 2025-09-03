@@ -1,6 +1,7 @@
 # Experiments module for running different configurations
 import yaml
 import json
+import os
 from src.train import train
 
 
@@ -14,6 +15,9 @@ def run_experiment(config_path, results_path="results/experiment.json"):
 
     # Save results (placeholder)
     results = {"config": config, "status": "completed"}
+
+    # Create directory if it doesn't exist
+    os.makedirs(os.path.dirname(results_path), exist_ok=True)
 
     with open(results_path, "w") as f:
         json.dump(results, f, indent=2)
