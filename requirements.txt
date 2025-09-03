@@ -14,3 +14,4 @@ black
 flake8
 mypy
 interrogate
+types-PyYAML

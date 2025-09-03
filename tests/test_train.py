@@ -2,6 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
+import pytest
 import torch
 import torch.nn as nn
 
@@ -197,10 +198,17 @@ class TestTrain:
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
     @patch("src.train.set_seed")
+    @pytest.mark.mps
     def test_train_mixed_precision(
         self, mock_set_seed, mock_get_model, mock_get_dataset
     ):
         """Test training with mixed precision"""
+        # Skip this test if MPS is not available
+        if not torch.backends.mps.is_available():
+            import pytest
+
+            pytest.skip("MPS not available on this system")
+
         # Mock dataset
         mock_trainloader = MagicMock()
         mock_testloader = MagicMock()

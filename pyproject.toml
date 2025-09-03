@@ -9,3 +9,15 @@ ignore-nested-functions = false
 ignore-nested-classes = false
 ignore-regex = ["^_"]
 exclude = ["venv", ".git", "__pycache__", ".pytest_cache"]
+
+[tool.pytest.ini_options]
+addopts = "-v --tb=short"
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "mps: marks tests that require MPS support",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
