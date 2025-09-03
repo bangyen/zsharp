@@ -192,7 +192,7 @@ def train(config: TrainingConfig) -> Optional[TrainingResults]:
                         )
 
                         # ZSharp two-step training
-                        zsharp_optimizer = cast(ZSharp, optimizer)
+                        zsharp_optimizer = cast("ZSharp", optimizer)
                         zsharp_optimizer.first_step()
 
                         criterion(model(x), y).backward()
