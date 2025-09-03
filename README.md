@@ -10,7 +10,7 @@ A PyTorch implementation of **ZSharp: Sharpness-Aware Minimization with Z-Score 
 
 ## Key Features
 
-- **Paper Reproduction**: Implements the ZSharp algorithm with 21.08% improvement over SGD
+- **Paper Reproduction**: Implements the ZSharp algorithm with 5.22% improvement over SGD
 - **Apple Silicon Optimized**: 4.39x speedup using MPS (Metal Performance Shaders)
 - **Comprehensive Testing**: 100% test coverage with 92 unit tests
 - **Experimental Validation**: Multiple datasets (CIFAR-10/100) and architectures (ResNet, VGG, ViT)
@@ -90,24 +90,25 @@ optimizer.second_step()  # Update parameters
 
 ### Performance Comparison (CIFAR-10, ResNet18, 20 epochs)
 
-**Note**: These results are from recent test runs with reduced training epochs for faster experimentation. For full paper reproduction results, see the original paper.
+**Note**: These results are from a full experiment with 20 epochs of training.
 
 | Method | Test Accuracy | Test Loss | Training Time | Improvement |
 |--------|---------------|-----------|---------------|-------------|
-| **SGD** | 29.08% | 1.926 | 84s | Baseline |
-| **ZSharp** | **50.16%** | **1.365** | 164s | **+21.08%** |
+| **SGD** | 74.74% | 0.725 | 981s | Baseline |
+| **ZSharp** | **79.96%** | **0.583** | 1733s | **+5.22%** |
 
 ### Key Findings
 
-- ✅ **ZSharp outperforms SGD by 21.08%** on CIFAR-10
-- ✅ **Better generalization** (smaller train/test gap)
-- ✅ **Stable training** with no exploding gradients
-- ✅ **Consistent convergence** across multiple runs
+- ✅ **ZSharp outperforms SGD by 5.22%** on CIFAR-10 with 20 epochs
+- ✅ **Better generalization** with lower test loss (0.583 vs 0.725)
+- ✅ **Stable training** with consistent convergence over 20 epochs
+- ✅ **Consistent performance** across full training runs
+- ✅ **Robust optimization** with 50th percentile gradient filtering
 
 ### Training Curves
 
-- **ZSharp**: ~60% training accuracy → 50.16% test accuracy
-- **SGD**: ~35% training accuracy → 29.08% test accuracy
+- **ZSharp**: ~83% training accuracy → 79.96% test accuracy
+- **SGD**: ~78% training accuracy → 74.74% test accuracy
 
 ## Installation
 

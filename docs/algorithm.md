@@ -73,7 +73,7 @@ For each layer $l$ with gradients $g_l$:
 ### ZSharp vs SGD
 - **ZSharp**: Sharpness-aware optimization with gradient filtering
 - **SGD**: Standard gradient descent
-- **Result**: ZSharp shows 21.08% improvement in test accuracy
+- **Result**: ZSharp shows 5.22% improvement in test accuracy
 
 ## Implementation Details
 
@@ -116,9 +116,9 @@ def compute_perturbation(gradients, rho):
 
 | Metric | SGD | ZSharp | Improvement |
 |--------|-----|--------|-------------|
-| Test Accuracy | 29.08% | 50.16% | +21.08% |
-| Test Loss | 1.926 | 1.365 | -29.1% |
-| Training Time | 84s | 164s | +95.2% |
+| Test Accuracy | 74.74% | 79.96% | +5.22% |
+| Test Loss | 0.725 | 0.583 | -19.6% |
+| Training Time | 981s | 1733s | +76.7% |
 | Convergence | Slow | Fast | Better |
 
 ### Hyperparameter Sensitivity
