@@ -94,7 +94,4 @@ PERCENTILE_KEY = "percentile"
 
 # Type definitions for configuration
 TrainingConfig = dict[str, Any]
-"""Type alias for training configuration dictionary."""
-
 ExperimentResults = dict[str, Any]
-"""Type alias for experiment results dictionary."""

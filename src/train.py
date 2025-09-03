@@ -74,7 +74,10 @@ def get_device(config: TrainingConfig) -> torch.device:
     return torch.device(CPU_DEVICE)
 
 
-def train(config: TrainingConfig) -> Optional[dict[str, Any]]:
+TrainingResults = dict[str, Any]
+
+
+def train(config: TrainingConfig) -> Optional[TrainingResults]:
     """Train a model using the provided configuration.
 
     Args:
