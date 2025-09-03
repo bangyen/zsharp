@@ -24,8 +24,7 @@ class SimpleModel(nn.Module):
     def forward(self, x):
         """Forward pass through the model"""
         x = torch.relu(self.linear1(x))
-        x = self.linear2(x)
-        return x
+        return self.linear2(x)
 
 
 class TestSAM:

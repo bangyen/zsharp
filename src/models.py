@@ -4,13 +4,16 @@ This module provides functions to load and configure different
 PyTorch models including ResNet, VGG, and Vision Transformer variants.
 """
 
+from torch import nn
 from torchvision import models
 from torchvision.models import vit_b_16
 
 from src.constants import CIFAR10_NUM_CLASSES, RESNET18_NAME
 
 
-def get_model(name=RESNET18_NAME, num_classes=CIFAR10_NUM_CLASSES):
+def get_model(
+    name: str = RESNET18_NAME, num_classes: int = CIFAR10_NUM_CLASSES
+) -> nn.Module:
     """Get a PyTorch model by name.
 
     Args:
@@ -24,7 +27,7 @@ def get_model(name=RESNET18_NAME, num_classes=CIFAR10_NUM_CLASSES):
         ValueError: If model name is not supported
     """
     if name == "resnet18":
-        model = models.resnet18(num_classes=num_classes)
+        model: nn.Module = models.resnet18(num_classes=num_classes)
     elif name == "resnet56":
         # ResNet-56 implementation (simplified)
         model = models.resnet18(

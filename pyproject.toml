@@ -76,6 +76,11 @@ select = [
     "PLR", # pylint refactor
     "PLW", # pylint warnings
     "PLE", # pylint errors
+    "RET", # flake8-return
+    "SLF", # flake8-self
+    "SLOT", # flake8-slots
+    "TID", # flake8-tidy-imports
+    "YTT", # flake8-2020
 ]
 ignore = [
     "E501",  # line too long (handled by ruff format)
@@ -90,6 +95,7 @@ ignore = [
     "C901",    # Function too complex (acceptable for complex algorithms)
     "SIM102",  # Nested if statements (acceptable in some cases)
     "SIM117",  # Nested with statements (acceptable in some cases)
+    "N812",    # Lowercase imported as non-lowercase (allow common aliases)
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
@@ -117,10 +123,10 @@ line-ending = "auto"
 python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = false  # Relaxed for now
-disallow_incomplete_defs = false  # Relaxed for now
+disallow_untyped_defs = true  # More strict
+disallow_incomplete_defs = true  # More strict
 check_untyped_defs = true
-disallow_untyped_decorators = false  # Relaxed for now
+disallow_untyped_decorators = false  # Relaxed for torch decorators
 no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
@@ -130,11 +136,14 @@ strict_equality = true
 ignore_missing_imports = true
 disallow_any_generics = false  # Relaxed for now
 disallow_subclassing_any = false  # Relaxed for now
-disallow_untyped_calls = false  # Relaxed for now
-disallow_any_explicit = false  # Allow explicit Any when needed
+disallow_untyped_calls = false  # Relaxed for test files
+disallow_any_explicit = false  # Relaxed for now
 disallow_any_unimported = false  # Relaxed for now
 no_implicit_reexport = false  # Relaxed for now
 strict_optional = false  # Relaxed for now
+
+# Exclude test files from strict type checking
+exclude = ["tests/", "tests/.*"]
 
 # Add type annotations gradually to improve code quality
 # Priority order:

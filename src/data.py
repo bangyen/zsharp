@@ -5,6 +5,7 @@ datasets with appropriate data augmentation and normalization.
 """
 
 import torch
+import torch.utils.data
 import torchvision
 import torchvision.transforms as T
 
@@ -23,10 +24,10 @@ from src.constants import (
 
 
 def get_cifar10(
-    batch_size=DEFAULT_BATCH_SIZE,
-    num_workers=DEFAULT_NUM_WORKERS,
-    pin_memory=DEFAULT_PIN_MEMORY,
-):
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    num_workers: int = DEFAULT_NUM_WORKERS,
+    pin_memory: bool = DEFAULT_PIN_MEMORY,
+) -> tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
     """Get CIFAR-10 dataset with train and test data loaders.
 
     Args:
@@ -78,10 +79,10 @@ def get_cifar10(
 
 
 def get_cifar100(
-    batch_size=DEFAULT_BATCH_SIZE,
-    num_workers=DEFAULT_NUM_WORKERS,
-    pin_memory=DEFAULT_PIN_MEMORY,
-):
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    num_workers: int = DEFAULT_NUM_WORKERS,
+    pin_memory: bool = DEFAULT_PIN_MEMORY,
+) -> tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
     """Get CIFAR-100 dataset with train and test data loaders.
 
     Args:
@@ -137,11 +138,11 @@ def get_cifar100(
 
 
 def get_dataset(
-    dataset_name,
-    batch_size=DEFAULT_BATCH_SIZE,
-    num_workers=DEFAULT_NUM_WORKERS,
-    pin_memory=DEFAULT_PIN_MEMORY,
-):
+    dataset_name: str,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    num_workers: int = DEFAULT_NUM_WORKERS,
+    pin_memory: bool = DEFAULT_PIN_MEMORY,
+) -> tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
     """Get dataset by name with train and test data loaders.
 
     Args:
@@ -158,7 +159,6 @@ def get_dataset(
     """
     if dataset_name == "cifar10":
         return get_cifar10(batch_size, num_workers, pin_memory)
-    elif dataset_name == "cifar100":
+    if dataset_name == "cifar100":
         return get_cifar100(batch_size, num_workers, pin_memory)
-    else:
-        raise ValueError(f"Unknown dataset: {dataset_name}")
+    raise ValueError(f"Unknown dataset: {dataset_name}")

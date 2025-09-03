@@ -7,13 +7,16 @@ configurations and saving results to JSON files.
 # Experiments module for running different configurations
 import json
 import os
+from typing import Any
 
 import yaml
 
 from src.train import train
 
 
-def run_experiment(config_path, results_path="results/experiment.json"):
+def run_experiment(
+    config_path: str, results_path: str = "results/experiment.json"
+) -> dict[str, Any]:
     """Run a single experiment and save results.
 
     Args:
@@ -24,7 +27,7 @@ def run_experiment(config_path, results_path="results/experiment.json"):
         dict: Experiment results and configuration
     """
     with open(config_path) as f:
-        config = yaml.safe_load(f)
+        config: dict[str, Any] = yaml.safe_load(f)
 
     # Run training
     train(config)

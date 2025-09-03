@@ -13,7 +13,7 @@ import torch
 from src.constants import DEFAULT_SEED
 
 
-def set_seed(seed=DEFAULT_SEED):
+def set_seed(seed: int = DEFAULT_SEED) -> None:
     """Set random seed for reproducibility.
 
     Args:

@@ -8,9 +8,11 @@ import json
 import logging
 import os
 import time
-from typing import Any
+from typing import Any, Optional, Union
 
 import torch
+import torch.nn
+import torch.optim
 from torch import nn, optim
 from tqdm import tqdm
 
@@ -53,7 +55,7 @@ from src.utils import set_seed
 logger = logging.getLogger(__name__)
 
 
-def get_device(config):
+def get_device(config: dict[str, Any]) -> torch.device:
     """Get the best available device for training.
 
     Args:
@@ -66,13 +68,12 @@ def get_device(config):
 
     if device_config == MPS_DEVICE and torch.backends.mps.is_available():
         return torch.device(MPS_DEVICE)
-    elif device_config == CUDA_DEVICE and torch.cuda.is_available():
+    if device_config == CUDA_DEVICE and torch.cuda.is_available():
         return torch.device(CUDA_DEVICE)
-    else:
-        return torch.device(CPU_DEVICE)
+    return torch.device(CPU_DEVICE)
 
 
-def train(config):
+def train(config: dict[str, Any]) -> Optional[dict[str, Any]]:
     """Train a model using the provided configuration.
 
     Args:
@@ -121,7 +122,7 @@ def train(config):
         TYPE_KEY, ZSHARP_OPTIMIZER
     )
 
-    optimizer: Any
+    optimizer: Union[torch.optim.Optimizer, ZSharp]
 
     if optimizer_type == SGD_OPTIMIZER:
         optimizer = optim.SGD(
@@ -134,7 +135,7 @@ def train(config):
     else:
         # ZSharp optimizer
         base_opt = optim.SGD
-        zsharp_optimizer = ZSharp(
+        optimizer = ZSharp(
             list(model.parameters()),
             base_optimizer=base_opt,
             rho=float(config[OPTIMIZER_CONFIG_KEY][RHO_KEY]),
@@ -143,7 +144,6 @@ def train(config):
             weight_decay=float(config[OPTIMIZER_CONFIG_KEY][WEIGHT_DECAY_KEY]),
             percentile=int(config[OPTIMIZER_CONFIG_KEY][PERCENTILE_KEY]),
         )
-        optimizer = zsharp_optimizer
         use_zsharp = True
 
     criterion = nn.CrossEntropyLoss()
@@ -160,7 +160,7 @@ def train(config):
             correct, total = 0, 0
 
             desc = f"Epoch {epoch + 1}/{config[TRAIN_CONFIG_KEY][EPOCHS_KEY]}"
-            pbar = tqdm(trainloader, desc=desc)
+            pbar: tqdm = tqdm(trainloader, desc=desc)
 
             try:
                 for _i, (x, y) in enumerate(pbar):
@@ -181,10 +181,12 @@ def train(config):
                             model.parameters(), max_norm=MAX_GRADIENT_NORM
                         )
 
-                        optimizer.first_step()
+                        # Type check to ensure optimizer is ZSharp
+                        if isinstance(optimizer, ZSharp):
+                            optimizer.first_step()
 
-                        criterion(model(x), y).backward()
-                        optimizer.second_step()
+                            criterion(model(x), y).backward()
+                            optimizer.second_step()
                     else:
                         # Standard SGD training
                         optimizer.zero_grad()
@@ -238,7 +240,7 @@ def train(config):
 
     try:
         with torch.no_grad():
-            eval_pbar = tqdm(testloader, desc="Evaluating")
+            eval_pbar: tqdm = tqdm(testloader, desc="Evaluating")
             try:
                 for x, y in eval_pbar:
                     x, y = x.to(device), y.to(device)

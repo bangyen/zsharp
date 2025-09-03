@@ -25,8 +25,7 @@ class SimpleTestModel(nn.Module):
         x = self.conv(x)
         x = self.pool(x)
         x = x.view(x.size(0), -1)
-        x = self.linear(x)
-        return x
+        return self.linear(x)
 
 
 class TestTrain:

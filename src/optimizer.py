@@ -4,9 +4,11 @@ This module provides implementations of SAM (Sharpness-Aware Minimization)
 and ZSharp optimizers for deep learning training with gradient filtering.
 """
 
-from typing import Any, Callable
+from typing import Callable, Optional, Union
 
 import torch
+import torch.nn
+import torch.optim
 
 from src.constants import (
     DEFAULT_PERCENTILE,
@@ -16,6 +18,9 @@ from src.constants import (
     EPSILON_STD,
     PERCENTAGE_MULTIPLIER,
 )
+
+# Type for optimizer kwargs
+OptimizerKwargs = Union[float, int, bool]
 
 
 class SAM(torch.optim.Optimizer):
@@ -36,9 +41,9 @@ class SAM(torch.optim.Optimizer):
     def __init__(
         self,
         params: list[torch.nn.Parameter],
-        base_optimizer: Callable,
+        base_optimizer: Callable[..., torch.optim.Optimizer],
         rho: float = DEFAULT_RHO,
-        **kwargs: Any,
+        **kwargs: OptimizerKwargs,
     ) -> None:
         """Initialize SAM optimizer.
 
@@ -48,9 +53,11 @@ class SAM(torch.optim.Optimizer):
             rho: Perturbation radius for SAM
             **kwargs: Additional arguments passed to base_optimizer
         """
-        defaults = dict(rho=rho, **kwargs)
+        defaults = {"rho": rho, **kwargs}
         super().__init__(params, defaults)
-        self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
+        self.base_optimizer: torch.optim.Optimizer = base_optimizer(
+            self.param_groups, **kwargs
+        )
         self.rho = rho
 
     @torch.no_grad()
@@ -97,7 +104,7 @@ class SAM(torch.optim.Optimizer):
                     p.sub_(p.state["e"])
         self.base_optimizer.step()
 
-    def step(self, closure=None):
+    def step(self, closure: Optional[Callable[[], float]] = None) -> float:  # type: ignore[override]
         """
         Raises an error since SAM requires two-step calls.
 
@@ -128,10 +135,10 @@ class ZSharp(SAM):
     def __init__(
         self,
         params: list[torch.nn.Parameter],
-        base_optimizer: Callable,
+        base_optimizer: Callable[..., torch.optim.Optimizer],
         rho: float = 0.05,
         percentile: int = DEFAULT_PERCENTILE,
-        **kwargs: Any,
+        **kwargs: OptimizerKwargs,
     ) -> None:
         """Initialize ZSharp optimizer.
 

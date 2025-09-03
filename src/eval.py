@@ -4,12 +4,20 @@ This module provides functions for evaluating model performance
 on test datasets, including accuracy computation.
 """
 
+from typing import Union
+
 import torch
+import torch.nn
+import torch.utils.data
 
 from src.constants import PERCENTAGE_MULTIPLIER
 
 
-def evaluate_model(model, testloader, device):
+def evaluate_model(
+    model: torch.nn.Module,
+    testloader: torch.utils.data.DataLoader,
+    device: Union[torch.device, str],
+) -> float:
     """Evaluate model on test set.
 
     Args:
