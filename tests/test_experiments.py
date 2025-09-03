@@ -3,7 +3,7 @@ import yaml
 import json
 import tempfile
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from src.experiments import run_experiment
 
 
@@ -208,6 +208,7 @@ class TestExperiments:
                 os.unlink(config_path)
             if os.path.exists("temp_results"):
                 import shutil
+
                 shutil.rmtree("temp_results")
 
     def test_run_experiment_json_serialization(self):
@@ -244,7 +245,7 @@ class TestExperiments:
             with patch("src.experiments.train") as mock_train:
                 mock_train.return_value = {"status": "mocked"}
 
-                results = run_experiment(config_path, results_path)
+                run_experiment(config_path, results_path)
 
                 # Check that results file contains valid JSON
                 with open(results_path, "r") as f:

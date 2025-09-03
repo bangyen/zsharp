@@ -81,10 +81,10 @@ def main():
             "Strip trailing whitespace",
         ),
         ("black . -l 79", "Black formatting"),
-        ("flake8 src", "Flake8 linting"),
+        ("flake8 src tests", "Flake8 linting"),
         (
-            "python -m pytest --cov=src --cov-report=term-missing "
-            "--cov-fail-under=80 --quiet -n 2 --cov-context=test",
+            "pytest tests/ --cov=src --cov-report=term-missing "
+            "--cov-fail-under=80 --quiet --cov-context=test",
             "Pytest with coverage",
         ),
     ]

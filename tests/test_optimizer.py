@@ -2,7 +2,6 @@ import pytest
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
 from src.optimizer import SAM, ZSharp
 
 
@@ -65,7 +64,9 @@ class TestSAM:
         assert perturbed, "Parameters should be perturbed after first_step"
 
     def test_sam_second_step(self):
-        """Test SAM second step (parameter restoration and base optimizer step)"""
+        """
+        Test SAM second step (parameter restoration and base optimizer step)
+        """
         model = SimpleModel()
         base_optimizer = optim.SGD
         sam = SAM(model.parameters(), base_optimizer, rho=0.05, lr=0.01)
@@ -266,17 +267,18 @@ class TestZSharp:
         # Apply first step (this should filter gradients)
         zsharp.first_step()
 
-        # Check that some gradients have been zeroed out (filtered)
-        filtered = False
+        # Check that gradients have been modified by the ZSharp optimizer
+        gradients_modified = False
         for name, param in model.named_parameters():
             if param.grad is not None and name in original_grads:
-                if torch.allclose(param.grad, torch.zeros_like(param.grad)):
-                    filtered = True
+                # Check if gradients have been modified
+                # (either filtered or scaled)
+                if not torch.allclose(param.grad, original_grads[name]):
+                    gradients_modified = True
                     break
 
-        # Note: This test might not always pass depending on the gradient distribution
-        # and percentile threshold, but it should work in most cases
-        assert True  # Placeholder - actual filtering behavior depends on data
+        # The ZSharp optimizer should modify gradients in some way
+        assert gradients_modified, "ZSharp optimizer should modify gradients"
 
     def test_zsharp_second_step(self):
         """Test ZSharp second step (inherited from SAM)"""

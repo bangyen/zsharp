@@ -15,7 +15,9 @@ class TestModels:
         assert hasattr(model, "fc")  # ResNet has final classification layer
 
         # Test forward pass with smaller input for faster testing
-        x = torch.randn(1, 3, 224, 224)  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
+        x = torch.randn(
+            1, 3, 224, 224
+        )  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
         output = model(x)
         assert output.shape == (1, 10)  # Updated expected shape
 
@@ -27,7 +29,9 @@ class TestModels:
         assert hasattr(model, "fc")
 
         # Test forward pass with smaller input for faster testing
-        x = torch.randn(1, 3, 224, 224)  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
+        x = torch.randn(
+            1, 3, 224, 224
+        )  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
         output = model(x)
         assert output.shape == (1, 100)  # Updated expected shape
 
@@ -39,7 +43,9 @@ class TestModels:
         assert hasattr(model, "classifier")  # VGG has classifier attribute
 
         # Test forward pass with smaller input for faster testing
-        x = torch.randn(1, 3, 224, 224)  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
+        x = torch.randn(
+            1, 3, 224, 224
+        )  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
         output = model(x)
         assert output.shape == (1, 10)  # Updated expected shape
 
@@ -50,7 +56,9 @@ class TestModels:
         assert isinstance(model, nn.Module)
 
         # Test forward pass with smaller input for faster testing
-        x = torch.randn(1, 3, 224, 224)  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
+        x = torch.randn(
+            1, 3, 224, 224
+        )  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
         output = model(x)
         assert output.shape == (1, 10)  # Updated expected shape
 
@@ -61,7 +69,9 @@ class TestModels:
         assert isinstance(model, nn.Module)
 
         # Test forward pass with smaller input for faster testing
-        x = torch.randn(1, 3, 224, 224)  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
+        x = torch.randn(
+            1, 3, 224, 224
+        )  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
         output = model(x)
         assert output.shape == (1, 10)  # Updated expected shape
 
@@ -77,14 +87,19 @@ class TestModels:
             model = get_model("resnet18", num_classes=num_classes)
 
             # Test forward pass with smaller input for faster testing
-            x = torch.randn(1, 3, 224, 224)  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
+            x = torch.randn(
+                1, 3, 224, 224
+            )  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
             output = model(x)
             assert output.shape == (1, num_classes)  # Updated expected shape
 
     def test_model_parameters(self):
         """Test that models have trainable parameters"""
         # Reduced number of models to test for faster execution
-        model_names = ["resnet18", "vgg11"]  # Removed heavy models: "resnet56", "vit_b_16", "vit_s_16"
+        model_names = [
+            "resnet18",
+            "vgg11",
+        ]  # Removed heavy models: "resnet56", "vit_b_16", "vit_s_16"
 
         for model_name in model_names:
             model = get_model(model_name, num_classes=10)
@@ -127,7 +142,9 @@ class TestModels:
         model = get_model("resnet18", num_classes=10)
 
         # Create dummy data with smaller input for faster testing
-        x = torch.randn(1, 3, 224, 224, requires_grad=True)  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
+        x = torch.randn(
+            1, 3, 224, 224, requires_grad=True
+        )  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
         y = torch.randint(0, 10, (1,))  # Reduced from (2,) to (1,)
         criterion = nn.CrossEntropyLoss()
 
@@ -150,7 +167,9 @@ class TestModels:
         model = get_model("resnet18", num_classes=10)
         model.eval()
 
-        x = torch.randn(1, 3, 224, 224)  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
+        x = torch.randn(
+            1, 3, 224, 224
+        )  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
         output = model(x)
 
         # Output should be finite
@@ -168,8 +187,11 @@ class TestModels:
         for param1, param2 in zip(model1.parameters(), model2.parameters()):
             param2.data = param1.data.clone()
 
-        # Same input should produce same output with smaller input for faster testing
-        x = torch.randn(1, 3, 224, 224)  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
+        # Same input should produce same output with smaller input for faster
+        # testing
+        x = torch.randn(
+            1, 3, 224, 224
+        )  # Reduced from (2, 3, 224, 224) to (1, 3, 224, 224)
         output1 = model1(x)
         output2 = model2(x)
 

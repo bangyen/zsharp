@@ -1,7 +1,6 @@
-import pytest
-import torch
-import torch.nn as nn
 from src.eval import evaluate_model
+import torch.nn as nn
+import torch
 
 
 class SimpleTestModel(nn.Module):
@@ -75,7 +74,8 @@ class TestEval:
         accuracy = evaluate_model(model, testloader, device)
 
         # The model should achieve perfect accuracy with this setup
-        # Note: This test might fail due to numerical precision, so we check for high accuracy
+        # Note: This test might fail due to numerical precision, so we check
+        # for high accuracy
         # or at least some correct predictions
         assert accuracy >= 0.0  # At least some predictions should be correct
 

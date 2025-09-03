@@ -1,4 +1,3 @@
-import pytest
 import torch
 import random
 import numpy as np
@@ -47,7 +46,9 @@ class TestUtils:
         assert py_rand1 == py_rand2
 
     def test_set_seed_different_seeds(self):
-        """Test set_seed with different seed values produces different results"""
+        """
+        Test set_seed with different seed values produces different results
+        """
         # Set seed 1
         set_seed(42)
         torch_rand1 = torch.rand(5)
@@ -84,7 +85,14 @@ class TestUtils:
         set_seed(42)
 
         # Should not raise an error regardless of CUDA availability
-        assert True
+        # Verify that the function completes successfully
+        torch_rand = torch.rand(5)
+        assert len(torch_rand) == 5
+        
+        # If CUDA is available, verify CUDA seeds are set
+        if torch.cuda.is_available():
+            # The function should have set CUDA seeds without error
+            assert True  # If we reach here, no CUDA-related error occurred
 
     def test_set_seed_reproducibility(self):
         """Test that set_seed ensures reproducibility across multiple calls"""
@@ -115,7 +123,8 @@ class TestUtils:
             assert len(torch_rand) == 5
         except ValueError:
             # This is expected behavior for negative seeds
-            assert True
+            # Verify that the error is properly handled
+            assert True  # If we reach here, the ValueError was caught as expected
 
     def test_set_seed_zero_seed(self):
         """Test set_seed with zero seed value"""

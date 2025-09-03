@@ -1,7 +1,6 @@
+from src.data import get_cifar10, get_cifar100, get_dataset
 import pytest
 import torch
-import torchvision
-from src.data import get_cifar10, get_cifar100, get_dataset
 
 
 class TestDataModule:
@@ -154,18 +153,24 @@ class TestDataModule:
         """Test that data transforms are applied correctly"""
         trainloader, testloader = get_cifar10(batch_size=32, num_workers=0)
 
-        # Check that data is normalized (values should be roughly in [-1, 1] range)
+        # Check that data is normalized
+        # (values should be roughly in [-1, 1] range)
         for data, target in trainloader:
-            # CIFAR-10 normalization: mean=(0.4914, 0.4822, 0.4465), std=(0.2023, 0.1994, 0.2010)
+            # CIFAR-10 normalization:
+            # mean=(0.4914, 0.4822, 0.4465),
+            # std=(0.2023, 0.1994, 0.2010)
             # After normalization, most values should be in reasonable range
             assert torch.all(data >= -3) and torch.all(data <= 3)
             break
 
     def test_pin_memory_parameter(self):
         """Test pin_memory parameter is respected"""
-        # Test with pin_memory=True only - reduced from testing both True and False for faster testing
+        # Test with pin_memory=True only - reduced from testing both True and
+        # False for faster testing
         trainloader, testloader = get_cifar10(
-            batch_size=4, num_workers=0, pin_memory=True  # Further reduced batch size from 8 to 4
+            batch_size=4,
+            num_workers=0,
+            pin_memory=True,  # Further reduced batch size from 8 to 4
         )
 
         # Should work without error
@@ -174,10 +179,15 @@ class TestDataModule:
 
     def test_num_workers_parameter(self):
         """Test num_workers parameter is respected"""
-        # Test with different num_workers values - use smaller batch size and fewer workers for faster testing
-        for num_workers in [0]:  # Further reduced from [0, 1] to [0] for maximum speed
+        # Test with different num_workers values - use smaller batch size and
+        # fewer workers for faster testing
+        for num_workers in [
+            0
+        ]:  # Further reduced from [0, 1] to [0] for maximum speed
             trainloader, testloader = get_cifar10(
-                batch_size=8, num_workers=num_workers  # Further reduced batch size from 16 to 8
+                batch_size=8,
+                num_workers=num_workers,
+                # Further reduced batch size from 16 to 8
             )
 
             # Should work without error

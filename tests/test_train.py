@@ -1,9 +1,6 @@
-import pytest
 import torch
 import torch.nn as nn
-import yaml
-import tempfile
-import os
+
 from unittest.mock import patch, MagicMock
 from src.train import get_device, train
 
@@ -400,7 +397,7 @@ class TestTrain:
                 mock_file = MagicMock()
                 mock_open.return_value.__enter__.return_value = mock_file
 
-                results = train(config)
+                train(config)
 
                 # Check that file was opened for writing
                 mock_open.assert_called()
@@ -452,7 +449,7 @@ class TestTrain:
 
         with patch("torch.device", return_value=torch.device("cpu")):
             with patch("torch.nn.utils.clip_grad_norm_") as mock_clip:
-                results = train(config)
+                train(config)
 
                 # Check that gradient clipping was called
                 mock_clip.assert_called()
@@ -510,13 +507,13 @@ class TestTrain:
             with patch("src.train.tqdm") as mock_tqdm:
                 mock_pbar = MagicMock()
                 mock_tqdm.return_value = mock_pbar
-                
+
                 # Ensure the mock pbar iterates over the data
                 mock_pbar.__iter__ = lambda self: iter(
                     [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
                 )
 
-                results = train(config)
+                train(config)
 
                 # Check that tqdm was called for progress bars
                 assert mock_tqdm.called
