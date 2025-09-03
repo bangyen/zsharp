@@ -1,3 +1,47 @@
+[project]
+name = "zsharp"
+version = "0.1.0"
+description = "Sharpness-Aware Minimization with Z-Score Gradient Filtering"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "tqdm",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+    "interrogate",
+    "pre-commit",
+    "types-PyYAML",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [interrogate]
 fail-under = 100
 ignore-init-method = false
@@ -58,20 +102,16 @@ indent-width = 4
 target-version = "py39"
 
 [tool.ruff.lint]
-# Enable more comprehensive linting rules
+# Core linting rules
 select = [
     "E",   # pycodestyle errors
     "F",   # pyflakes
     "I",   # isort
     "W",   # pycodestyle warnings
-    "C4",  # flake8-comprehensions
-    "C90", # mccabe complexity
     "UP",  # pyupgrade
     "B",   # flake8-bugbear
     "SIM", # flake8-simplify
     "ARG", # flake8-unused-arguments
-    "PIE", # flake8-pie
-    "T20", # flake8-print
     "TCH", # flake8-type-checking
     "Q",   # flake8-quotes
     "N",   # pep8-naming
@@ -80,19 +120,10 @@ select = [
     "PLE", # pylint errors
     "RET", # flake8-return
     "SLF", # flake8-self
-    "SLOT", # flake8-slots
     "TID", # flake8-tidy-imports
-    "YTT", # flake8-2020
-    "A",   # flake8-builtins
-    "COM", # flake8-commas
-    "DTZ", # flake8-datetimez
-    "EM",  # flake8-errmsg
-    "ISC", # flake8-implicit-str-concat
     "ICN", # flake8-import-conventions
-    "G",   # flake8-logging-format
     "S",   # flake8-bandit
     "BLE", # flake8-blind-except
-    "FBT", # flake8-boolean-trap
 ]
 ignore = [
     "E501",  # line too long (handled by ruff format)

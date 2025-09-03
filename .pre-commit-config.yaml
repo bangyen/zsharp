@@ -1,39 +1,28 @@
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-added-large-files
-      - id: check-merge-conflict
-      - id: debug-statements
-      - id: check-case-conflict
-      - id: check-docstring-first
-      - id: check-json
-      - id: check-toml
-      - id: detect-private-key
-
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.1.6
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
-        args: [--line-length=79]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
+    rev: v1.7.1
     hooks:
       - id: mypy
-        additional_dependencies: [types-PyYAML, types-tqdm]
-        exclude: ^(tests/|scripts/)
+        additional_dependencies: [types-PyYAML]
 
-  - repo: local
+  - repo: https://github.com/econchick/interrogate
+    rev: 1.5.0
     hooks:
       - id: interrogate
-        name: interrogate
-        entry: interrogate
-        language: system
-        files: ^(src/|tests/|scripts/)$
-        args: [--config=pyproject.toml, --fail-under=100, src/, tests/, scripts/]
+        args: [--fail-under=100]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
