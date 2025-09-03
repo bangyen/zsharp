@@ -244,7 +244,7 @@ pip install -r requirements.txt
 
 # Run code formatting
 black src/ tests/
-flake8 src/ --max-line-length=79
+ruff check src/ tests/ scripts/
 
 # Run tests
 python -m pytest tests/ -v
