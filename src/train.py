@@ -207,7 +207,9 @@ def train(config):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default="configs/default.yaml")
+    parser.add_argument(
+        "--config", type=str, default="configs/zsharp_baseline.yaml"
+    )
     args = parser.parse_args()
 
     with open(args.config) as f:

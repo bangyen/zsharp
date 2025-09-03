@@ -35,16 +35,16 @@ def run_comparison_experiments(fast_mode=False):
     """Run comparison experiments as described in the ZSharp paper"""
     if fast_mode:
         experiments = [
-            ("configs/test_sgd.yaml", "SGD Baseline (Test)"),
-            ("configs/test.yaml", "ZSharp (Test)"),
+            ("configs/sgd_quick.yaml", "SGD Baseline (Quick)"),
+            ("configs/zsharp_quick.yaml", "ZSharp (Quick)"),
         ]
     else:
         experiments = [
-            ("configs/baseline_sgd.yaml", "SGD Baseline"),
-            ("configs/default.yaml", "ZSharp"),
+            ("configs/sgd_baseline.yaml", "SGD Baseline"),
+            ("configs/zsharp_baseline.yaml", "ZSharp"),
             # Temporarily disabled for testing:
-            # ("configs/cifar100.yaml", "ZSharp CIFAR-100"),
-            # ("configs/vit_experiment.yaml", "ZSharp ViT"),
+            # ("configs/cifar100_zsharp.yaml", "ZSharp CIFAR-100"),
+            # ("configs/vit_zsharp.yaml", "ZSharp ViT"),
         ]
 
     results = {}
