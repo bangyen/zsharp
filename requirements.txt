@@ -11,7 +11,7 @@ pre-commit
 pytest-cov
 pytest
 black
-flake8
+ruff
 mypy
 interrogate
 types-PyYAML

@@ -18,12 +18,16 @@ test-fast: ## Run tests without coverage
 
 lint: ## Run linting checks
 	black --check --line-length=79 src/ tests/ scripts/
-	flake8 src/ tests/ scripts/
+	ruff check src/ tests/ scripts/
 	mypy src/ tests/ scripts/
 	interrogate src/ --fail-under=100
 
-format: ## Format code with black
+type-check: ## Run type checking only
+	mypy src/ tests/ scripts/
+
+format: ## Format code with black and ruff
 	black --line-length=79 src/ tests/ scripts/
+	ruff check --fix src/ tests/ scripts/
 
 clean: ## Clean up generated files
 	rm -rf htmlcov/
