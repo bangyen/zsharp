@@ -3,11 +3,19 @@
 
 import argparse
 import logging
+import signal
 import sys
 
 import yaml
 
 from src.train import train
+
+
+def signal_handler(_sig, _frame):  # pylint: disable=unused-argument
+    """Handle Ctrl+C gracefully by logging and exiting cleanly."""
+    logger = logging.getLogger(__name__)
+    logger.warning("Interrupted by user. Cleaning up...")
+    sys.exit(0)
 
 
 def main():
@@ -22,6 +30,9 @@ def main():
     )
 
     args = parser.parse_args()
+
+    # Set up signal handler for graceful interruption
+    signal.signal(signal.SIGINT, signal_handler)
 
     # Setup logging without prefix
     level = logging.INFO if args.verbose else logging.WARNING
@@ -42,6 +53,9 @@ def main():
     # Run training
     try:
         results = train(config)
+        if results is None:
+            logger.warning("Training was interrupted by user")
+            return 0
         logger.info("Training completed!")
         logger.info(
             "Final test accuracy: {:.2f}%".format(
@@ -56,6 +70,9 @@ def main():
                 results["total_training_time"]
             )
         )
+        return 0
+    except KeyboardInterrupt:
+        logger.warning("Training interrupted by user")
         return 0
     except Exception as e:
         logger.error(f"Error during training: {e}")

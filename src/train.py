@@ -5,6 +5,7 @@ device management, data loading, model training, and result saving.
 """
 
 import json
+import logging
 import os
 import time
 from typing import Any
@@ -48,6 +49,8 @@ from src.data import get_dataset
 from src.models import get_model
 from src.optimizer import ZSharp
 from src.utils import set_seed
+
+logger = logging.getLogger(__name__)
 
 
 def get_device(config):
@@ -150,68 +153,81 @@ def train(config):
     train_losses = []
     train_accuracies = []
 
-    for epoch in range(int(config[TRAIN_CONFIG_KEY][EPOCHS_KEY])):
-        model.train()
-        epoch_loss = 0.0
-        correct, total = 0, 0
+    try:
+        for epoch in range(int(config[TRAIN_CONFIG_KEY][EPOCHS_KEY])):
+            model.train()
+            epoch_loss = 0.0
+            correct, total = 0, 0
 
-        desc = f"Epoch {epoch + 1}/{config[TRAIN_CONFIG_KEY][EPOCHS_KEY]}"
-        pbar = tqdm(trainloader, desc=desc)
+            desc = f"Epoch {epoch + 1}/{config[TRAIN_CONFIG_KEY][EPOCHS_KEY]}"
+            pbar = tqdm(trainloader, desc=desc)
 
-        for _i, (x, y) in enumerate(pbar):
-            x, y = x.to(device), y.to(device)
+            try:
+                for _i, (x, y) in enumerate(pbar):
+                    x, y = x.to(device), y.to(device)
 
-            # Convert to half precision if using MPS and mixed precision is
-            # enabled
-            if device.type == "mps" and use_mixed_precision:
-                x = x.half()
+                    # Convert to half precision if using MPS and mixed precision is
+                    # enabled
+                    if device.type == "mps" and use_mixed_precision:
+                        x = x.half()
 
-            if use_zsharp:
-                # ZSharp two-step training
-                loss = criterion(model(x), y)
-                loss.backward()
+                    if use_zsharp:
+                        # ZSharp two-step training
+                        loss = criterion(model(x), y)
+                        loss.backward()
 
-                # Add gradient clipping for stability
-                torch.nn.utils.clip_grad_norm_(
-                    model.parameters(), max_norm=MAX_GRADIENT_NORM
-                )
+                        # Add gradient clipping for stability
+                        torch.nn.utils.clip_grad_norm_(
+                            model.parameters(), max_norm=MAX_GRADIENT_NORM
+                        )
 
-                optimizer.first_step()
+                        optimizer.first_step()
 
-                criterion(model(x), y).backward()
-                optimizer.second_step()
-            else:
-                # Standard SGD training
-                optimizer.zero_grad()
-                loss = criterion(model(x), y)
-                loss.backward()
+                        criterion(model(x), y).backward()
+                        optimizer.second_step()
+                    else:
+                        # Standard SGD training
+                        optimizer.zero_grad()
+                        loss = criterion(model(x), y)
+                        loss.backward()
 
-                # Add gradient clipping for stability
-                torch.nn.utils.clip_grad_norm_(
-                    model.parameters(), max_norm=MAX_GRADIENT_NORM
-                )
+                        # Add gradient clipping for stability
+                        torch.nn.utils.clip_grad_norm_(
+                            model.parameters(), max_norm=MAX_GRADIENT_NORM
+                        )
 
-                optimizer.step()
+                        optimizer.step()
 
-            # Track metrics
-            epoch_loss += loss.item()
-            preds = model(x).argmax(dim=1)
-            correct += (preds == y).sum().item()
-            total += y.size(0)
+                    # Track metrics
+                    epoch_loss += loss.item()
+                    preds = model(x).argmax(dim=1)
+                    correct += (preds == y).sum().item()
+                    total += y.size(0)
 
-            # Update progress bar
-            pbar.set_postfix(
-                {
-                    "Loss": f"{loss.item():.4f}",
-                    "Acc": (f"{PERCENTAGE_MULTIPLIER * correct / total:.2f}%"),
-                }
-            )
+                    # Update progress bar
+                    pbar.set_postfix(
+                        {
+                            "Loss": f"{loss.item():.4f}",
+                            "Acc": (
+                                f"{PERCENTAGE_MULTIPLIER * correct / total:.2f}%"
+                            ),
+                        }
+                    )
 
-        # Record epoch metrics
-        avg_loss = epoch_loss / len(trainloader)
-        train_accuracy = PERCENTAGE_MULTIPLIER * correct / total
-        train_losses.append(avg_loss)
-        train_accuracies.append(train_accuracy)
+            except KeyboardInterrupt:
+                pbar.close()
+                logger.warning("Training interrupted by user.")
+                raise
+
+            # Record epoch metrics
+            avg_loss = epoch_loss / len(trainloader)
+            train_accuracy = PERCENTAGE_MULTIPLIER * correct / total
+            train_losses.append(avg_loss)
+            train_accuracies.append(train_accuracy)
+
+    except KeyboardInterrupt:
+        logger.warning("Training interrupted by user.")
+        return None
 
     total_time = time.time() - start_time
 
@@ -220,23 +236,32 @@ def train(config):
     test_correct, test_total = 0, 0
     test_loss = 0.0
 
-    with torch.no_grad():
-        eval_pbar = tqdm(testloader, desc="Evaluating")
-        for x, y in eval_pbar:
-            x, y = x.to(device), y.to(device)
-            if device.type == "mps" and use_mixed_precision:
-                x = x.half()
+    try:
+        with torch.no_grad():
+            eval_pbar = tqdm(testloader, desc="Evaluating")
+            try:
+                for x, y in eval_pbar:
+                    x, y = x.to(device), y.to(device)
+                    if device.type == "mps" and use_mixed_precision:
+                        x = x.half()
 
-            outputs = model(x)
-            loss = criterion(outputs, y)
-            test_loss += loss.item()
+                    outputs = model(x)
+                    loss = criterion(outputs, y)
+                    test_loss += loss.item()
 
-            preds = outputs.argmax(dim=1)
-            test_correct += (preds == y).sum().item()
-            test_total += y.size(0)
+                    preds = outputs.argmax(dim=1)
+                    test_correct += (preds == y).sum().item()
+                    test_total += y.size(0)
 
-            acc = PERCENTAGE_MULTIPLIER * test_correct / test_total
-            eval_pbar.set_postfix({"Test Acc": f"{acc:.2f}%"})
+                    acc = PERCENTAGE_MULTIPLIER * test_correct / test_total
+                    eval_pbar.set_postfix({"Test Acc": f"{acc:.2f}%"})
+            except KeyboardInterrupt:
+                eval_pbar.close()
+                logger.warning("Evaluation interrupted by user.")
+                raise
+    except KeyboardInterrupt:
+        logger.warning("Evaluation interrupted by user.")
+        return None
 
     test_accuracy = PERCENTAGE_MULTIPLIER * test_correct / test_total
     avg_test_loss = test_loss / len(testloader)

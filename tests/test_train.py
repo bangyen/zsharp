@@ -78,10 +78,7 @@ class TestTrain:
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
-    @patch("src.train.set_seed")
-    def test_train_basic_sgd(
-        self, mock_set_seed, mock_get_model, mock_get_dataset
-    ):
+    def test_train_basic_sgd(self, mock_get_model, mock_get_dataset):
         """Test basic training with SGD optimizer"""
         # Mock dataset
         mock_trainloader = MagicMock()
@@ -135,9 +132,8 @@ class TestTrain:
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
     @patch("src.train.ZSharp")
-    @patch("src.train.set_seed")
     def test_train_zsharp_optimizer(
-        self, mock_set_seed, mock_zsharp, mock_get_model, mock_get_dataset
+        self, mock_zsharp, mock_get_model, mock_get_dataset
     ):
         """Test training with ZSharp optimizer"""
         # Mock dataset
@@ -197,11 +193,8 @@ class TestTrain:
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
-    @patch("src.train.set_seed")
     @pytest.mark.mps
-    def test_train_mixed_precision(
-        self, mock_set_seed, mock_get_model, mock_get_dataset
-    ):
+    def test_train_mixed_precision(self, mock_get_model, mock_get_dataset):
         """Test training with mixed precision"""
         # Skip this test if MPS is not available
         if not torch.backends.mps.is_available():
@@ -256,10 +249,7 @@ class TestTrain:
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
-    @patch("src.train.set_seed")
-    def test_train_cifar100(
-        self, mock_set_seed, mock_get_model, mock_get_dataset
-    ):
+    def test_train_cifar100(self, mock_get_model, mock_get_dataset):
         """Test training with CIFAR-100 dataset"""
         # Mock dataset
         mock_trainloader = MagicMock()
@@ -308,10 +298,7 @@ class TestTrain:
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
-    @patch("src.train.set_seed")
-    def test_train_multiple_epochs(
-        self, mock_set_seed, mock_get_model, mock_get_dataset
-    ):
+    def test_train_multiple_epochs(self, mock_get_model, mock_get_dataset):
         """Test training with multiple epochs"""
         # Mock dataset
         mock_trainloader = MagicMock()
@@ -363,10 +350,7 @@ class TestTrain:
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
-    @patch("src.train.set_seed")
-    def test_train_results_saving(
-        self, mock_set_seed, mock_get_model, mock_get_dataset
-    ):
+    def test_train_results_saving(self, mock_get_model, mock_get_dataset):
         """Test that training results are saved to file"""
         # Mock dataset
         mock_trainloader = MagicMock()
@@ -418,10 +402,7 @@ class TestTrain:
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
-    @patch("src.train.set_seed")
-    def test_train_gradient_clipping(
-        self, mock_set_seed, mock_get_model, mock_get_dataset
-    ):
+    def test_train_gradient_clipping(self, mock_get_model, mock_get_dataset):
         """Test that gradient clipping is applied"""
         # Mock dataset
         mock_trainloader = MagicMock()
@@ -469,10 +450,7 @@ class TestTrain:
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
-    @patch("src.train.set_seed")
-    def test_train_progress_bar(
-        self, mock_set_seed, mock_get_model, mock_get_dataset
-    ):
+    def test_train_progress_bar(self, mock_get_model, mock_get_dataset):
         """Test that progress bars are used during training"""
         # Mock dataset
         mock_trainloader = MagicMock()

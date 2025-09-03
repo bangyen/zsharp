@@ -35,7 +35,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def run_experiment(config_path, results_dir=RESULTS_DIR):
+def run_experiment(config_path):
     """Run a single experiment and save results"""
     # Load config
     with open(config_path) as f:
@@ -44,6 +44,9 @@ def run_experiment(config_path, results_dir=RESULTS_DIR):
     try:
         # Run training directly using the imported function
         results = train(config)
+        if results is None:
+            logger.warning("Training was interrupted")
+            return None
         return results
 
     except KeyboardInterrupt:
@@ -197,7 +200,7 @@ def run_hyperparameter_study():
     return results
 
 
-def signal_handler(sig, frame):
+def signal_handler(_sig, _frame):
     """Handle Ctrl+C gracefully by logging and exiting cleanly."""
     logger.warning("Interrupted by user. Cleaning up...")
     sys.exit(0)
