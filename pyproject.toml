@@ -1,0 +1,12 @@
+[interrogate]
+fail-under = 40
+ignore-init-method = true
+ignore-init-module = true
+ignore-semiprivate = true
+ignore-private = true
+ignore-property-decorators = true
+ignore-module = ["tests"]
+ignore-nested-functions = true
+ignore-nested-classes = true
+ignore-regex = ["^_"]
+exclude = ["venv", ".git", "__pycache__", ".pytest_cache"]

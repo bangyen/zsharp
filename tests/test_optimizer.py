@@ -3,7 +3,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from src.constants import DEFAULT_LEARNING_RATE, DEFAULT_PERCENTILE, DEFAULT_RHO
+from src.constants import (
+    DEFAULT_LEARNING_RATE,
+    DEFAULT_PERCENTILE,
+    DEFAULT_RHO,
+)
 from src.optimizer import SAM, ZSharp
 
 

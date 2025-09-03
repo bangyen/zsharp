@@ -11,7 +11,7 @@ install: ## Install dependencies
 	pip install -r requirements.txt
 
 test: ## Run tests with coverage
-	python -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term-missing
+	python -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term-missing --cov-fail-under=85
 
 test-fast: ## Run tests without coverage
 	python -m pytest tests/ -v
@@ -19,6 +19,13 @@ test-fast: ## Run tests without coverage
 lint: ## Run linting checks
 	flake8 src/ tests/ run_experiments.py
 	black --check --line-length=79 src/ tests/ run_experiments.py
+	mypy src/ tests/ run_experiments.py
+
+type-check: ## Run type checking with mypy
+	mypy src/ tests/ run_experiments.py
+
+doc-check: ## Check documentation coverage with interrogate
+	interrogate src/ --fail-under=40
 
 format: ## Format code with black
 	black --line-length=79 src/ tests/ run_experiments.py
@@ -46,7 +53,7 @@ setup-dev: install ## Setup development environment
 	pip install pre-commit
 	pre-commit install
 
-check-all: lint test ## Run all checks (lint + test)
+check-all: lint test type-check doc-check ## Run all checks (lint + test + type-check + doc-check)
 
 # Development shortcuts
 dev: setup-dev ## Setup development environment

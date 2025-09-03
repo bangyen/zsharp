@@ -12,3 +12,5 @@ pytest-cov
 pytest
 black
 flake8
+mypy
+interrogate
