@@ -3,6 +3,7 @@
 
 import argparse
 import logging
+import sys
 
 import yaml
 
@@ -32,12 +33,10 @@ def main():
         with open(args.config) as f:
             config = yaml.safe_load(f)
     except FileNotFoundError:
-        logger.error(
-            "Error: Configuration file '{}' not found".format(args.config)
-        )
+        logger.error(f"Error: Configuration file '{args.config}' not found")
         return 1
     except yaml.YAMLError as e:
-        logger.error("Error: Invalid YAML in configuration file: {}".format(e))
+        logger.error(f"Error: Invalid YAML in configuration file: {e}")
         return 1
 
     # Run training
@@ -59,9 +58,9 @@ def main():
         )
         return 0
     except Exception as e:
-        logger.error("Error during training: {}".format(e))
+        logger.error(f"Error during training: {e}")
         return 1
 
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

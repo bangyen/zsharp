@@ -10,8 +10,7 @@ import time
 from typing import Any
 
 import torch
-import torch.nn as nn
-import torch.optim as optim
+from torch import nn, optim
 from tqdm import tqdm
 
 from src.constants import (
@@ -156,10 +155,10 @@ def train(config):
         epoch_loss = 0.0
         correct, total = 0, 0
 
-        desc = f"Epoch {epoch+1}/{config[TRAIN_CONFIG_KEY][EPOCHS_KEY]}"
+        desc = f"Epoch {epoch + 1}/{config[TRAIN_CONFIG_KEY][EPOCHS_KEY]}"
         pbar = tqdm(trainloader, desc=desc)
 
-        for i, (x, y) in enumerate(pbar):
+        for _i, (x, y) in enumerate(pbar):
             x, y = x.to(device), y.to(device)
 
             # Convert to half precision if using MPS and mixed precision is

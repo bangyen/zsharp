@@ -4,7 +4,7 @@ This module provides implementations of SAM (Sharpness-Aware Minimization)
 and ZSharp optimizers for deep learning training with gradient filtering.
 """
 
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable
 
 import torch
 
@@ -35,10 +35,10 @@ class SAM(torch.optim.Optimizer):
 
     def __init__(
         self,
-        params: List[torch.nn.Parameter],
+        params: list[torch.nn.Parameter],
         base_optimizer: Callable,
         rho: float = DEFAULT_RHO,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """Initialize SAM optimizer.
 
@@ -49,7 +49,7 @@ class SAM(torch.optim.Optimizer):
             **kwargs: Additional arguments passed to base_optimizer
         """
         defaults = dict(rho=rho, **kwargs)
-        super(SAM, self).__init__(params, defaults)
+        super().__init__(params, defaults)
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.rho = rho
 
@@ -127,11 +127,11 @@ class ZSharp(SAM):
 
     def __init__(
         self,
-        params: List[torch.nn.Parameter],
+        params: list[torch.nn.Parameter],
         base_optimizer: Callable,
         rho: float = 0.05,
         percentile: int = DEFAULT_PERCENTILE,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """Initialize ZSharp optimizer.
 
@@ -157,9 +157,9 @@ class ZSharp(SAM):
         """
         # Collect gradients by layer/parameter group for layer-wise Z-score
         # computation
-        info_type = Tuple[torch.nn.Parameter, torch.Tensor, int, int]
-        layer_grad_info: List[info_type] = []
-        layer_grads: List[torch.Tensor] = []
+        info_type = tuple[torch.nn.Parameter, torch.Tensor, int, int]
+        layer_grad_info: list[info_type] = []
+        layer_grads: list[torch.Tensor] = []
         # Store (param, grad, start_idx, end_idx) for each layer
 
         start_idx = 0
@@ -182,7 +182,7 @@ class ZSharp(SAM):
             return
 
         # Compute Z-scores layer-wise as described in the paper
-        zscores_list: List[torch.Tensor] = []
+        zscores_list: list[torch.Tensor] = []
         for grad_flat in layer_grads:
             # Layer-wise Z-score normalization with numerical stability
             layer_mean, layer_std = (

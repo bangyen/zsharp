@@ -24,11 +24,11 @@ class TestDataModule:
         )
 
         # Check first batch size
-        for batch_idx, (data, target) in enumerate(trainloader):
+        for _batch_idx, (data, _target) in enumerate(trainloader):
             assert data.size(0) <= batch_size
             break
 
-        for batch_idx, (data, target) in enumerate(testloader):
+        for _batch_idx, (data, _target) in enumerate(testloader):
             assert data.size(0) <= batch_size
             break
 
@@ -53,12 +53,12 @@ class TestDataModule:
         trainloader, testloader = get_cifar10(batch_size=32, num_workers=0)
 
         # Check training targets
-        for data, target in trainloader:
+        for _data, target in trainloader:
             assert torch.all(target >= 0) and torch.all(target < 10)
             break
 
         # Check test targets
-        for data, target in testloader:
+        for _data, target in testloader:
             assert torch.all(target >= 0) and torch.all(target < 10)
             break
 
@@ -77,11 +77,11 @@ class TestDataModule:
         )
 
         # Check first batch size
-        for batch_idx, (data, target) in enumerate(trainloader):
+        for _batch_idx, (data, _target) in enumerate(trainloader):
             assert data.size(0) <= batch_size
             break
 
-        for batch_idx, (data, target) in enumerate(testloader):
+        for _batch_idx, (data, _target) in enumerate(testloader):
             assert data.size(0) <= batch_size
             break
 
@@ -110,12 +110,12 @@ class TestDataModule:
         trainloader, testloader = get_cifar100(batch_size=32, num_workers=0)
 
         # Check training targets
-        for data, target in trainloader:
+        for _data, target in trainloader:
             assert torch.all(target >= 0) and torch.all(target < 100)
             break
 
         # Check test targets
-        for data, target in testloader:
+        for _data, target in testloader:
             assert torch.all(target >= 0) and torch.all(target < 100)
             break
 
@@ -129,7 +129,7 @@ class TestDataModule:
         assert isinstance(testloader, torch.utils.data.DataLoader)
 
         # Check data shape
-        for data, target in trainloader:
+        for data, _target in trainloader:
             assert data.shape[1:] == (3, 32, 32)
             break
 
@@ -143,7 +143,7 @@ class TestDataModule:
         assert isinstance(testloader, torch.utils.data.DataLoader)
 
         # Check data shape
-        for data, target in trainloader:
+        for data, _target in trainloader:
             assert data.shape[1:] == (3, 32, 32)
             break
 
@@ -158,7 +158,7 @@ class TestDataModule:
 
         # Check that data is normalized
         # (values should be roughly in [-1, 1] range)
-        for data, target in trainloader:
+        for data, _target in trainloader:
             # CIFAR-10 normalization:
             # mean=(0.4914, 0.4822, 0.4465),
             # std=(0.2023, 0.1994, 0.2010)

@@ -1,7 +1,7 @@
 """Test suite for model evaluation functions."""
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 from src.eval import evaluate_model
 

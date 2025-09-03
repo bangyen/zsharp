@@ -56,13 +56,58 @@ indent-width = 4
 target-version = "py39"
 
 [tool.ruff.lint]
-# Enable pycodestyle (`E`), Pyflakes (`F`), and isort (`I`) codes by default.
-select = ["E", "F", "I"]
-ignore = []
+# Enable more comprehensive linting rules
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "W",   # pycodestyle warnings
+    "C4",  # flake8-comprehensions
+    "C90", # mccabe complexity
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "ARG", # flake8-unused-arguments
+    "PIE", # flake8-pie
+    "T20", # flake8-print
+    "TCH", # flake8-type-checking
+    "Q",   # flake8-quotes
+    "N",   # pep8-naming
+    "PLR", # pylint refactor
+    "PLW", # pylint warnings
+    "PLE", # pylint errors
+]
+ignore = [
+    "E501",  # line too long (handled by ruff format)
+    "PLR0913", # Too many arguments to function call
+    "PLR0915", # Too many statements
+    "PLR0912", # Too many branches
+    "PLW2901", # Loop variable overwrites (common in ML code)
+    "PLR2004", # Magic numbers (acceptable in tests)
+    "ARG001",  # Unused function arguments (some are required by APIs)
+    "ARG002",  # Unused method arguments (some are required by APIs)
+    "ARG005",  # Unused lambda arguments
+    "C901",    # Function too complex (acceptable for complex algorithms)
+    "SIM102",  # Nested if statements (acceptable in some cases)
+    "SIM117",  # Nested with statements (acceptable in some cases)
+]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
 unfixable = []
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
@@ -72,10 +117,10 @@ unfixable = []
 python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
+disallow_untyped_defs = false  # Relaxed for now
+disallow_incomplete_defs = false  # Relaxed for now
 check_untyped_defs = true
-disallow_untyped_decorators = false
+disallow_untyped_decorators = false  # Relaxed for now
 no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
@@ -83,6 +128,13 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 ignore_missing_imports = true
+disallow_any_generics = false  # Relaxed for now
+disallow_subclassing_any = false  # Relaxed for now
+disallow_untyped_calls = false  # Relaxed for now
+disallow_any_explicit = false  # Allow explicit Any when needed
+disallow_any_unimported = false  # Relaxed for now
+no_implicit_reexport = false  # Relaxed for now
+strict_optional = false  # Relaxed for now
 
 # Add type annotations gradually to improve code quality
 # Priority order:

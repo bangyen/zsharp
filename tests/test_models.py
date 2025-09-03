@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
 from src.models import get_model
 

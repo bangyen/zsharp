@@ -17,17 +17,13 @@ test-fast: ## Run tests without coverage
 	python -m pytest tests/ -v
 
 lint: ## Run linting checks
-	black --check --line-length=79 src/ tests/ scripts/
 	ruff check src/ tests/ scripts/
+	ruff format --check src/ tests/ scripts/
 	mypy src/ tests/ scripts/
 	interrogate src/ --fail-under=100
 
-type-check: ## Run type checking only
-	mypy src/ tests/ scripts/
-
-format: ## Format code with black and ruff
-	black --line-length=79 src/ tests/ scripts/
-	ruff check --fix src/ tests/ scripts/
+format: ## Format code with ruff
+	ruff format src/ tests/ scripts/
 
 clean: ## Clean up generated files
 	rm -rf htmlcov/
@@ -39,33 +35,9 @@ clean: ## Clean up generated files
 run-experiments: ## Run comprehensive experiments
 	python -m scripts.experiment
 
-run-experiments-fast: ## Run experiments in fast mode
-	python -m scripts.experiment --fast
-
-run-hp-study: ## Run hyperparameter study
-	python -m scripts.experiment --hp-study
-
 run-train: ## Run single training experiment
 	python -m scripts.train --config configs/zsharp_baseline.yaml
-
-run-train-sgd: ## Run SGD baseline training
-	python -m scripts.train --config configs/sgd_baseline.yaml
-
-run-train-quick: ## Run quick training experiment
-	python -m scripts.train --config configs/zsharp_quick.yaml
 
 setup-dev: install ## Setup development environment
 	pip install pre-commit
 	pre-commit install
-
-check-all: lint test ## Run all checks
-
-# Development shortcuts
-dev: setup-dev ## Setup development environment
-	@echo "Development environment ready!"
-
-quick-test: test-fast ## Quick test run
-	@echo "Tests completed!"
-
-demo: run-experiments-fast ## Run quick demo
-	@echo "Demo completed!"

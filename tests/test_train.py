@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
 from src.train import get_device, train
 
@@ -537,4 +537,3 @@ class TestTrain:
         # Skip this test as the main block is a simple CLI that's hard to test
         # The main block just parses arguments and calls train() with a config
         # This functionality is already tested by the train() function itself
-        pass

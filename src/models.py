@@ -4,7 +4,7 @@ This module provides functions to load and configure different
 PyTorch models including ResNet, VGG, and Vision Transformer variants.
 """
 
-import torchvision.models as models
+from torchvision import models
 from torchvision.models import vit_b_16
 
 from src.constants import CIFAR10_NUM_CLASSES, RESNET18_NAME

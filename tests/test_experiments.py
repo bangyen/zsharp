@@ -66,7 +66,7 @@ class TestExperiments:
                 assert os.path.exists(results_path)
 
                 # Check that results were written to file
-                with open(results_path, "r") as f:
+                with open(results_path) as f:
                     saved_results = json.load(f)
                     assert saved_results["status"] == "completed"
 
@@ -252,7 +252,7 @@ class TestExperiments:
                 run_experiment(config_path, results_path)
 
                 # Check that results file contains valid JSON
-                with open(results_path, "r") as f:
+                with open(results_path) as f:
                     saved_results = json.load(f)
 
                     # Check structure

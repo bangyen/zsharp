@@ -2,8 +2,7 @@
 
 import pytest
 import torch
-import torch.nn as nn
-import torch.optim as optim
+from torch import nn, optim
 
 from src.constants import (
     DEFAULT_LEARNING_RATE,
@@ -563,7 +562,7 @@ class TestOptimizerIntegration:
         model2 = SimpleModel()
 
         # Use same initial weights
-        for (name1, param1), (name2, param2) in zip(
+        for (_name1, param1), (_name2, param2) in zip(
             model1.named_parameters(), model2.named_parameters()
         ):
             param2.data = param1.data.clone()
@@ -601,7 +600,7 @@ class TestOptimizerIntegration:
 
         # Check that the models have diverged (different behavior)
         diverged = False
-        for (name1, param1), (name2, param2) in zip(
+        for (_name1, param1), (_name2, param2) in zip(
             model1.named_parameters(), model2.named_parameters()
         ):
             if not torch.allclose(param1.data, param2.data):

@@ -243,7 +243,7 @@ zsharp/
 pip install -r requirements.txt
 
 # Run code formatting
-black src/ tests/
+ruff format src/ tests/ scripts/
 ruff check src/ tests/ scripts/
 
 # Run tests

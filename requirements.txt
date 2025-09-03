@@ -1,17 +1,16 @@
-torch>=2.0.0
-torchvision>=0.15.0
-numpy
-scipy
-pyyaml
-tqdm
+interrogate
 matplotlib
+mypy
+numpy
 
 # to run checks
 pre-commit
-pytest-cov
 pytest
-black
+pytest-cov
+pyyaml
 ruff
-mypy
-interrogate
+scipy
+torch>=2.0.0
+torchvision>=0.15.0
+tqdm
 types-PyYAML
