@@ -104,7 +104,7 @@ class SAM(torch.optim.Optimizer):
                     p.sub_(p.state["e"])
         self.base_optimizer.step()
 
-    def step(self, closure: Optional[Callable[[], float]] = None) -> float:  # type: ignore[override]
+    def step(self, closure: Optional[Callable[[], float]] = None) -> float:
         """
         Raises an error since SAM requires two-step calls.
 

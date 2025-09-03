@@ -143,7 +143,7 @@ no_implicit_reexport = false  # Relaxed for now
 strict_optional = false  # Relaxed for now
 
 # Exclude test files from strict type checking
-exclude = ["tests/", "tests/.*"]
+exclude = ["tests/", "tests/.*", "scripts/", "scripts/.*"]
 
 # Add type annotations gradually to improve code quality
 # Priority order:

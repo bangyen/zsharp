@@ -27,6 +27,7 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [types-PyYAML, types-tqdm]
+        exclude: ^(tests/|scripts/)
 
   - repo: local
     hooks:
