@@ -1,3 +1,9 @@
+"""Data loading utilities for CIFAR-10 and CIFAR-100 datasets.
+
+This module provides functions to load and preprocess CIFAR-10 and CIFAR-100
+datasets with appropriate data augmentation and normalization.
+"""
+
 import torch
 import torchvision
 import torchvision.transforms as T
@@ -21,6 +27,16 @@ def get_cifar10(
     num_workers=DEFAULT_NUM_WORKERS,
     pin_memory=DEFAULT_PIN_MEMORY,
 ):
+    """Get CIFAR-10 dataset with train and test data loaders.
+
+    Args:
+        batch_size: Batch size for data loaders
+        num_workers: Number of worker processes for data loading
+        pin_memory: Whether to pin memory for faster GPU transfer
+
+    Returns:
+        tuple: (train_loader, test_loader) for CIFAR-10 dataset
+    """
     transform_train = T.Compose(
         [
             T.RandomCrop(CIFAR_IMAGE_SIZE, padding=CIFAR_CROP_PADDING),
@@ -66,6 +82,16 @@ def get_cifar100(
     num_workers=DEFAULT_NUM_WORKERS,
     pin_memory=DEFAULT_PIN_MEMORY,
 ):
+    """Get CIFAR-100 dataset with train and test data loaders.
+
+    Args:
+        batch_size: Batch size for data loaders
+        num_workers: Number of worker processes for data loading
+        pin_memory: Whether to pin memory for faster GPU transfer
+
+    Returns:
+        tuple: (train_loader, test_loader) for CIFAR-100 dataset
+    """
     transform_train = T.Compose(
         [
             T.RandomCrop(CIFAR_IMAGE_SIZE, padding=CIFAR_CROP_PADDING),
@@ -116,10 +142,23 @@ def get_dataset(
     num_workers=DEFAULT_NUM_WORKERS,
     pin_memory=DEFAULT_PIN_MEMORY,
 ):
-    """Get dataset by name"""
+    """Get dataset by name with train and test data loaders.
+
+    Args:
+        dataset_name: Name of the dataset ('cifar10' or 'cifar100')
+        batch_size: Batch size for data loaders
+        num_workers: Number of worker processes for data loading
+        pin_memory: Whether to pin memory for faster GPU transfer
+
+    Returns:
+        tuple: (train_loader, test_loader) for the specified dataset
+
+    Raises:
+        ValueError: If dataset name is not supported
+    """
     if dataset_name == "cifar10":
         return get_cifar10(batch_size, num_workers, pin_memory)
     elif dataset_name == "cifar100":
         return get_cifar100(batch_size, num_workers, pin_memory)
     else:
-        raise ValueError(f"Unknown dataset {dataset_name}")
+        raise ValueError(f"Unknown dataset: {dataset_name}")

@@ -127,7 +127,12 @@ python -m pytest tests/ -v
 
 ```python
 from src.train import train
+import logging
 import yaml
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load configuration
 with open('configs/default.yaml') as f:
@@ -135,7 +140,7 @@ with open('configs/default.yaml') as f:
 
 # Train model
 results = train(config)
-print(f"Final accuracy: {results['final_test_accuracy']:.2f}%")
+logger.info(f"Final accuracy: {results['final_test_accuracy']:.2f}%")
 ```
 
 ### Custom Configuration

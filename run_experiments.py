@@ -1,6 +1,7 @@
 # Comprehensive experiment runner for ZSharp paper reproduction
 import argparse
 import json
+import logging
 import os
 import signal
 import sys
@@ -21,6 +22,17 @@ from src.constants import (
 # Import the training function directly
 from src.train import train
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler("experiments.log"),
+    ],
+)
+logger = logging.getLogger(__name__)
+
 
 def run_experiment(config_path, results_dir=RESULTS_DIR):
     """Run a single experiment and save results"""
@@ -34,10 +46,10 @@ def run_experiment(config_path, results_dir=RESULTS_DIR):
         return results
 
     except KeyboardInterrupt:
-        print("\nExperiment interrupted by user")
+        logger.warning("Experiment interrupted by user")
         return None
     except Exception as e:
-        print(f"Experiment failed with error: {e}")
+        logger.error(f"Experiment failed with error: {e}")
         return None
 
 
@@ -59,14 +71,14 @@ def run_comparison_experiments(fast_mode=False):
 
     results = {}
 
-    print(f"{'='*50}")
-    print(f"Running {len(experiments)} experiments")
-    print(f"{'='*50}")
+    logger.info("=" * 50)
+    logger.info(f"Running {len(experiments)} experiments")
+    logger.info("=" * 50)
 
     # Add progress bar for comparison experiments
     for i, (config_path, experiment_name) in enumerate(experiments, 1):
-        print(f"\n{i}. {experiment_name}")
-        print("-" * 30)
+        logger.info(f"\n{i}. {experiment_name}")
+        logger.info("-" * 30)
 
         start_time = time.time()
         output = run_experiment(config_path)
@@ -87,14 +99,16 @@ def run_comparison_experiments(fast_mode=False):
             }
 
     # Print summary
-    print(f"\n{'='*50}")
-    print("EXPERIMENT SUMMARY")
-    print(f"{'='*50}")
+    logger.info("=" * 50)
+    logger.info("EXPERIMENT SUMMARY")
+    logger.info("=" * 50)
     for exp_name, result in results.items():
         if result["status"] == "success":
-            print(f"{exp_name}: {result['final_test_accuracy']:.2f}% accuracy")
+            logger.info(
+                f"{exp_name}: {result['final_test_accuracy']:.2f}% accuracy"
+            )
         else:
-            print(f"{exp_name}: Failed")
+            logger.warning(f"{exp_name}: Failed")
 
     # Save comparison results
     comparison_file = f"{RESULTS_DIR}/comparison_results.json"
@@ -102,7 +116,7 @@ def run_comparison_experiments(fast_mode=False):
     with open(comparison_file, "w") as f:
         json.dump(results, f, indent=2)
 
-    print(f"\nDetailed results saved to {comparison_file}")
+    logger.info(f"Detailed results saved to {comparison_file}")
     return results
 
 
@@ -114,9 +128,9 @@ def run_hyperparameter_study():
     results = {}
 
     for percentile in percentiles:
-        print(f"{'='*50}")
-        print(f"Testing percentile: {percentile}")
-        print(f"{'='*50}")
+        logger.info("=" * 50)
+        logger.info(f"Testing percentile: {percentile}")
+        logger.info("=" * 50)
 
         # Create temporary config
         config = {
@@ -161,30 +175,30 @@ def run_hyperparameter_study():
 
         # Clean up
         os.remove(temp_config_path)
-        print("")
+        logger.info("")
 
     # Print summary
-    print(f"\n{'='*50}")
-    print("HYPERPARAMETER STUDY SUMMARY")
-    print(f"{'='*50}")
+    logger.info("=" * 50)
+    logger.info("HYPERPARAMETER STUDY SUMMARY")
+    logger.info("=" * 50)
     for percentile in percentiles:
         key = f"percentile_{percentile}"
         if key in results and results[key]["status"] == "success":
             acc = results[key]["final_test_accuracy"]
-            print(f"Percentile {percentile}%: {acc:.2f}% accuracy")
+            logger.info(f"Percentile {percentile}%: {acc:.2f}% accuracy")
 
     # Save hyperparameter study results
     hp_file = f"{RESULTS_DIR}/hyperparameter_study.json"
     with open(hp_file, "w") as f:
         json.dump(results, f, indent=2)
 
-    print(f"\nDetailed results saved to {hp_file}")
+    logger.info(f"Detailed results saved to {hp_file}")
     return results
 
 
 def signal_handler(sig, frame):
     """Handle Ctrl+C gracefully"""
-    print("\n\nInterrupted by user. Cleaning up...")
+    logger.warning("Interrupted by user. Cleaning up...")
     sys.exit(0)
 
 
@@ -219,5 +233,5 @@ if __name__ == "__main__":
             )
 
     except KeyboardInterrupt:
-        print("\n\nExperiments interrupted by user.")
+        logger.warning("Experiments interrupted by user.")
         sys.exit(0)

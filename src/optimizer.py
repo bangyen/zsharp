@@ -1,3 +1,9 @@
+"""Optimizer implementations for SAM and ZSharp.
+
+This module provides implementations of SAM (Sharpness-Aware Minimization)
+and ZSharp optimizers for deep learning training with gradient filtering.
+"""
+
 from typing import Any, Callable, List, Optional, Tuple
 
 import torch
@@ -34,6 +40,14 @@ class SAM(torch.optim.Optimizer):
         rho: float = DEFAULT_RHO,
         **kwargs: Any
     ) -> None:
+        """Initialize SAM optimizer.
+
+        Args:
+            params: Parameters to optimize
+            base_optimizer: Base optimizer class (e.g., torch.optim.SGD)
+            rho: Perturbation radius for SAM
+            **kwargs: Additional arguments passed to base_optimizer
+        """
         defaults = dict(rho=rho, **kwargs)
         super(SAM, self).__init__(params, defaults)
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
@@ -119,6 +133,15 @@ class ZSharp(SAM):
         percentile: int = DEFAULT_PERCENTILE,
         **kwargs: Any
     ) -> None:
+        """Initialize ZSharp optimizer.
+
+        Args:
+            params: Parameters to optimize
+            base_optimizer: Base optimizer class (e.g., torch.optim.SGD)
+            rho: Perturbation radius for SAM
+            percentile: Percentile threshold for gradient filtering (0-100)
+            **kwargs: Additional arguments passed to base_optimizer
+        """
         super().__init__(params, base_optimizer, rho=rho, **kwargs)
         self.percentile = percentile
 

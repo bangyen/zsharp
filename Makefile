@@ -11,7 +11,7 @@ install: ## Install dependencies
 	pip install -r requirements.txt
 
 test: ## Run tests with coverage
-	python -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term-missing --cov-fail-under=85
+	python -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term-missing --cov-fail-under=95
 
 test-fast: ## Run tests without coverage
 	python -m pytest tests/ -v
@@ -25,7 +25,7 @@ type-check: ## Run type checking with mypy
 	mypy src/ tests/ run_experiments.py
 
 doc-check: ## Check documentation coverage with interrogate
-	interrogate src/ --fail-under=40
+	interrogate src/ --fail-under=100
 
 format: ## Format code with black
 	black --line-length=79 src/ tests/ run_experiments.py

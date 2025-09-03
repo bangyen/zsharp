@@ -37,7 +37,7 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        python -m pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=85
+        python -m pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=95
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -73,7 +73,7 @@ jobs:
       run: mypy src/ tests/ run_experiments.py
 
     - name: Run interrogate doc coverage
-      run: interrogate src/ --fail-under=40
+      run: interrogate src/ --fail-under=100
 
   format:
     runs-on: ubuntu-latest

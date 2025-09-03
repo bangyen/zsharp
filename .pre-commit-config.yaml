@@ -40,4 +40,4 @@ repos:
         entry: interrogate
         language: system
         types: [python]
-        args: [--fail-under=40]
+        args: [--fail-under=100]

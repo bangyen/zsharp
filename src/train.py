@@ -1,3 +1,9 @@
+"""Training utilities for deep learning models.
+
+This module provides comprehensive training functionality including
+device management, data loading, model training, and result saving.
+"""
+
 import argparse
 import json
 import os
@@ -47,7 +53,14 @@ from src.utils import set_seed
 
 
 def get_device(config):
-    """Get the best available device for training"""
+    """Get the best available device for training.
+
+    Args:
+        config: Configuration dictionary containing device settings
+
+    Returns:
+        torch.device: Best available device (mps/cuda/cpu)
+    """
     device_config = config[TRAIN_CONFIG_KEY][DEVICE_KEY]
 
     if device_config == MPS_DEVICE and torch.backends.mps.is_available():
@@ -59,6 +72,14 @@ def get_device(config):
 
 
 def train(config):
+    """Train a model using the provided configuration.
+
+    Args:
+        config: Configuration dictionary containing all training parameters
+
+    Returns:
+        dict: Training results including losses, accuracies, and timing
+    """
     # Set seed for reproducibility
     set_seed(DEFAULT_SEED)
 

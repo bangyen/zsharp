@@ -1,3 +1,9 @@
+"""Utility functions for reproducibility and common operations.
+
+This module provides utility functions for setting random seeds
+and other common operations used throughout the project.
+"""
+
 # Utility functions
 import random
 
@@ -8,7 +14,11 @@ from src.constants import DEFAULT_SEED
 
 
 def set_seed(seed=DEFAULT_SEED):
-    """Set random seed for reproducibility"""
+    """Set random seed for reproducibility.
+
+    Args:
+        seed: Random seed value for all random number generators
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
