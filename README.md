@@ -35,7 +35,7 @@ A PyTorch implementation of **ZSharp: Sharpness-Aware Minimization with Z-Score 
 
 ```bash
 # Clone and setup
-git clone https://github.com/yourusername/zsharp.git
+git clone https://github.com/bangyen/zsharp.git
 cd zsharp
 
 # Create and activate virtual environment
