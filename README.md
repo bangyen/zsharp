@@ -26,6 +26,7 @@ A PyTorch implementation of **ZSharp: Sharpness-Aware Minimization with Z-Score 
 - [Usage](#usage)
 - [Testing](#testing)
 - [Project Structure](#project-structure)
+- [Development Commands](#development-commands)
 - [Contributing](#contributing)
 - [Citation](#citation)
 - [License](#license)
@@ -34,18 +35,7 @@ A PyTorch implementation of **ZSharp: Sharpness-Aware Minimization with Z-Score 
 ## Quickstart
 
 ```bash
-# Clone and setup
-git clone https://github.com/bangyen/zsharp.git
-cd zsharp
-
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Train with ZSharp (default)
+# Train with ZSharp
 python -m scripts.train --config configs/zsharp_baseline.yaml
 
 # Train with baseline SGD for comparison
@@ -113,16 +103,16 @@ optimizer.second_step()  # Update parameters
 ## Installation
 
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/zsharp.git
+# Clone and setup
+git clone https://github.com/bangyen/zsharp.git
 cd zsharp
 
 # Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install with development dependencies
+pip install -e ".[dev]"
 
 # Verify installation
 python -m pytest tests/ -v
@@ -134,21 +124,14 @@ python -m pytest tests/ -v
 
 ```python
 from src.train import train
-import logging
 import yaml
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Load configuration
+# Load configuration and train
 with open('configs/zsharp_baseline.yaml') as f:
     config = yaml.safe_load(f)
 
-# Train model
-from src.train import train
 results = train(config)
-logger.info(f"Final accuracy: {results['final_test_accuracy']:.2f}%")
+print(f"Final accuracy: {results['final_test_accuracy']:.2f}%")
 ```
 
 ### Custom Configuration
@@ -202,30 +185,33 @@ python -m pytest tests/test_optimizer.py::TestZSharp::test_zsharp_gradient_filte
 ```
 zsharp/
 ├── src/                    # Core implementation
-│   ├── optimizer.py       # ZSharp and SAM optimizers
-│   ├── models.py          # Model definitions
-│   ├── data.py            # Data loading utilities
-│   ├── train.py           # Training loop
-│   ├── eval.py            # Evaluation utilities
-│   ├── experiments.py     # Experiment management
-│   ├── constants.py       # Constants and configuration
-│   └── utils.py           # Utility functions
-├── tests/                 # Comprehensive test suite
-│   ├── test_optimizer.py  # Optimizer tests
-│   ├── test_models.py     # Model tests
-│   └── ...               # 92 total tests
+├── tests/                 # Test suite (92 tests)
 ├── configs/               # Configuration files
-│   ├── zsharp_baseline.yaml
-│   ├── sgd_baseline.yaml
-│   ├── zsharp_quick.yaml
-│   └── ...
 ├── results/               # Experimental results
 ├── data/                  # Dataset storage
 ├── docs/                  # Documentation
 ├── scripts/               # Training and experiment scripts
-│   ├── train.py          # Individual training script
-│   └── experiment.py     # Comprehensive experiment runner
-└── requirements.txt       # Dependencies
+├── pyproject.toml         # Package configuration
+└── Makefile              # Development commands
+```
+
+## Development Commands
+
+```bash
+# Setup development environment
+make setup-dev
+
+# Run all quality checks
+make lint
+
+# Format code
+make format
+
+# Run tests
+make test
+
+# Run experiments
+make run-experiments
 ```
 
 ## Contributing
@@ -235,23 +221,6 @@ zsharp/
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-### Development Setup
-
-```bash
-# Install development dependencies
-pip install -r requirements.txt
-
-# Run code formatting
-ruff format src/ tests/ scripts/
-ruff check src/ tests/ scripts/
-
-# Run tests
-python -m pytest tests/ -v
-
-# Run all checks
-make check-all
-```
 
 ## Citation
 
@@ -269,12 +238,6 @@ If you use this implementation in your research, please cite:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Original ZSharp paper authors for the innovative algorithm
-- PyTorch team for the excellent framework
-- Apple for MPS support enabling fast training on Apple Silicon
 
 ---
 
