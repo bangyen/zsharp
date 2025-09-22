@@ -2,35 +2,9 @@
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
-[![Tests](https://img.shields.io/badge/Tests-100%25%20Coverage-green.svg)](https://pytest.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Paper](https://img.shields.io/badge/Paper-arXiv%3A2505.02369-brightgreen.svg)](https://arxiv.org/html/2505.02369v3)
 
 A PyTorch implementation of **ZSharp: Sharpness-Aware Minimization with Z-Score Gradient Filtering**, optimized for Apple Silicon and featuring comprehensive experimental validation.
-
-## Key Features
-
-- **Paper Reproduction**: Implements the ZSharp algorithm with 5.22% improvement over SGD
-- **Apple Silicon Optimized**: 4.39x speedup using MPS (Metal Performance Shaders)
-- **Comprehensive Testing**: 100% test coverage with 92 unit tests
-- **Experimental Validation**: Multiple datasets (CIFAR-10/100) and architectures (ResNet, VGG, ViT)
-- **Production Ready**: Type hints, documentation, and reproducible results
-- **Virtual Environment Ready**: Includes pre-configured virtual environment for easy setup
-
-## Table of Contents
-
-- [Quickstart](#quickstart)
-- [Architecture](#architecture)
-- [Experimental Results](#experimental-results)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Testing](#testing)
-- [Project Structure](#project-structure)
-- [Development Commands](#development-commands)
-- [Contributing](#contributing)
-- [Citation](#citation)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
 
 ## Quickstart
 
@@ -44,6 +18,50 @@ python -m scripts.train --config configs/sgd_baseline.yaml
 # Run comprehensive experiments
 python -m scripts.experiment
 ```
+
+## Performance Results
+
+### Training Curves
+
+![Training Curves](docs/training_curves.png)
+
+### Performance Comparison Table
+
+| Method | Test Accuracy | Test Loss | Training Time | Improvement |
+|--------|---------------|-----------|---------------|-------------|
+| **SGD** | 74.74% | 0.725 | 981s | Baseline |
+| **ZSharp** | **79.96%** | **0.583** | 1733s | **+5.22%** |
+
+**Key Findings:**
+- **ZSharp outperforms SGD by 5.22%** on CIFAR-10 with 20 epochs
+- **Better generalization** with lower test loss (0.583 vs 0.725)
+- **Stable training** with consistent convergence over 20 epochs
+- **Consistent performance** across full training runs
+- **Robust optimization** with 70th percentile gradient filtering
+
+## Key Features
+
+- **Paper Reproduction**: Implements the ZSharp algorithm with 5.22% improvement over SGD
+- **Apple Silicon Optimized**: 4.39x speedup using MPS (Metal Performance Shaders)
+- **Comprehensive Testing**: 100% test coverage with 92 unit tests
+- **Experimental Validation**: Multiple datasets (CIFAR-10/100) and architectures (ResNet, VGG, ViT)
+- **Production Ready**: Type hints, documentation, and reproducible results
+- **Virtual Environment Ready**: Includes pre-configured virtual environment for easy setup
+
+## Table of Contents
+
+- [Quickstart](#quickstart)
+- [Performance Results](#performance-results)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Testing](#testing)
+- [Project Structure](#project-structure)
+- [Development Commands](#development-commands)
+- [Contributing](#contributing)
+- [Citation](#citation)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
 
 ## Architecture
 
@@ -75,25 +93,6 @@ optimizer.first_step()   # Apply gradient filtering + SAM perturbation
 criterion(model(x), y).backward()
 optimizer.second_step()  # Update parameters
 ```
-
-## Experimental Results
-
-### Performance Comparison (CIFAR-10, ResNet18, 20 epochs)
-
-**Note**: These results are from a full experiment with 20 epochs of training.
-
-| Method | Test Accuracy | Test Loss | Training Time | Improvement |
-|--------|---------------|-----------|---------------|-------------|
-| **SGD** | 74.74% | 0.725 | 981s | Baseline |
-| **ZSharp** | **79.96%** | **0.583** | 1733s | **+5.22%** |
-
-### Key Findings
-
-- ✅ **ZSharp outperforms SGD by 5.22%** on CIFAR-10 with 20 epochs
-- ✅ **Better generalization** with lower test loss (0.583 vs 0.725)
-- ✅ **Stable training** with consistent convergence over 20 epochs
-- ✅ **Consistent performance** across full training runs
-- ✅ **Robust optimization** with 50th percentile gradient filtering
 
 ### Training Curves
 
