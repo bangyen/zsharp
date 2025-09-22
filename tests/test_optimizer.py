@@ -653,3 +653,31 @@ class TestOptimizerIntegration:
                 break
 
         assert diverged, "SAM and ZSharp should behave differently"
+
+    def test_sam_first_step_with_existing_state(self):
+        """Test SAM first step when parameter already has state attribute"""
+        model = SimpleModel()
+        # Manually add state to a parameter to test the existing state branch
+        for p in model.parameters():
+            p.state = {"existing": "value"}
+            break
+
+        sam = SAM(list(model.parameters()), optim.SGD, rho=0.1, lr=0.01)
+
+        # Create dummy data and compute gradients first
+        x = torch.randn(4, 10)
+        y = torch.randint(0, 2, (4,))
+        criterion = nn.CrossEntropyLoss()
+        loss = criterion(model(x), y)
+        loss.backward()
+
+        # Test that existing state is preserved and new state is added
+        sam.first_step()
+
+        # Verify the existing state is still there and new state was added
+        for p in model.parameters():
+            if hasattr(p, "state"):
+                assert "existing" in p.state
+                assert p.state["existing"] == "value"
+                assert "e" in p.state  # New state from SAM
+                break

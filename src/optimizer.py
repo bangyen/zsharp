@@ -4,7 +4,7 @@ This module provides implementations of SAM (Sharpness-Aware Minimization)
 and ZSharp optimizers for deep learning training with gradient filtering.
 """
 
-from typing import Callable, Optional, Union, overload
+from typing import Callable, Optional, Union, cast, overload
 
 import torch
 import torch.nn
@@ -248,8 +248,9 @@ class ZSharp(SAM):
             mask = mask.view_as(original_grad)
 
             # Apply masking to gradients
-            if p.grad is not None:
-                p.grad = p.grad * mask
+            # Note: p.grad is guaranteed to be not None here because we only
+            # process parameters with gradients in the collection phase above
+            p.grad = cast("torch.Tensor", p.grad) * mask
 
         # Apply SAM perturbation with filtered gradients
         grad_norm = torch.norm(
