@@ -574,6 +574,29 @@ class TestZSharp:
         zsharp.first_step()
         zsharp.second_step()
 
+    def test_zsharp_gradient_filtering_skip_none_gradients(self):
+        """Test ZSharp gradient filtering skips parameters with None gradients"""
+        model = SimpleModel()
+        zsharp = ZSharp(
+            list(model.parameters()),
+            optim.SGD,
+            lr=DEFAULT_LEARNING_RATE,
+            percentile=DEFAULT_PERCENTILE,
+        )
+
+        # Set all gradients to None except one
+        params = list(model.parameters())
+        for i, param in enumerate(params):
+            if i == 0:
+                param.grad = torch.randn_like(param.data)
+            else:
+                param.grad = None  # This should trigger the continue statement at line 252
+
+        # This should handle None gradients gracefully
+        # The first_step should skip parameters with None gradients
+        zsharp.first_step()
+        zsharp.second_step()
+
 
 class TestOptimizerIntegration:
     """Integration tests for optimizers"""
