@@ -30,10 +30,14 @@ def evaluate_model(
     """
     model.eval()
     correct, total = 0, 0
-    with torch.no_grad():
-        for x, y in testloader:
-            x, y = x.to(device), y.to(device)
-            preds = model(x).argmax(dim=1)
-            correct += (preds == y).sum().item()
-            total += y.size(0)
-    return PERCENTAGE_MULTIPLIER * correct / total
+    try:
+        with torch.no_grad():
+            for x, y in testloader:
+                x, y = x.to(device), y.to(device)
+                preds = model(x).argmax(dim=1)
+                correct += (preds == y).sum().item()
+                total += y.size(0)
+    except KeyboardInterrupt:
+        # Handle keyboard interrupt gracefully
+        return 0.0
+    return PERCENTAGE_MULTIPLIER * correct / total if total > 0 else 0.0
