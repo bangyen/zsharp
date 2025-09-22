@@ -717,8 +717,15 @@ class TestTrain:
             result = train(config)
             assert result is None
 
+    @pytest.mark.mps
     def test_train_mps_mixed_precision_evaluation(self):
         """Test that MPS mixed precision is handled during evaluation"""
+        # Skip this test if MPS is not available
+        if not torch.backends.mps.is_available():
+            import pytest
+
+            pytest.skip("MPS not available on this system")
+
         from unittest.mock import MagicMock, patch
 
         # Mock dataset
