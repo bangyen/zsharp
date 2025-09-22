@@ -248,9 +248,8 @@ class ZSharp(SAM):
             mask = mask.view_as(original_grad)
 
             # Apply masking to gradients
-            if p.grad is None:
-                continue  # Skip parameters without gradients
-            p.grad = p.grad * mask
+            if p.grad is not None:
+                p.grad = p.grad * mask
 
         # Apply SAM perturbation with filtered gradients
         grad_norm = torch.norm(

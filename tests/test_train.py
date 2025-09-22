@@ -523,52 +523,265 @@ class TestTrain:
         # The main block just parses arguments and calls train() with a config
         # This functionality is already tested by the train() function itself
 
-    def test_train_keyboard_interrupt_handling(self):
+    def test_train_keyboard_interrupt_during_training(self):
         """Test that KeyboardInterrupt is handled gracefully during training"""
-        # Instead of testing KeyboardInterrupt directly, we test that the training
-        # function has proper exception handling by checking the code structure
-        import inspect
+        from unittest.mock import MagicMock, patch
 
-        from src.train import train
-
-        # Check that the train function has KeyboardInterrupt handling
-        source = inspect.getsource(train)
-        assert "KeyboardInterrupt" in source
-        assert "except" in source
-
-        # This verifies that the exception handling is present in the code
-        # without actually triggering the exception
-
-    def test_evaluate_model_keyboard_interrupt_handling(self):
-        """Test that KeyboardInterrupt is handled gracefully during evaluation"""
-        # Instead of testing KeyboardInterrupt directly, we test that the evaluation
-        # function has proper exception handling by checking the code structure
-        import inspect
-
-        from src.eval import evaluate_model
-
-        # Check that the evaluate_model function has KeyboardInterrupt handling
-        source = inspect.getsource(evaluate_model)
-        assert "KeyboardInterrupt" in source
-        assert "except" in source
-
-        # This verifies that the exception handling is present in the code
-        # without actually triggering the exception
-
-    def test_evaluate_model_mps_mixed_precision(self):
-        """Test evaluate_model with MPS device and mixed precision"""
-        from src.eval import evaluate_model
-
-        model = SimpleTestModel()
-        device = torch.device("cpu")  # Use CPU for testing
-
-        # Create mock test loader with some data
+        # Mock dataset
+        mock_trainloader = MagicMock()
         mock_testloader = MagicMock()
-        mock_data = [(torch.randn(2, 3, 32, 32), torch.randint(0, 10, (2,)))]
-        mock_testloader.__iter__ = MagicMock(return_value=iter(mock_data))
 
-        # This should handle the MPS mixed precision case
-        result = evaluate_model(model, mock_testloader, device)
-        # Should return a float with test accuracy
-        assert isinstance(result, float)
-        assert 0 <= result <= 100
+        # Mock data that will raise KeyboardInterrupt
+        mock_trainloader.__iter__.return_value = iter(
+            [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+        )
+        mock_testloader.__iter__.return_value = iter(
+            [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+        )
+        mock_trainloader.__len__ = MagicMock(return_value=1)
+        mock_testloader.__len__ = MagicMock(return_value=1)
+
+        config = {
+            "dataset": "cifar10",
+            "model": "resnet18",
+            "train": {
+                "epochs": 1,
+                "batch_size": 32,
+                "device": "cpu",
+                "num_workers": 0,
+            },
+            "optimizer": {
+                "type": "sgd",
+                "lr": 0.01,
+                "momentum": 0.9,
+                "weight_decay": 0.0001,
+            },
+        }
+
+        with (
+            patch(
+                "src.train.get_dataset",
+                return_value=(mock_trainloader, mock_testloader),
+            ),
+            patch("src.train.get_model", return_value=SimpleTestModel()),
+            patch("torch.device", return_value=torch.device("cpu")),
+            patch("src.train.tqdm") as mock_tqdm,
+        ):
+            # Mock tqdm to raise KeyboardInterrupt
+            mock_pbar = MagicMock()
+            mock_tqdm.return_value = mock_pbar
+            mock_pbar.__iter__ = lambda self: iter(
+                [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+            )
+            mock_pbar.set_postfix = MagicMock()
+            mock_pbar.close = MagicMock()
+
+            # Make the progress bar raise KeyboardInterrupt
+            mock_pbar.__iter__ = lambda self: (_ for _ in ()).throw(
+                KeyboardInterrupt("Simulated keyboard interrupt")
+            )
+
+            # Should handle KeyboardInterrupt gracefully and return None
+            result = train(config)
+            assert result is None
+
+    def test_train_keyboard_interrupt_during_evaluation(self):
+        """Test that KeyboardInterrupt is handled gracefully during evaluation"""
+        from unittest.mock import MagicMock, patch
+
+        # Mock dataset
+        mock_trainloader = MagicMock()
+        mock_testloader = MagicMock()
+
+        # Mock data
+        mock_trainloader.__iter__.return_value = iter(
+            [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+        )
+        mock_testloader.__iter__.return_value = iter(
+            [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+        )
+        mock_trainloader.__len__ = MagicMock(return_value=1)
+        mock_testloader.__len__ = MagicMock(return_value=1)
+
+        config = {
+            "dataset": "cifar10",
+            "model": "resnet18",
+            "train": {
+                "epochs": 1,
+                "batch_size": 32,
+                "device": "cpu",
+                "num_workers": 0,
+            },
+            "optimizer": {
+                "type": "sgd",
+                "lr": 0.01,
+                "momentum": 0.9,
+                "weight_decay": 0.0001,
+            },
+        }
+
+        with (
+            patch(
+                "src.train.get_dataset",
+                return_value=(mock_trainloader, mock_testloader),
+            ),
+            patch("src.train.get_model", return_value=SimpleTestModel()),
+            patch("torch.device", return_value=torch.device("cpu")),
+            patch("src.train.tqdm") as mock_tqdm,
+        ):
+            # Mock tqdm for training
+            mock_pbar = MagicMock()
+            mock_tqdm.return_value = mock_pbar
+            mock_pbar.__iter__ = lambda self: iter(
+                [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+            )
+            mock_pbar.set_postfix = MagicMock()
+            mock_pbar.close = MagicMock()
+
+            # Mock tqdm for evaluation to raise KeyboardInterrupt
+            mock_eval_pbar = MagicMock()
+            mock_tqdm.side_effect = [mock_pbar, mock_eval_pbar]
+            mock_eval_pbar.__iter__ = lambda self: (_ for _ in ()).throw(
+                KeyboardInterrupt("Simulated keyboard interrupt")
+            )
+            mock_eval_pbar.set_postfix = MagicMock()
+            mock_eval_pbar.close = MagicMock()
+
+            # Should handle KeyboardInterrupt gracefully and return None
+            result = train(config)
+            assert result is None
+
+    def test_train_keyboard_interrupt_during_evaluation_outer(self):
+        """Test that KeyboardInterrupt is handled gracefully during evaluation (outer catch)"""
+        from unittest.mock import MagicMock, patch
+
+        # Mock dataset
+        mock_trainloader = MagicMock()
+        mock_testloader = MagicMock()
+
+        # Mock data
+        mock_trainloader.__iter__.return_value = iter(
+            [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+        )
+        mock_testloader.__iter__.return_value = iter(
+            [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+        )
+        mock_trainloader.__len__ = MagicMock(return_value=1)
+        mock_testloader.__len__ = MagicMock(return_value=1)
+
+        config = {
+            "dataset": "cifar10",
+            "model": "resnet18",
+            "train": {
+                "epochs": 1,
+                "batch_size": 32,
+                "device": "cpu",
+                "num_workers": 0,
+            },
+            "optimizer": {
+                "type": "sgd",
+                "lr": 0.01,
+                "momentum": 0.9,
+                "weight_decay": 0.0001,
+            },
+        }
+
+        with (
+            patch(
+                "src.train.get_dataset",
+                return_value=(mock_trainloader, mock_testloader),
+            ),
+            patch("src.train.get_model", return_value=SimpleTestModel()),
+            patch("torch.device", return_value=torch.device("cpu")),
+            patch("src.train.tqdm") as mock_tqdm,
+        ):
+            # Mock tqdm for training
+            mock_pbar = MagicMock()
+            mock_tqdm.return_value = mock_pbar
+            mock_pbar.__iter__ = lambda self: iter(
+                [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+            )
+            mock_pbar.set_postfix = MagicMock()
+            mock_pbar.close = MagicMock()
+
+            # Mock tqdm for evaluation to raise KeyboardInterrupt in outer catch
+            mock_eval_pbar = MagicMock()
+            mock_tqdm.side_effect = [mock_pbar, mock_eval_pbar]
+            mock_eval_pbar.__iter__ = lambda self: (_ for _ in ()).throw(
+                KeyboardInterrupt("Simulated keyboard interrupt")
+            )
+            mock_eval_pbar.set_postfix = MagicMock()
+            mock_eval_pbar.close = MagicMock()
+
+            # Should handle KeyboardInterrupt gracefully and return None
+            result = train(config)
+            assert result is None
+
+    def test_train_mps_mixed_precision_evaluation(self):
+        """Test that MPS mixed precision is handled during evaluation"""
+        from unittest.mock import MagicMock, patch
+
+        # Mock dataset
+        mock_trainloader = MagicMock()
+        mock_testloader = MagicMock()
+
+        # Mock data
+        mock_trainloader.__iter__.return_value = iter(
+            [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+        )
+        mock_testloader.__iter__.return_value = iter(
+            [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+        )
+        mock_trainloader.__len__ = MagicMock(return_value=1)
+        mock_testloader.__len__ = MagicMock(return_value=1)
+
+        config = {
+            "dataset": "cifar10",
+            "model": "resnet18",
+            "train": {
+                "epochs": 1,
+                "batch_size": 32,
+                "device": "mps",
+                "num_workers": 0,
+                "use_mixed_precision": True,
+            },
+            "optimizer": {
+                "type": "sgd",
+                "lr": 0.01,
+                "momentum": 0.9,
+                "weight_decay": 0.0001,
+            },
+        }
+
+        with (
+            patch(
+                "src.train.get_dataset",
+                return_value=(mock_trainloader, mock_testloader),
+            ),
+            patch("src.train.get_model", return_value=SimpleTestModel()),
+            patch("torch.device", return_value=torch.device("mps")),
+            patch("torch.backends.mps.is_available", return_value=True),
+            patch("src.train.tqdm") as mock_tqdm,
+        ):
+            # Mock tqdm for training
+            mock_pbar = MagicMock()
+            mock_tqdm.return_value = mock_pbar
+            mock_pbar.__iter__ = lambda self: iter(
+                [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+            )
+            mock_pbar.set_postfix = MagicMock()
+            mock_pbar.close = MagicMock()
+
+            # Mock tqdm for evaluation
+            mock_eval_pbar = MagicMock()
+            mock_tqdm.side_effect = [mock_pbar, mock_eval_pbar]
+            mock_eval_pbar.__iter__ = lambda self: iter(
+                [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
+            )
+            mock_eval_pbar.set_postfix = MagicMock()
+            mock_eval_pbar.close = MagicMock()
+
+            # This should trigger the MPS mixed precision case during evaluation
+            result = train(config)
+            assert isinstance(result, dict)
+            assert result["device"] == "mps"

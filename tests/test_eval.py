@@ -316,3 +316,27 @@ class TestEval:
 
             assert isinstance(accuracy, float)
             assert 0 <= accuracy <= 100
+
+    def test_evaluate_model_keyboard_interrupt(self):
+        """Test that KeyboardInterrupt is handled gracefully during evaluation"""
+        model = SimpleTestModel(num_classes=10)
+        model.eval()
+
+        # Create a mock DataLoader that raises KeyboardInterrupt
+        class MockDataLoaderWithInterrupt:
+            """Mock DataLoader that raises KeyboardInterrupt"""
+
+            def __init__(self):
+                """Initialize the mock DataLoader"""
+                pass
+
+            def __iter__(self):
+                """Return iterator that raises KeyboardInterrupt"""
+                raise KeyboardInterrupt("Simulated keyboard interrupt")
+
+        testloader = MockDataLoaderWithInterrupt()
+        device = torch.device("cpu")
+
+        # Should handle KeyboardInterrupt gracefully and return 0.0
+        accuracy = evaluate_model(model, testloader, device)
+        assert accuracy == 0.0
