@@ -48,7 +48,6 @@ python -m scripts.experiment
 - **Comprehensive Testing**: 100% test coverage with 92 unit tests
 - **Experimental Validation**: Multiple datasets (CIFAR-10/100) and architectures (ResNet, VGG, ViT)
 - **Production Ready**: Type hints, documentation, and reproducible results
-- **Virtual Environment Ready**: Includes pre-configured virtual environment for easy setup
 
 ## Table of Contents
 
