@@ -29,19 +29,19 @@ python -m scripts.experiment
 
 | Method | Test Accuracy | Test Loss | Training Time | Improvement |
 |--------|---------------|-----------|---------------|-------------|
-| **SGD** | 74.74% | 0.725 | 981s | Baseline |
-| **ZSharp** | **79.96%** | **0.583** | 1733s | **+5.22%** |
+| **SGD** | 74.89% | 0.722 | 2231s | Baseline |
+| **ZSharp** | **80.15%** | **0.572** | 4715s | **+5.26%** |
 
 **Key Findings:**
-- **ZSharp outperforms SGD by 5.22%** on CIFAR-10 with 20 epochs
-- **Better generalization** with lower test loss (0.583 vs 0.725)
+- **ZSharp outperforms SGD by 5.26%** on CIFAR-10 with 20 epochs
+- **Better generalization** with lower test loss (0.572 vs 0.722)
 - **Stable training** with consistent convergence over 20 epochs
 - **Consistent performance** across full training runs
 - **Robust optimization** with 70th percentile gradient filtering
 
 ## Key Features
 
-- **Paper Reproduction**: Implements the ZSharp algorithm with 5.22% improvement over SGD
+- **Paper Reproduction**: Implements the ZSharp algorithm with 5.26% improvement over SGD
 - **Apple Silicon Optimized**: 4.39x speedup using MPS (Metal Performance Shaders)
 - **Comprehensive Testing**: 100% test coverage with 92 unit tests
 - **Experimental Validation**: Multiple datasets (CIFAR-10/100) and architectures (ResNet, VGG, ViT)

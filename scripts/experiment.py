@@ -95,6 +95,18 @@ def run_comparison_experiments(fast_mode=False):
                 "final_test_loss": output.get("final_test_loss", 0),
                 "runtime": end_time - start_time,
                 "status": "success",
+                "history": [
+                    {
+                        "epoch": i + 1,
+                        "train_accuracy": output.get("train_accuracies", [])[i]
+                        if i < len(output.get("train_accuracies", []))
+                        else 0,
+                        "test_accuracy": output.get("test_accuracies", [])[i]
+                        if i < len(output.get("test_accuracies", []))
+                        else 0,
+                    }
+                    for i in range(len(output.get("test_accuracies", [])))
+                ],
             }
         else:
             results[experiment_name] = {

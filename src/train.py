@@ -158,6 +158,7 @@ def train(config: TrainingConfig) -> Optional[TrainingResults]:
     start_time = time.time()
     train_losses = []
     train_accuracies = []
+    test_accuracies = []
 
     try:
         for epoch in range(int(config[TRAIN_CONFIG_KEY][EPOCHS_KEY])):
@@ -238,6 +239,33 @@ def train(config: TrainingConfig) -> Optional[TrainingResults]:
             train_losses.append(avg_loss)
             train_accuracies.append(train_accuracy)
 
+            # Evaluate on test set after each epoch
+            model.eval()
+            test_correct, test_total = 0, 0
+
+            with torch.no_grad():
+                for x, y in testloader:
+                    x, y = x.to(device), y.to(device)
+                    if device.type == "mps" and use_mixed_precision:
+                        x = x.half()
+
+                    outputs = model(x)
+                    preds = outputs.argmax(dim=1)
+                    test_correct += (preds == y).sum().item()
+                    test_total += y.size(0)
+
+            test_accuracy = (
+                PERCENTAGE_MULTIPLIER * test_correct / test_total
+                if test_total > 0
+                else 0.0
+            )
+            test_accuracies.append(test_accuracy)
+
+            # Log epoch results
+            logger.info(
+                f"Epoch {epoch + 1}: Train Acc: {train_accuracy:.2f}%, Test Acc: {test_accuracy:.2f}%"
+            )
+
     except KeyboardInterrupt:
         logger.warning("Training interrupted by user.")
         return None
@@ -279,7 +307,11 @@ def train(config: TrainingConfig) -> Optional[TrainingResults]:
         logger.warning("Evaluation interrupted by user.")
         return None
 
-    test_accuracy = PERCENTAGE_MULTIPLIER * test_correct / test_total
+    test_accuracy = (
+        PERCENTAGE_MULTIPLIER * test_correct / test_total
+        if test_total > 0
+        else 0.0
+    )
     avg_test_loss = test_loss / len(testloader)
 
     # Save results
@@ -289,6 +321,7 @@ def train(config: TrainingConfig) -> Optional[TrainingResults]:
         "final_test_loss": avg_test_loss,
         "train_losses": train_losses,
         "train_accuracies": train_accuracies,
+        "test_accuracies": test_accuracies,
         "total_training_time": total_time,
         "device": str(device),
         "optimizer_type": optimizer_type,
