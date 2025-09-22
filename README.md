@@ -8,6 +8,8 @@ A PyTorch implementation of **ZSharp: Sharpness-Aware Minimization with Z-Score 
 
 ## Quickstart
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bangyen/zsharp/blob/main/zsharp_demo.ipynb)
+
 ```bash
 # Train with ZSharp
 python -m scripts.train --config configs/zsharp_baseline.yaml
