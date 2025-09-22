@@ -552,6 +552,28 @@ class TestZSharp:
         # This should trigger the early return case
         zsharp.first_step()
 
+    def test_zsharp_gradient_filtering_with_none_gradients(self):
+        """Test ZSharp gradient filtering when some parameters have None gradients"""
+        model = SimpleModel()
+        zsharp = ZSharp(
+            list(model.parameters()),
+            optim.SGD,
+            lr=DEFAULT_LEARNING_RATE,
+            percentile=DEFAULT_PERCENTILE,
+        )
+
+        # Set some gradients to None and others to normal values
+        params = list(model.parameters())
+        params[0].grad = torch.randn_like(params[0].data)
+        params[1].grad = None  # This should trigger the continue statement
+        if len(params) > 2:
+            params[2].grad = torch.randn_like(params[2].data)
+
+        # This should handle None gradients gracefully
+        # The first_step should skip parameters with None gradients
+        zsharp.first_step()
+        zsharp.second_step()
+
 
 class TestOptimizerIntegration:
     """Integration tests for optimizers"""
