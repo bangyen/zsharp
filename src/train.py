@@ -11,7 +11,7 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     from torch.utils.data import DataLoader
@@ -212,7 +212,11 @@ def _init_components(
 def _prepare_training(
     config: TrainingConfig,
     device: torch.device,
-) -> tuple[TrainingContext, tuple[DataLoader[Any], DataLoader[Any]], int]:
+) -> tuple[
+    TrainingContext,
+    tuple[DataLoader[torch.Tensor], DataLoader[torch.Tensor]],
+    int,
+]:
     """Prepare training context and loaders."""
     cfg = config.train
     m, opt, uz = _init_components(config, device)

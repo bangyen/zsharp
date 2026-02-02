@@ -83,6 +83,21 @@ jobs:
     - name: Run interrogate doc coverage
       run: interrogate src/ --fail-under=100
 
+    - name: Run deptry dependency check
+      run: deptry .
+
+    - name: Run vulture dead code detection
+      run: vulture src/
+
+    - name: Run import-linter architecture check
+      run: python -c "from importlinter.cli import lint_imports_command; lint_imports_command()"
+
+    - name: Run bandit security linting
+      run: bandit -r src/ -ll
+
+    - name: Run pip-audit security audit
+      run: pip-audit || true
+
   test-mps:
     runs-on: macos-latest
 
