@@ -223,13 +223,26 @@ disallow_any_explicit = false
 
 
 
-# Add type annotations gradually to improve code quality
-# Priority order:
-# 1. Public APIs (functions in __init__.py)
-# 2. Core algorithms (optimizer.py)
-# 3. Data processing (data.py)
-# 4. Model definitions (models.py)
-# 5. Training loops (train.py)
+# ------------------------------------------------------------------------------
+# Olympus Mode Configuration (Import Linter & Mutmut)
+# ------------------------------------------------------------------------------
 
-# Examples...
-# ...
+[tool.importlinter]
+root_package = "src"
+
+[[tool.importlinter.contracts]]
+name = "Layered Architecture"
+type = "layers"
+layers = [
+    "experiments",
+    "train | eval",
+    "optimizer | models | data",
+    "utils",
+    "constants",
+]
+
+[tool.mutmut]
+paths_to_mutate = "src/"
+backup = false
+runner = "python -m pytest tests/"
+tests_dir = "tests/"
