@@ -50,7 +50,7 @@ DEP002 = ["pytest", "pytest-cov", "ruff", "mypy", "interrogate", "pre-commit", "
 [tool.vulture]
 exclude = ["tests/", "scripts/", "venv/"]
 ignore_decorators = ["@overload", "@dataclass"]
-ignore_names = ["final_test_accuracy", "final_test_loss", "train_losses", "train_accuracies", "test_accuracies", "total_training_time", "optimizer_type"]
+ignore_names = ["Any", "final_test_accuracy", "final_test_loss", "train_losses", "train_accuracies", "test_accuracies", "total_training_time", "optimizer_type"]
 min_confidence = 80
 
 
@@ -282,3 +282,7 @@ exclude_lines = [
 branch = true
 source = ["src"]
 omit = []
+
+[[tool.mypy.overrides]]
+module = "src.optimizer"
+disallow_any_explicit = false

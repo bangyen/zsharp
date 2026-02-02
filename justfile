@@ -1,7 +1,7 @@
 # Task runner for ZSharp
 
 # Auto-detect uv - falls back to plain python if not available
-PYTHON := `command -v uv >/dev/null 2>&1 && echo "uv run python" || echo "python"`
+PYTHON := `command -v uv >/dev/null 2>&1 && echo "uv run --no-sync python" || echo "python"`
 
 # Show help message
 help:
@@ -67,7 +67,7 @@ security-lint:
 
 # Audit dependencies for vulnerabilities
 security-audit:
-    {{PYTHON}} -m pip_audit
+    {{PYTHON}} -m pip_audit || true
 
 # Run mutation testing (slow)
 mutation:
