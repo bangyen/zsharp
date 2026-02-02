@@ -65,11 +65,11 @@ arch:
 mutation:
     {{PYTHON}} -m mutmut run
 
-# Run Titan Mode checks
-titan: verify-deps dead-code arch
+# Run extended quality checks (dependencies, dead code, architecture)
+quality: verify-deps dead-code arch
 
-# Run all checks (fmt, lint, type, test, titan)
-all: fmt lint type test titan
+# Run all checks (fmt, lint, type, test, quality)
+all: fmt lint type test quality
     @echo "All checks completed!"
 
 # Clean up generated files

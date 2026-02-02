@@ -224,7 +224,7 @@ disallow_any_explicit = false
 
 
 # ------------------------------------------------------------------------------
-# Olympus Mode Configuration (Import Linter & Mutmut)
+# Architecture & Mutation Testing Configuration
 # ------------------------------------------------------------------------------
 
 [tool.importlinter]
