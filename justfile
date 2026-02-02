@@ -57,8 +57,16 @@ verify-deps:
 dead-code:
     {{PYTHON}} -m vulture src/
 
+# Verify architectural contracts
+arch:
+    {{PYTHON}} -c "from importlinter.cli import lint_imports_command; lint_imports_command()"
+
+# Run mutation testing (slow)
+mutation:
+    {{PYTHON}} -m mutmut run
+
 # Run Titan Mode checks
-titan: verify-deps dead-code
+titan: verify-deps dead-code arch
 
 # Run all checks (fmt, lint, type, test, titan)
 all: fmt lint type test titan
