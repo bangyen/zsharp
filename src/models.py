@@ -4,6 +4,8 @@ This module provides functions to load and configure different
 PyTorch models including ResNet, VGG, and Vision Transformer variants.
 """
 
+from typing import cast
+
 from torch import nn
 from torchvision import models
 from torchvision.models import vit_b_16
@@ -40,4 +42,4 @@ def get_model(
         error_msg = f"Unknown model {name}"
         raise ValueError(error_msg)
 
-    return model_map[name]()
+    return cast("nn.Module", model_map[name]())
