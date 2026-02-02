@@ -242,7 +242,7 @@ layers = [
 ]
 
 [tool.mutmut]
-paths_to_mutate = "src/"
+paths_to_mutate = ["src/"]
 backup = false
 runner = "python -m pytest tests/"
-tests_dir = "tests/"
+tests_dir = ["tests/"]
