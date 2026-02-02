@@ -28,21 +28,16 @@ def get_model(
         ValueError: If model name is not supported
 
     """
-    if name == "resnet18":
-        model: nn.Module = models.resnet18(num_classes=num_classes)
-    elif name == "resnet56":
-        # ResNet-56 implementation (simplified)
-        model = models.resnet18(
-            num_classes=num_classes,
-        )  # Using ResNet18 as proxy
-    elif name == "vgg11":
-        model = models.vgg11(num_classes=num_classes)
-    elif name == "vit_b_16":
-        model = vit_b_16(num_classes=num_classes)
-    elif name == "vit_s_16":
-        # Use ViT-B/16 as proxy for ViT-S/16
-        model = vit_b_16(num_classes=num_classes)
-    else:
+    model_map = {
+        "resnet18": lambda: models.resnet18(num_classes=num_classes),
+        "resnet56": lambda: models.resnet18(num_classes=num_classes),
+        "vgg11": lambda: models.vgg11(num_classes=num_classes),
+        "vit_b_16": lambda: vit_b_16(num_classes=num_classes),
+        "vit_s_16": lambda: vit_b_16(num_classes=num_classes),
+    }
+
+    if name not in model_map:
         error_msg = f"Unknown model {name}"
         raise ValueError(error_msg)
-    return model
+
+    return model_map[name]()

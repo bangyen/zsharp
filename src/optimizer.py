@@ -3,6 +3,7 @@
 This module provides implementations of SAM (Sharpness-Aware Minimization)
 and ZSharp optimizers for deep learning training with gradient filtering.
 """
+
 from __future__ import annotations
 
 from typing import Callable, Union, cast, overload
@@ -26,11 +27,12 @@ OptimizerKwargs = Union[float, int, bool]
 """Type alias for optimizer keyword arguments."""
 
 # Type for base optimizer constructor
-BaseOptimizerConstructor = Callable[..., Optimizer]
+# Type for base optimizer constructor
+BaseOptimizerConstructor = Callable[..., Optimizer]  # type: ignore[explicit-any]
 """Type alias for base optimizer constructor functions."""
 
 
-class SAM(Optimizer):
+class SAM(Optimizer):  # type: ignore[misc]
     """Sharpness-Aware Minimization (SAM) optimizer.
 
     SAM is a two-step optimizer that first perturbs parameters in the direction
@@ -69,7 +71,7 @@ class SAM(Optimizer):
         )
         self.rho = rho
 
-    @torch.no_grad()
+    @torch.no_grad()  # type: ignore[untyped-decorator]
     def first_step(self) -> None:
         """First step of SAM: perturb parameters in gradient direction.
 
@@ -98,7 +100,7 @@ class SAM(Optimizer):
                     p.state = {}
                 p.state["e"] = e
 
-    @torch.no_grad()
+    @torch.no_grad()  # type: ignore[untyped-decorator]
     def second_step(self) -> None:
         """Second step of SAM: remove perturbation and update parameters.
 
@@ -112,12 +114,10 @@ class SAM(Optimizer):
         self.base_optimizer.step()
 
     @overload
-    def step(self, closure: None = None) -> None:
-        ...
+    def step(self, closure: None = None) -> None: ...
 
     @overload
-    def step(self, closure: Callable[[], float]) -> float:
-        ...
+    def step(self, closure: Callable[[], float]) -> float: ...
 
     def step(
         self,
@@ -171,7 +171,7 @@ class ZSharp(SAM):
         super().__init__(params, base_optimizer, rho=rho, **kwargs)
         self.percentile = percentile
 
-    @torch.no_grad()
+    @torch.no_grad()  # type: ignore[untyped-decorator]
     def first_step(self) -> None:
         """First step of ZSharp: apply gradient filtering and SAM perturbation.
 
@@ -180,21 +180,44 @@ class ZSharp(SAM):
         2. Applies percentile-based filtering to keep only important gradients
         3. Applies SAM perturbation with filtered gradients
         """
-        # Collect gradients by layer/parameter group for layer-wise Z-score
-        # computation
-        info_type = tuple[torch.nn.Parameter, torch.Tensor, int, int]
-        layer_grad_info: list[info_type] = []
-        layer_grads: list[torch.Tensor] = []
-        # Store (param, grad, start_idx, end_idx) for each layer
+        layer_grad_info, layer_grads = self._collect_gradients_for_filtering()
+        if not layer_grads:
+            return
 
+        zscores_list = self._compute_layer_zscores(layer_grads)
+        threshold = self._compute_filtering_threshold(zscores_list)
+
+        self._apply_gradient_filtering(
+            layer_grad_info, zscores_list, threshold
+        )
+
+        self._apply_sam_perturbation()
+
+    def _collect_gradients_for_filtering(
+        self,
+    ) -> tuple[
+        list[tuple[torch.nn.Parameter, torch.Tensor, int, int]],
+        list[torch.Tensor],
+    ]:
+        """Collect and flatten gradients for each layer.
+
+        Returns:
+            tuple: (layer_grad_info, layer_grads) where layer_grad_info maintains
+                   the mapping back to parameters and layer_grads contains flattened
+                   float32 gradients.
+        """
+        layer_grad_info: list[
+            tuple[torch.nn.Parameter, torch.Tensor, int, int]
+        ] = []
+        layer_grads: list[torch.Tensor] = []
         start_idx = 0
+
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is None:
                     continue
                 grad_flat = p.grad.detach().flatten()
 
-                # Handle mixed precision
                 if grad_flat.dtype == torch.float16:
                     grad_flat = grad_flat.float()
 
@@ -203,73 +226,91 @@ class ZSharp(SAM):
                 layer_grad_info.append((p, p.grad, start_idx, end_idx))
                 start_idx = end_idx
 
-        if not layer_grads:
-            return
+        return layer_grad_info, layer_grads
 
-        # Compute Z-scores layer-wise as described in the paper
+    def _compute_layer_zscores(
+        self,
+        layer_grads: list[torch.Tensor],
+    ) -> list[torch.Tensor]:
+        """Compute Z-score normalization for each layer independently.
+
+        Args:
+            layer_grads: List of flattened gradients for each layer.
+
+        Returns:
+            list: Normalized Z-scores for each layer.
+        """
         zscores_list: list[torch.Tensor] = []
         for grad_flat in layer_grads:
-            # Layer-wise Z-score normalization with numerical stability
-            layer_mean, layer_std = (
-                torch.mean(grad_flat),
-                torch.std(grad_flat) + EPSILON_STD,
-            )
+            layer_mean = torch.mean(grad_flat)
+            layer_std = torch.std(grad_flat) + EPSILON_STD
             layer_zscores = (grad_flat - layer_mean) / layer_std
             zscores_list.append(layer_zscores)
+        return zscores_list
 
-        # Concatenate Z-scores for percentile computation
+    def _compute_filtering_threshold(
+        self,
+        zscores_list: list[torch.Tensor],
+    ) -> float:
+        """Compute the global threshold based on absolute Z-scores.
+
+        Args:
+            zscores_list: List of layer-wise normalized Z-scores.
+
+        Returns:
+            float: The absolute Z-score threshold for the requested percentile.
+        """
         all_zscores = torch.cat(zscores_list)
+        return float(
+            torch.quantile(
+                all_zscores.abs(),
+                self.percentile / PERCENTAGE_MULTIPLIER,
+            ).item(),
+        )
 
-        # Use absolute Z-scores for percentile computation as per paper
-        threshold = torch.quantile(
-            all_zscores.abs(),
-            self.percentile / PERCENTAGE_MULTIPLIER,
-        ).item()
+    def _apply_gradient_filtering(
+        self,
+        layer_grad_info: list[
+            tuple[torch.nn.Parameter, torch.Tensor, int, int]
+        ],
+        zscores_list: list[torch.Tensor],
+        threshold: float,
+    ) -> None:
+        """Apply filtering mask to gradients based on threshold.
 
-        # Apply filtering to each layer
+        Args:
+            layer_grad_info: Metadata to map back to parameters.
+            zscores_list: Precomputed Z-scores.
+            threshold: Absolute Z-score threshold.
+        """
         for i, (p, original_grad, _, _) in enumerate(layer_grad_info):
-            # Get Z-scores for this layer
             layer_zscores = zscores_list[i]
-
-            # Create mask based on absolute Z-score threshold
             mask = layer_zscores.abs() >= threshold
 
-            # Ensure at least some gradients are kept (numerical stability)
             if not mask.any():
-                # Keep top 20% if no gradients pass threshold
                 top_k = max(1, int(DEFAULT_TOP_K_RATIO * mask.numel()))
                 _, indices = torch.topk(layer_zscores.abs(), top_k)
                 mask = torch.zeros_like(mask)
                 mask[indices] = True
 
-            # Reshape mask to match original gradient shape
             mask = mask.view_as(original_grad)
-
-            # Apply masking to gradients
-            # Note: p.grad is guaranteed to be not None here because we only
-            # process parameters with gradients in the collection phase above
             p.grad = cast("torch.Tensor", p.grad) * mask
 
-        # Apply SAM perturbation with filtered gradients
-        grad_norm = torch.norm(
-            torch.stack(
-                [
-                    p.grad.norm(p=2)
-                    for group in self.param_groups
-                    for p in group["params"]
-                    if p.grad is not None
-                ],
-            ),
-            p=2,
-        )
-
-        # Add numerical stability to gradient scaling
+    def _apply_sam_perturbation(self) -> None:
+        """Apply the final SAM perturbation with filtered gradients."""
+        grads = [
+            p.grad.norm(p=2)
+            for group in self.param_groups
+            for p in group["params"]
+            if p.grad is not None
+        ]
+        grad_norm = torch.norm(torch.stack(grads), p=2)
         scale = self.rho / grad_norm
 
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is None:
-                    continue  # Skip parameters without gradients
+                    continue
                 e = p.grad * scale
                 p.add_(e)
                 if not hasattr(p, "state"):

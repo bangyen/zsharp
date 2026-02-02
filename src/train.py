@@ -3,13 +3,15 @@
 This module provides comprehensive training functionality including
 device management, data loading, model training, and result saving.
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import time
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 import torch
 import torch.nn
@@ -18,35 +20,20 @@ from torch import nn, optim
 from tqdm import tqdm
 
 from src.constants import (
-    BATCH_SIZE_KEY,
     CIFAR10_DATASET,
-    CIFAR10_NUM_CLASSES,
     CIFAR100_DATASET,
     CIFAR100_NUM_CLASSES,
     CPU_DEVICE,
     CUDA_DEVICE,
-    DATASET_CONFIG_KEY,
     DEFAULT_SEED,
-    DEVICE_KEY,
-    EPOCHS_KEY,
-    LR_KEY,
     MAX_GRADIENT_NORM,
-    MODEL_CONFIG_KEY,
-    MOMENTUM_KEY,
     MPS_DEVICE,
-    NUM_WORKERS_KEY,
-    OPTIMIZER_CONFIG_KEY,
     PERCENTAGE_MULTIPLIER,
-    PERCENTILE_KEY,
-    PIN_MEMORY_KEY,
     RESULTS_DIR,
-    RHO_KEY,
     SGD_OPTIMIZER,
-    TRAIN_CONFIG_KEY,
-    TYPE_KEY,
     USE_MIXED_PRECISION_KEY,
-    WEIGHT_DECAY_KEY,
     ZSHARP_OPTIMIZER,
+    ExperimentResults,
     TrainingConfig,
 )
 from src.data import get_dataset
@@ -67,7 +54,7 @@ def get_device(config: TrainingConfig) -> torch.device:
         torch.device: Best available device (mps/cuda/cpu)
 
     """
-    device_config = config[TRAIN_CONFIG_KEY][DEVICE_KEY]
+    device_config = config["train"]["device"]
 
     if device_config == MPS_DEVICE and torch.backends.mps.is_available():
         return torch.device(MPS_DEVICE)
@@ -76,272 +63,207 @@ def get_device(config: TrainingConfig) -> torch.device:
     return torch.device(CPU_DEVICE)
 
 
-TrainingResults = dict[str, Any]
+@dataclass(frozen=True)
+class TrainingContext:
+    """Encapsulates training components and flags."""
 
-
-def train(config: TrainingConfig) -> TrainingResults | None:
-    """Train a model using the provided configuration.
-
-    Args:
-        config: Configuration dictionary containing all training parameters
-
-    Returns:
-        dict: Training results including losses, accuracies, and timing
-
-    """
-    # Set seed for reproducibility
-    set_seed(DEFAULT_SEED)
-
-    device = get_device(config)
-
-    # Get training parameters
-    batch_size = int(config[TRAIN_CONFIG_KEY][BATCH_SIZE_KEY])
-    num_workers = int(config[TRAIN_CONFIG_KEY].get(NUM_WORKERS_KEY, 2))
-    pin_memory = config[TRAIN_CONFIG_KEY].get(PIN_MEMORY_KEY, False)
-    use_mixed_precision = config[TRAIN_CONFIG_KEY].get(
-        USE_MIXED_PRECISION_KEY,
-        False,
-    )
-
-    # Get dataset
-    dataset_name = config.get(DATASET_CONFIG_KEY, CIFAR10_DATASET)
-    trainloader, testloader = get_dataset(
-        dataset_name=dataset_name,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        pin_memory=pin_memory,
-    )
-
-    # Get model
-    model_name = config.get(MODEL_CONFIG_KEY, "resnet18")
-    num_classes = (
-        CIFAR100_NUM_CLASSES
-        if dataset_name == CIFAR100_DATASET
-        else CIFAR10_NUM_CLASSES
-    )
-    model = get_model(model_name, num_classes=num_classes).to(device)
-
-    # Enable mixed precision for faster training on Apple Silicon (optional)
-    if device.type == "mps" and use_mixed_precision:
-        model = model.half()  # Use float16 for better performance
-
-    # Setup optimizer based on config
-    optimizer_type = config[OPTIMIZER_CONFIG_KEY].get(
-        TYPE_KEY,
-        ZSHARP_OPTIMIZER,
-    )
-
+    model: nn.Module
     optimizer: torch.optim.SGD | ZSharp
+    criterion: nn.Module
+    device: torch.device
+    use_zsharp: bool
+    use_half: bool
 
-    if optimizer_type == SGD_OPTIMIZER:
+
+def _setup_optimizer(
+    config: TrainingConfig,
+    model: nn.Module,
+) -> tuple[torch.optim.SGD | ZSharp, bool]:
+    """Initialize the optimizer based on configuration."""
+    opt_config = config["optimizer"]
+    opt_type = opt_config.get("type", ZSHARP_OPTIMIZER)
+    params = list(model.parameters())
+    lr = float(opt_config["lr"])
+    momentum = float(opt_config["momentum"])
+    wd = float(opt_config["weight_decay"])
+
+    if opt_type == SGD_OPTIMIZER:
         optimizer = optim.SGD(
-            list(model.parameters()),
-            lr=float(config[OPTIMIZER_CONFIG_KEY][LR_KEY]),
-            momentum=float(config[OPTIMIZER_CONFIG_KEY][MOMENTUM_KEY]),
-            weight_decay=float(config[OPTIMIZER_CONFIG_KEY][WEIGHT_DECAY_KEY]),
+            params, lr=lr, momentum=momentum, weight_decay=wd
         )
-        use_zsharp = False
+        return optimizer, False
+
+    # ZSharp optimizer
+    optimizer = ZSharp(
+        params,
+        base_optimizer=optim.SGD,
+        rho=float(opt_config["rho"]),
+        lr=lr,
+        momentum=momentum,
+        weight_decay=wd,
+        percentile=int(opt_config["percentile"]),
+    )
+    return optimizer, True
+
+
+def _run_train_step(
+    ctx: TrainingContext,
+    x: torch.Tensor,
+    y: torch.Tensor,
+) -> float:
+    """Perform a single training step."""
+    if ctx.use_zsharp:
+        # ZSharp two-step training
+        loss = ctx.criterion(ctx.model(x), y)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(
+            ctx.model.parameters(), MAX_GRADIENT_NORM
+        )
+        zsharp_opt = cast("ZSharp", ctx.optimizer)
+        zsharp_opt.first_step()
+        ctx.criterion(ctx.model(x), y).backward()
+        zsharp_opt.second_step()
     else:
-        # ZSharp optimizer
-        base_opt = optim.SGD
-        optimizer = ZSharp(
-            list(model.parameters()),
-            base_optimizer=base_opt,
-            rho=float(config[OPTIMIZER_CONFIG_KEY][RHO_KEY]),
-            lr=float(config[OPTIMIZER_CONFIG_KEY][LR_KEY]),
-            momentum=float(config[OPTIMIZER_CONFIG_KEY][MOMENTUM_KEY]),
-            weight_decay=float(config[OPTIMIZER_CONFIG_KEY][WEIGHT_DECAY_KEY]),
-            percentile=int(config[OPTIMIZER_CONFIG_KEY][PERCENTILE_KEY]),
+        # Standard SGD training
+        ctx.optimizer.zero_grad()
+        loss = ctx.criterion(ctx.model(x), y)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(
+            ctx.model.parameters(), MAX_GRADIENT_NORM
         )
-        use_zsharp = True
+        ctx.optimizer.step()
+    return float(loss.item())
 
-    criterion = nn.CrossEntropyLoss()
 
-    # Training loop with timing
+def _validate(
+    ctx: TrainingContext,
+    loader: torch.utils.data.DataLoader[torch.Tensor],
+) -> tuple[float, float]:
+    """Evaluate model on a dataset."""
+    ctx.model.eval()
+    correct, total, total_loss = 0, 0, 0.0
+    pbar = tqdm(loader, desc="Evaluating")
+    with torch.no_grad():
+        for x, y in pbar:
+            x, y = x.to(ctx.device), y.to(ctx.device)
+            if ctx.use_half:
+                x = x.half()
+            outputs = ctx.model(x)
+            loss = ctx.criterion(outputs, y)
+            total_loss += loss.item()
+            correct += (outputs.argmax(dim=1) == y).sum().item()
+            total += y.size(0)
+            pbar.set_postfix({"Acc": f"{PERCENTAGE_MULTIPLIER * correct / total:.2f}%"})
+    acc = PERCENTAGE_MULTIPLIER * correct / total if total > 0 else 0.0
+    return acc, total_loss / len(loader) if len(loader) > 0 else 0.0
+
+
+def _run_epoch(
+    ctx: TrainingContext,
+    epoch: int,
+    loader: torch.utils.data.DataLoader[torch.Tensor],
+) -> tuple[float, float]:
+    """Run a single training epoch."""
+    ctx.model.train()
+    epoch_loss, correct, total = 0.0, 0, 0
+    pbar = tqdm(loader, desc=f"Epoch {epoch + 1}")
+
+    for x, y in pbar:
+        x, y = x.to(ctx.device), y.to(ctx.device)
+        if ctx.use_half:
+            x = x.half()
+        loss = _run_train_step(ctx, x, y)
+        epoch_loss += loss
+        correct += (ctx.model(x).argmax(dim=1) == y).sum().item()
+        total += y.size(0)
+        pbar.set_postfix({"Loss": f"{loss:.4f}"})
+    return epoch_loss / len(loader), PERCENTAGE_MULTIPLIER * correct / total
+
+
+def _save_results(
+    results: ExperimentResults,
+    dataset_name: str,
+    *args: str,  # model_name, opt_type
+) -> None:
+    """Save results to a JSON file."""
+    model_name, opt_type = args
+    path = Path(RESULTS_DIR)
+    file_path = path / f"zsharp_{dataset_name}_{model_name}_{opt_type}.json"
+    path.mkdir(parents=True, exist_ok=True)
+    with file_path.open("w") as f:
+        json.dump(results, f, indent=2)
+
+
+def _init_components(
+    config: TrainingConfig,
+    device: torch.device,
+) -> tuple[nn.Module, torch.optim.SGD | ZSharp, bool]:
+    """Initialize model and optimizer components."""
+    ds_name = config.get("dataset", CIFAR10_DATASET)
+    classes = CIFAR100_NUM_CLASSES if ds_name == CIFAR100_DATASET else 10
+    model_name = config.get("model", "resnet18")
+    model = get_model(model_name, num_classes=classes).to(device)
+    optimizer, use_zs = _setup_optimizer(config, model)
+    return model, optimizer, use_zs
+
+
+def train(config: TrainingConfig) -> ExperimentResults | None:
+    """Train a model using the provided configuration."""
+    set_seed(DEFAULT_SEED)
+    device = get_device(config)
+    cfg = config["train"]
+    use_half = device.type == "mps" and cfg.get(USE_MIXED_PRECISION_KEY)
+
+    model, optimizer, use_zs = _init_components(config, device)
+    use_half_bool = bool(use_half)
+    if use_half_bool:
+        model = model.half()
+
+    ctx = TrainingContext(
+        model, optimizer, nn.CrossEntropyLoss(), device, use_zs, use_half_bool
+    )
+    ldrs = get_dataset(
+        dataset_name=config.get("dataset", CIFAR10_DATASET),
+        batch_size=int(cfg["batch_size"]),
+        num_workers=int(cfg.get("num_workers", 2)),
+        pin_memory=cfg.get("pin_memory", False),
+    )
+    train_ldr, test_ldr = ldrs
     start_time = time.time()
-    train_losses = []
-    train_accuracies = []
-    test_accuracies = []
+    losses, train_accs, test_accs = [], [], []
 
     try:
-        for epoch in range(int(config[TRAIN_CONFIG_KEY][EPOCHS_KEY])):
-            model.train()
-            epoch_loss = 0.0
-            correct, total = 0, 0
-
-            desc = f"Epoch {epoch + 1}/{config[TRAIN_CONFIG_KEY][EPOCHS_KEY]}"
-            pbar: tqdm[tuple[torch.Tensor, torch.Tensor]] = tqdm(
-                trainloader,
-                desc=desc,
-            )
-
-            try:
-                for _i, (x, y) in enumerate(pbar):
-                    x, y = x.to(device), y.to(device)
-
-                    # Convert to half precision if using MPS and mixed precision is
-                    # enabled
-                    if device.type == "mps" and use_mixed_precision:
-                        x = x.half()
-
-                    if use_zsharp:
-                        # ZSharp two-step training
-                        loss = criterion(model(x), y)
-                        loss.backward()
-
-                        # Add gradient clipping for stability
-                        torch.nn.utils.clip_grad_norm_(
-                            model.parameters(),
-                            max_norm=MAX_GRADIENT_NORM,
-                        )
-
-                        # ZSharp two-step training
-                        zsharp_optimizer = cast("ZSharp", optimizer)
-                        zsharp_optimizer.first_step()
-
-                        criterion(model(x), y).backward()
-                        zsharp_optimizer.second_step()
-                    else:
-                        # Standard SGD training
-                        optimizer.zero_grad()
-                        loss = criterion(model(x), y)
-                        loss.backward()
-
-                        # Add gradient clipping for stability
-                        torch.nn.utils.clip_grad_norm_(
-                            model.parameters(),
-                            max_norm=MAX_GRADIENT_NORM,
-                        )
-
-                        optimizer.step()
-
-                    # Track metrics
-                    epoch_loss += loss.item()
-                    preds = model(x).argmax(dim=1)
-                    correct += (preds == y).sum().item()
-                    total += y.size(0)
-
-                    # Update progress bar
-                    pbar.set_postfix(
-                        {
-                            "Loss": f"{loss.item():.4f}",
-                            "Acc": (
-                                f"{PERCENTAGE_MULTIPLIER * correct / total:.2f}%"
-                            ),
-                        },
-                    )
-
-            except KeyboardInterrupt:
-                pbar.close()
-                logger.warning("Training interrupted by user.")
-                raise
-
-            # Record epoch metrics
-            avg_loss = epoch_loss / len(trainloader)
-            train_accuracy = PERCENTAGE_MULTIPLIER * correct / total
-            train_losses.append(avg_loss)
-            train_accuracies.append(train_accuracy)
-
-            # Evaluate on test set after each epoch
-            model.eval()
-            test_correct, test_total = 0, 0
-
-            with torch.no_grad():
-                for x, y in testloader:
-                    x, y = x.to(device), y.to(device)
-                    if device.type == "mps" and use_mixed_precision:
-                        x = x.half()
-
-                    outputs = model(x)
-                    preds = outputs.argmax(dim=1)
-                    test_correct += (preds == y).sum().item()
-                    test_total += y.size(0)
-
-            test_accuracy = (
-                PERCENTAGE_MULTIPLIER * test_correct / test_total
-                if test_total > 0
-                else 0.0
-            )
-            test_accuracies.append(test_accuracy)
-
-            # Log epoch results
+        for epoch in range(int(cfg["epochs"])):
+            e_loss, a = _run_epoch(ctx, epoch, train_ldr)
+            va, _ = _validate(ctx, test_ldr)
+            losses.append(e_loss)
+            train_accs.append(a)
+            test_accs.append(va)
             logger.info(
                 "Epoch %d: Train Acc: %.2f%%, Test Acc: %.2f%%",
                 epoch + 1,
-                train_accuracy,
-                test_accuracy,
+                a,
+                va,
             )
-
     except KeyboardInterrupt:
-        logger.warning("Training interrupted by user.")
         return None
 
-    total_time = time.time() - start_time
-
-    # Evaluate on test set
-    model.eval()
-    test_correct, test_total = 0, 0
-    test_loss = 0.0
-
-    try:
-        with torch.no_grad():
-            eval_pbar: tqdm[tuple[torch.Tensor, torch.Tensor]] = tqdm(
-                testloader,
-                desc="Evaluating",
-            )
-            try:
-                for x, y in eval_pbar:
-                    x, y = x.to(device), y.to(device)
-                    if device.type == "mps" and use_mixed_precision:
-                        x = x.half()
-
-                    outputs = model(x)
-                    loss = criterion(outputs, y)
-                    test_loss += loss.item()
-
-                    preds = outputs.argmax(dim=1)
-                    test_correct += (preds == y).sum().item()
-                    test_total += y.size(0)
-
-                    acc = PERCENTAGE_MULTIPLIER * test_correct / test_total
-                    eval_pbar.set_postfix({"Test Acc": f"{acc:.2f}%"})
-            except KeyboardInterrupt:
-                eval_pbar.close()
-                logger.warning("Evaluation interrupted by user.")
-                raise
-    except KeyboardInterrupt:
-        logger.warning("Evaluation interrupted by user.")
-        return None
-
-    test_accuracy = (
-        PERCENTAGE_MULTIPLIER * test_correct / test_total
-        if test_total > 0
-        else 0.0
-    )
-    avg_test_loss = test_loss / len(testloader)
-
-    # Save results
-    results = {
+    fa, fl = _validate(ctx, test_ldr)
+    results: ExperimentResults = {
         "config": config,
-        "final_test_accuracy": test_accuracy,
-        "final_test_loss": avg_test_loss,
-        "train_losses": train_losses,
-        "train_accuracies": train_accuracies,
-        "test_accuracies": test_accuracies,
-        "total_training_time": total_time,
+        "final_test_accuracy": fa,
+        "final_test_loss": fl,
+        "train_losses": losses,
+        "train_accuracies": train_accs,
+        "test_accuracies": test_accs,
+        "total_training_time": time.time() - start_time,
         "device": str(device),
-        "optimizer_type": optimizer_type,
+        "optimizer_type": "zsharp",
     }
-
-    # Save results to file
-    results_path = Path(RESULTS_DIR)
-    results_file = (
-        results_path
-        / f"zsharp_{dataset_name}_{model_name}_{optimizer_type}.json"
+    _save_results(
+        results,
+        str(config.get("dataset", "c10")),
+        str(config.get("model", "r18")),
+        "zsharp",
     )
-
-    results_path.mkdir(parents=True, exist_ok=True)
-    with results_file.open("w") as f:
-        json.dump(results, f, indent=2)
-
     return results

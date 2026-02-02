@@ -31,10 +31,11 @@ def run_experiment(
         config: TrainingConfig = yaml.safe_load(f)
 
     # Run training
-    train(config)
+    results = train(config)
 
-    # Save results (placeholder)
-    results = {"config": config, "status": "completed"}
+    if results is None:
+        msg = "Training failed to return results"
+        raise RuntimeError(msg)
 
     # Create directory if it doesn't exist
     res_path = Path(results_path)

@@ -4,7 +4,7 @@ This module defines all the magic numbers and configuration values
 that were previously hardcoded throughout the codebase.
 """
 
-from typing import Any
+from typing import TypedDict
 
 # Random seed for reproducibility
 DEFAULT_SEED = 42
@@ -91,6 +91,48 @@ WEIGHT_DECAY_KEY = "weight_decay"
 RHO_KEY = "rho"
 PERCENTILE_KEY = "percentile"
 
+
 # Type definitions for configuration
-TrainingConfig = dict[str, Any]
-ExperimentResults = dict[str, Any]
+class OptimizerConfig(TypedDict):
+    """Configuration for the optimizer."""
+
+    type: str
+    lr: float
+    momentum: float
+    weight_decay: float
+    rho: float
+    percentile: int
+
+
+class TrainingSubConfig(TypedDict):
+    """Sub-configuration for training parameters."""
+
+    device: str
+    batch_size: int
+    epochs: int
+    num_workers: int
+    pin_memory: bool
+    use_mixed_precision: bool
+
+
+class TrainingConfig(TypedDict):
+    """Overall training configuration."""
+
+    train: TrainingSubConfig
+    optimizer: OptimizerConfig
+    dataset: str
+    model: str
+
+
+class ExperimentResults(TypedDict):
+    """Results from an experiment."""
+
+    config: TrainingConfig
+    final_test_accuracy: float
+    final_test_loss: float
+    train_losses: list[float]
+    train_accuracies: list[float]
+    test_accuracies: list[float]
+    total_training_time: float
+    device: str
+    optimizer_type: str

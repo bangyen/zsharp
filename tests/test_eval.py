@@ -63,7 +63,6 @@ class TestEval:
 
             def __init__(self):
                 """Initialize the mock DataLoader"""
-                pass
 
             def __iter__(self):
                 """Return iterator that raises KeyboardInterrupt"""

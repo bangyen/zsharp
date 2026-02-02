@@ -82,9 +82,7 @@ class TestSAM:
         assert perturbed, "Parameters should be perturbed after first_step"
 
     def test_sam_second_step(self):
-        """
-        Test SAM second step (parameter restoration and base optimizer step)
-        """
+        """Test SAM second step (parameter restoration and base optimizer step)"""
         model = SimpleModel()
         base_optimizer = optim.SGD
         sam = SAM(
