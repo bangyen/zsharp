@@ -4,7 +4,7 @@ This module defines all the magic numbers and configuration values
 that were previously hardcoded throughout the codebase.
 """
 
-from typing import TypedDict
+from pydantic import BaseModel, Field
 
 # Random seed for reproducibility
 DEFAULT_SEED = 42
@@ -93,38 +93,38 @@ PERCENTILE_KEY = "percentile"
 
 
 # Type definitions for configuration
-class OptimizerConfig(TypedDict):
+class OptimizerConfig(BaseModel):
     """Configuration for the optimizer."""
 
-    type: str
-    lr: float
-    momentum: float
-    weight_decay: float
-    rho: float
-    percentile: int
+    type: str = Field(default=ZSHARP_OPTIMIZER)
+    lr: float = Field(default=DEFAULT_LEARNING_RATE)
+    momentum: float = Field(default=DEFAULT_MOMENTUM)
+    weight_decay: float = Field(default=DEFAULT_WEIGHT_DECAY)
+    rho: float = Field(default=DEFAULT_RHO)
+    percentile: int = Field(default=DEFAULT_PERCENTILE)
 
 
-class TrainingSubConfig(TypedDict):
+class TrainingSubConfig(BaseModel):
     """Sub-configuration for training parameters."""
 
-    device: str
-    batch_size: int
-    epochs: int
-    num_workers: int
-    pin_memory: bool
-    use_mixed_precision: bool
+    device: str = Field(default=CPU_DEVICE)
+    batch_size: int = Field(default=DEFAULT_BATCH_SIZE)
+    epochs: int = Field(default=10)
+    num_workers: int = Field(default=DEFAULT_NUM_WORKERS)
+    pin_memory: bool = Field(default=DEFAULT_PIN_MEMORY)
+    use_mixed_precision: bool = Field(default=False)
 
 
-class TrainingConfig(TypedDict):
+class TrainingConfig(BaseModel):
     """Overall training configuration."""
 
-    train: TrainingSubConfig
-    optimizer: OptimizerConfig
-    dataset: str
-    model: str
+    train: TrainingSubConfig = Field(default_factory=TrainingSubConfig)
+    optimizer: OptimizerConfig = Field(default_factory=OptimizerConfig)
+    dataset: str = Field(default=CIFAR10_DATASET)
+    model: str = Field(default=RESNET18_NAME)
 
 
-class ExperimentResults(TypedDict):
+class ExperimentResults(BaseModel):
     """Results from an experiment."""
 
     config: TrainingConfig

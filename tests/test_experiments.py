@@ -1,6 +1,5 @@
 """Test suite for experiment running functions."""
 
-import json
 import os
 import tempfile
 from unittest.mock import patch
@@ -8,6 +7,7 @@ from unittest.mock import patch
 import pytest
 import yaml
 
+from src.constants import ExperimentResults, TrainingConfig
 from src.experiments import run_experiment
 
 
@@ -33,7 +33,9 @@ class TestExperiments:
             },
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
             yaml.dump(config, f)
             config_path = f.name
 
@@ -41,23 +43,23 @@ class TestExperiments:
 
         try:
             with patch("src.experiments.train") as mock_train:
-                mock_train.return_value = {
-                    "config": config,
-                    "final_test_accuracy": 0.9,
-                    "final_test_loss": 0.1,
-                    "train_losses": [0.1],
-                    "train_accuracies": [0.9],
-                    "test_accuracies": [0.9],
-                    "total_training_time": 1.0,
-                    "device": "cpu",
-                    "optimizer_type": "sgd",
-                }
+                mock_train.return_value = ExperimentResults(
+                    config=TrainingConfig.model_validate(config),
+                    final_test_accuracy=0.9,
+                    final_test_loss=0.1,
+                    train_losses=[0.1],
+                    train_accuracies=[0.9],
+                    test_accuracies=[0.9],
+                    total_training_time=1.0,
+                    device="cpu",
+                    optimizer_type="sgd",
+                )
 
                 results = run_experiment(config_path, results_path)
 
                 mock_train.assert_called_once()
-                assert isinstance(results, dict)
-                assert "final_test_accuracy" in results
+                assert isinstance(results, ExperimentResults)
+                assert results.final_test_accuracy == 0.9
                 assert os.path.exists(results_path)
         finally:
             if os.path.exists(config_path):
@@ -67,12 +69,16 @@ class TestExperiments:
 
     def test_run_experiment_failure(self):
         """Test experiment execution failure when train returns None"""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
             yaml.dump({"dataset": "c10"}, f)
             config_path = f.name
         try:
             with patch("src.experiments.train", return_value=None):
-                with pytest.raises(RuntimeError, match="Training failed to return results"):
+                with pytest.raises(
+                    RuntimeError, match="Training failed to return results"
+                ):
                     run_experiment(config_path, "results_failed.json")
         finally:
             if os.path.exists(config_path):

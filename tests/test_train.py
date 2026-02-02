@@ -6,6 +6,7 @@ import pytest
 import torch
 from torch import nn
 
+from src.constants import ExperimentResults, TrainingConfig
 from src.train import get_device, train
 
 
@@ -33,13 +34,13 @@ class TestTrain:
 
     def test_get_device_cpu(self):
         """Test get_device returns CPU when specified"""
-        config = {"train": {"device": "cpu"}}
+        config = TrainingConfig.model_validate({"train": {"device": "cpu"}})
         device = get_device(config)
         assert device.type == "cpu"
 
     def test_get_device_cuda_available(self):
         """Test get_device with CUDA when available"""
-        config = {"train": {"device": "cuda"}}
+        config = TrainingConfig.model_validate({"train": {"device": "cuda"}})
 
         with patch("torch.cuda.is_available", return_value=True):
             device = get_device(config)
@@ -47,7 +48,7 @@ class TestTrain:
 
     def test_get_device_cuda_unavailable(self):
         """Test get_device falls back to CPU when CUDA unavailable"""
-        config = {"train": {"device": "cuda"}}
+        config = TrainingConfig.model_validate({"train": {"device": "cuda"}})
 
         with patch("torch.cuda.is_available", return_value=False):
             device = get_device(config)
@@ -55,7 +56,7 @@ class TestTrain:
 
     def test_get_device_mps_available(self):
         """Test get_device with MPS when available"""
-        config = {"train": {"device": "mps"}}
+        config = TrainingConfig.model_validate({"train": {"device": "mps"}})
 
         with patch("torch.backends.mps.is_available", return_value=True):
             device = get_device(config)
@@ -63,7 +64,7 @@ class TestTrain:
 
     def test_get_device_mps_unavailable(self):
         """Test get_device falls back to CPU when MPS unavailable"""
-        config = {"train": {"device": "mps"}}
+        config = TrainingConfig.model_validate({"train": {"device": "mps"}})
 
         with patch("torch.backends.mps.is_available", return_value=False):
             device = get_device(config)
@@ -71,7 +72,9 @@ class TestTrain:
 
     def test_get_device_unknown_device(self):
         """Test get_device with unknown device falls back to CPU"""
-        config = {"train": {"device": "unknown"}}
+        config = TrainingConfig.model_validate(
+            {"train": {"device": "unknown"}}
+        )
         device = get_device(config)
         assert device.type == "cpu"
 
@@ -99,34 +102,36 @@ class TestTrain:
         mock_trainloader.__len__ = MagicMock(return_value=1)
         mock_testloader.__len__ = MagicMock(return_value=1)
 
-        config = {
-            "dataset": "cifar10",
-            "model": "resnet18",
-            "train": {
-                "epochs": 1,
-                "batch_size": 32,
-                "device": "cpu",
-                "num_workers": 0,
-            },
-            "optimizer": {
-                "type": "sgd",
-                "lr": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
-            },
-        }
+        config = TrainingConfig.model_validate(
+            {
+                "dataset": "cifar10",
+                "model": "resnet18",
+                "train": {
+                    "epochs": 1,
+                    "batch_size": 32,
+                    "device": "cpu",
+                    "num_workers": 0,
+                },
+                "optimizer": {
+                    "type": "sgd",
+                    "lr": 0.01,
+                    "momentum": 0.9,
+                    "weight_decay": 0.0001,
+                },
+            }
+        )
 
         with patch("torch.device", return_value=torch.device("cpu")):
             results = train(config)
 
-            assert isinstance(results, dict)
-            assert "final_test_accuracy" in results
-            assert "final_test_loss" in results
-            assert "train_losses" in results
-            assert "train_accuracies" in results
-            assert "total_training_time" in results
-            assert "device" in results
-            assert "optimizer_type" in results
+            assert isinstance(results, ExperimentResults)
+            assert results.final_test_accuracy is not None
+            assert results.final_test_loss is not None
+            assert results.train_losses is not None
+            assert results.train_accuracies is not None
+            assert results.total_training_time is not None
+            assert results.device is not None
+            assert results.optimizer_type is not None
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
@@ -159,24 +164,26 @@ class TestTrain:
         mock_trainloader.__len__ = MagicMock(return_value=1)
         mock_testloader.__len__ = MagicMock(return_value=1)
 
-        config = {
-            "dataset": "cifar10",
-            "model": "resnet18",
-            "train": {
-                "epochs": 1,
-                "batch_size": 32,
-                "device": "cpu",
-                "num_workers": 0,
-            },
-            "optimizer": {
-                "type": "zsharp",
-                "lr": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
-                "rho": 0.05,
-                "percentile": 70,
-            },
-        }
+        config = TrainingConfig.model_validate(
+            {
+                "dataset": "cifar10",
+                "model": "resnet18",
+                "train": {
+                    "epochs": 1,
+                    "batch_size": 32,
+                    "device": "cpu",
+                    "num_workers": 0,
+                },
+                "optimizer": {
+                    "type": "zsharp",
+                    "lr": 0.01,
+                    "momentum": 0.9,
+                    "weight_decay": 0.0001,
+                    "rho": 0.05,
+                    "percentile": 70,
+                },
+            }
+        )
 
         with patch("torch.device", return_value=torch.device("cpu")):
             results = train(config)
@@ -188,7 +195,7 @@ class TestTrain:
             assert mock_optimizer.first_step.called
             assert mock_optimizer.second_step.called
 
-            assert results["optimizer_type"] == "zsharp"
+            assert results.optimizer_type == "zsharp"
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
@@ -221,23 +228,25 @@ class TestTrain:
         mock_trainloader.__len__ = MagicMock(return_value=1)
         mock_testloader.__len__ = MagicMock(return_value=1)
 
-        config = {
-            "dataset": "cifar10",
-            "model": "resnet18",
-            "train": {
-                "epochs": 1,
-                "batch_size": 32,
-                "device": "mps",
-                "num_workers": 0,
-                "use_mixed_precision": True,
-            },
-            "optimizer": {
-                "type": "sgd",
-                "lr": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
-            },
-        }
+        config = TrainingConfig.model_validate(
+            {
+                "dataset": "cifar10",
+                "model": "resnet18",
+                "train": {
+                    "epochs": 1,
+                    "batch_size": 32,
+                    "device": "mps",
+                    "num_workers": 0,
+                    "use_mixed_precision": True,
+                },
+                "optimizer": {
+                    "type": "sgd",
+                    "lr": 0.01,
+                    "momentum": 0.9,
+                    "weight_decay": 0.0001,
+                },
+            }
+        )
 
         with (
             patch("torch.device", return_value=torch.device("mps")),
@@ -245,8 +254,8 @@ class TestTrain:
         ):
             results = train(config)
 
-            assert isinstance(results, dict)
-            assert results["device"] == "mps"
+            assert isinstance(results, ExperimentResults)
+            assert results.device == "mps"
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
@@ -272,22 +281,24 @@ class TestTrain:
         mock_trainloader.__len__ = MagicMock(return_value=1)
         mock_testloader.__len__ = MagicMock(return_value=1)
 
-        config = {
-            "dataset": "cifar100",
-            "model": "resnet18",
-            "train": {
-                "epochs": 1,
-                "batch_size": 32,
-                "device": "cpu",
-                "num_workers": 0,
-            },
-            "optimizer": {
-                "type": "sgd",
-                "lr": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
-            },
-        }
+        config = TrainingConfig.model_validate(
+            {
+                "dataset": "cifar100",
+                "model": "resnet18",
+                "train": {
+                    "epochs": 1,
+                    "batch_size": 32,
+                    "device": "cpu",
+                    "num_workers": 0,
+                },
+                "optimizer": {
+                    "type": "sgd",
+                    "lr": 0.01,
+                    "momentum": 0.9,
+                    "weight_decay": 0.0001,
+                },
+            }
+        )
 
         with patch("torch.device", return_value=torch.device("cpu")):
             results = train(config)
@@ -295,7 +306,7 @@ class TestTrain:
             # Check that model was created with correct num_classes
             mock_get_model.assert_called_with("resnet18", num_classes=100)
 
-            assert isinstance(results, dict)
+            assert isinstance(results, ExperimentResults)
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
@@ -326,28 +337,30 @@ class TestTrain:
             [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
         )
 
-        config = {
-            "dataset": "cifar10",
-            "model": "resnet18",
-            "train": {
-                "epochs": 3,
-                "batch_size": 32,
-                "device": "cpu",
-                "num_workers": 0,
-            },
-            "optimizer": {
-                "type": "sgd",
-                "lr": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
-            },
-        }
+        config = TrainingConfig.model_validate(
+            {
+                "dataset": "cifar10",
+                "model": "resnet18",
+                "train": {
+                    "epochs": 3,
+                    "batch_size": 32,
+                    "device": "cpu",
+                    "num_workers": 0,
+                },
+                "optimizer": {
+                    "type": "sgd",
+                    "lr": 0.01,
+                    "momentum": 0.9,
+                    "weight_decay": 0.0001,
+                },
+            }
+        )
 
         with patch("torch.device", return_value=torch.device("cpu")):
             results = train(config)
 
-            assert len(results["train_losses"]) == 3
-            assert len(results["train_accuracies"]) == 3
+            assert len(results.train_losses) == 3
+            assert len(results.train_accuracies) == 3
 
     @patch("src.train.get_dataset")
     @patch("src.train.get_model")
@@ -373,22 +386,24 @@ class TestTrain:
         mock_trainloader.__len__ = MagicMock(return_value=1)
         mock_testloader.__len__ = MagicMock(return_value=1)
 
-        config = {
-            "dataset": "cifar10",
-            "model": "resnet18",
-            "train": {
-                "epochs": 1,
-                "batch_size": 32,
-                "device": "cpu",
-                "num_workers": 0,
-            },
-            "optimizer": {
-                "type": "sgd",
-                "lr": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
-            },
-        }
+        config = TrainingConfig.model_validate(
+            {
+                "dataset": "cifar10",
+                "model": "resnet18",
+                "train": {
+                    "epochs": 1,
+                    "batch_size": 32,
+                    "device": "cpu",
+                    "num_workers": 0,
+                },
+                "optimizer": {
+                    "type": "sgd",
+                    "lr": 0.01,
+                    "momentum": 0.9,
+                    "weight_decay": 0.0001,
+                },
+            }
+        )
 
         with (
             patch("torch.device", return_value=torch.device("cpu")),
@@ -434,22 +449,24 @@ class TestTrain:
         mock_trainloader.__len__ = MagicMock(return_value=1)
         mock_testloader.__len__ = MagicMock(return_value=1)
 
-        config = {
-            "dataset": "cifar10",
-            "model": "resnet18",
-            "train": {
-                "epochs": 1,
-                "batch_size": 32,
-                "device": "cpu",
-                "num_workers": 0,
-            },
-            "optimizer": {
-                "type": "sgd",
-                "lr": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
-            },
-        }
+        config = TrainingConfig.model_validate(
+            {
+                "dataset": "cifar10",
+                "model": "resnet18",
+                "train": {
+                    "epochs": 1,
+                    "batch_size": 32,
+                    "device": "cpu",
+                    "num_workers": 0,
+                },
+                "optimizer": {
+                    "type": "sgd",
+                    "lr": 0.01,
+                    "momentum": 0.9,
+                    "weight_decay": 0.0001,
+                },
+            }
+        )
 
         with (
             patch("torch.device", return_value=torch.device("cpu")),
@@ -489,22 +506,24 @@ class TestTrain:
             [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
         )
 
-        config = {
-            "dataset": "cifar10",
-            "model": "resnet18",
-            "train": {
-                "epochs": 1,
-                "batch_size": 32,
-                "device": "cpu",
-                "num_workers": 0,
-            },
-            "optimizer": {
-                "type": "sgd",
-                "lr": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
-            },
-        }
+        config = TrainingConfig.model_validate(
+            {
+                "dataset": "cifar10",
+                "model": "resnet18",
+                "train": {
+                    "epochs": 1,
+                    "batch_size": 32,
+                    "device": "cpu",
+                    "num_workers": 0,
+                },
+                "optimizer": {
+                    "type": "sgd",
+                    "lr": 0.01,
+                    "momentum": 0.9,
+                    "weight_decay": 0.0001,
+                },
+            }
+        )
 
         with (
             patch("torch.device", return_value=torch.device("cpu")),
@@ -548,22 +567,24 @@ class TestTrain:
         mock_trainloader.__len__ = MagicMock(return_value=1)
         mock_testloader.__len__ = MagicMock(return_value=1)
 
-        config = {
-            "dataset": "cifar10",
-            "model": "resnet18",
-            "train": {
-                "epochs": 1,
-                "batch_size": 32,
-                "device": "cpu",
-                "num_workers": 0,
-            },
-            "optimizer": {
-                "type": "sgd",
-                "lr": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
-            },
-        }
+        config = TrainingConfig.model_validate(
+            {
+                "dataset": "cifar10",
+                "model": "resnet18",
+                "train": {
+                    "epochs": 1,
+                    "batch_size": 32,
+                    "device": "cpu",
+                    "num_workers": 0,
+                },
+                "optimizer": {
+                    "type": "sgd",
+                    "lr": 0.01,
+                    "momentum": 0.9,
+                    "weight_decay": 0.0001,
+                },
+            }
+        )
 
         with (
             patch(
@@ -610,22 +631,24 @@ class TestTrain:
         mock_trainloader.__len__ = MagicMock(return_value=1)
         mock_testloader.__len__ = MagicMock(return_value=1)
 
-        config = {
-            "dataset": "cifar10",
-            "model": "resnet18",
-            "train": {
-                "epochs": 1,
-                "batch_size": 32,
-                "device": "cpu",
-                "num_workers": 0,
-            },
-            "optimizer": {
-                "type": "sgd",
-                "lr": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
-            },
-        }
+        config = TrainingConfig.model_validate(
+            {
+                "dataset": "cifar10",
+                "model": "resnet18",
+                "train": {
+                    "epochs": 1,
+                    "batch_size": 32,
+                    "device": "cpu",
+                    "num_workers": 0,
+                },
+                "optimizer": {
+                    "type": "sgd",
+                    "lr": 0.01,
+                    "momentum": 0.9,
+                    "weight_decay": 0.0001,
+                },
+            }
+        )
 
         with (
             patch(
@@ -676,22 +699,24 @@ class TestTrain:
         mock_trainloader.__len__ = MagicMock(return_value=1)
         mock_testloader.__len__ = MagicMock(return_value=1)
 
-        config = {
-            "dataset": "cifar10",
-            "model": "resnet18",
-            "train": {
-                "epochs": 1,
-                "batch_size": 32,
-                "device": "cpu",
-                "num_workers": 0,
-            },
-            "optimizer": {
-                "type": "sgd",
-                "lr": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
-            },
-        }
+        config = TrainingConfig.model_validate(
+            {
+                "dataset": "cifar10",
+                "model": "resnet18",
+                "train": {
+                    "epochs": 1,
+                    "batch_size": 32,
+                    "device": "cpu",
+                    "num_workers": 0,
+                },
+                "optimizer": {
+                    "type": "sgd",
+                    "lr": 0.01,
+                    "momentum": 0.9,
+                    "weight_decay": 0.0001,
+                },
+            }
+        )
 
         with (
             patch(
@@ -749,23 +774,25 @@ class TestTrain:
         mock_trainloader.__len__ = MagicMock(return_value=1)
         mock_testloader.__len__ = MagicMock(return_value=1)
 
-        config = {
-            "dataset": "cifar10",
-            "model": "resnet18",
-            "train": {
-                "epochs": 1,
-                "batch_size": 32,
-                "device": "mps",
-                "num_workers": 0,
-                "use_mixed_precision": True,
-            },
-            "optimizer": {
-                "type": "sgd",
-                "lr": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
-            },
-        }
+        config = TrainingConfig.model_validate(
+            {
+                "dataset": "cifar10",
+                "model": "resnet18",
+                "train": {
+                    "epochs": 1,
+                    "batch_size": 32,
+                    "device": "mps",
+                    "num_workers": 0,
+                    "use_mixed_precision": True,
+                },
+                "optimizer": {
+                    "type": "sgd",
+                    "lr": 0.01,
+                    "momentum": 0.9,
+                    "weight_decay": 0.0001,
+                },
+            }
+        )
 
         with (
             patch(
@@ -788,7 +815,7 @@ class TestTrain:
 
             # Mock tqdm for evaluation
             mock_eval_pbar = MagicMock()
-            # The code calls _run_epoch (1 tqdm), _validate (1 tqdm), and final _validate (1 tqdm)? 
+            # The code calls _run_epoch (1 tqdm), _validate (1 tqdm), and final _validate (1 tqdm)?
             # Actually, per epoch: _run_epoch, _validate.
             # Then final _validate.
             # For 1 epoch: tqdm, tqdm, tqdm.
@@ -801,5 +828,5 @@ class TestTrain:
 
             # This should trigger the MPS mixed precision case during evaluation
             result = train(config)
-            assert isinstance(result, dict)
-            assert result["device"] == "mps"
+            assert isinstance(result, ExperimentResults)
+            assert result.device == "mps"
