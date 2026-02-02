@@ -26,6 +26,7 @@ def get_model(
 
     Raises:
         ValueError: If model name is not supported
+
     """
     if name == "resnet18":
         model: nn.Module = models.resnet18(num_classes=num_classes)

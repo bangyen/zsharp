@@ -102,39 +102,19 @@ indent-width = 4
 target-version = "py39"
 
 [tool.ruff.lint]
-# Core linting rules
-select = [
-    "E",   # pycodestyle errors
-    "F",   # pyflakes
-    "I",   # isort
-    "W",   # pycodestyle warnings
-    "UP",  # pyupgrade
-    "B",   # flake8-bugbear
-    "SIM", # flake8-simplify
-    "ARG", # flake8-unused-arguments
-    "TCH", # flake8-type-checking
-    "Q",   # flake8-quotes
-    "N",   # pep8-naming
-    "PLR", # pylint refactor
-    "PLW", # pylint warnings
-    "PLE", # pylint errors
-    "RET", # flake8-return
-    "SLF", # flake8-self
-    "TID", # flake8-tidy-imports
-    "ICN", # flake8-import-conventions
-    "S",   # flake8-bandit
-    "BLE", # flake8-blind-except
-]
+# Maximum strictness: select all rules
+select = ["ALL"]
 ignore = [
-    "E501",  # line too long (handled by ruff format)
+    "D203",    # one-blank-line-before-class (conflicts with D211)
+    "D213",    # multi-line-summary-second-line (conflicts with D212)
+    "E501",    # line too long (handled by ruff format)
+    "COM812",  # missing-trailing-comma (formatter conflict)
+    "ISC001",  # single-line-implicit-string-concatenation (formatter conflict)
     "PLW2901", # Loop variable overwrites (common in ML code)
-    "ARG001",  # Unused function arguments (some are required by APIs)
-    "ARG002",  # Unused method arguments (some are required by APIs)
-    "ARG005",  # Unused lambda arguments
     "N812",    # Lowercase imported as non-lowercase (allow common aliases)
-    "C901",    # Function too complex (acceptable for complex ML algorithms)
-    "PLR0912", # Too many branches (acceptable for training configs)
-    "PLR0915", # Too many statements (acceptable for training loops)
+    "C901",    # Function too complex
+    "PLR0912", # Too many branches
+    "PLR0915", # Too many statements
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
@@ -168,10 +148,11 @@ line-ending = "auto"
 # Type checking configuration
 [tool.mypy]
 python_version = "3.9"
+strict = true
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = true  # More strict
-disallow_incomplete_defs = true  # More strict
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
 check_untyped_defs = true
 disallow_untyped_decorators = false  # Relaxed for torch decorators
 no_implicit_optional = true
@@ -181,13 +162,13 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 ignore_missing_imports = true
-disallow_any_generics = true  # Stricter - disallow Any in generics
+disallow_any_generics = true
 disallow_subclassing_any = false  # Relaxed for torch optimizers
-disallow_untyped_calls = true  # Stricter - require type annotations
-disallow_any_explicit = false  # Keep relaxed for YAML configuration flexibility
-disallow_any_unimported = false  # Relaxed for torch imports
-no_implicit_reexport = true  # Stricter - require explicit re-exports
-strict_optional = true  # Stricter - handle None properly
+disallow_untyped_calls = true
+disallow_any_explicit = false
+disallow_any_unimported = false
+no_implicit_reexport = true
+strict_optional = true
 
 # Exclude test files from strict type checking
 exclude = ["tests/", "scripts/"]

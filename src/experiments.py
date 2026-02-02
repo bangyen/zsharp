@@ -5,7 +5,7 @@ configurations and saving results to JSON files.
 """
 
 import json
-import os
+from pathlib import Path
 
 import yaml
 
@@ -25,8 +25,9 @@ def run_experiment(
 
     Returns:
         dict: Experiment results and configuration
+
     """
-    with open(config_path) as f:
+    with Path(config_path).open() as f:
         config: TrainingConfig = yaml.safe_load(f)
 
     # Run training
@@ -36,9 +37,10 @@ def run_experiment(
     results = {"config": config, "status": "completed"}
 
     # Create directory if it doesn't exist
-    os.makedirs(os.path.dirname(results_path), exist_ok=True)
+    res_path = Path(results_path)
+    res_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(results_path, "w") as f:
+    with res_path.open("w") as f:
         json.dump(results, f, indent=2)
 
     return results

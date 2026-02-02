@@ -41,6 +41,7 @@ def get_cifar10(
 
     Returns:
         tuple: (train_loader, test_loader) for CIFAR-10 dataset
+
     """
     transform_train = T.Compose(
         [
@@ -106,6 +107,7 @@ def get_cifar100(
 
     Returns:
         tuple: (train_loader, test_loader) for CIFAR-100 dataset
+
     """
     transform_train = T.Compose(
         [
@@ -182,6 +184,7 @@ def get_dataset(
 
     Raises:
         ValueError: If dataset name is not supported
+
     """
     if dataset_name == "cifar10":
         return get_cifar10(batch_size, num_workers, pin_memory=pin_memory)
