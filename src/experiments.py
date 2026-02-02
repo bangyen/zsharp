@@ -28,7 +28,8 @@ def run_experiment(
 
     """
     with Path(config_path).open() as f:
-        config: TrainingConfig = yaml.safe_load(f)
+        config_data = yaml.safe_load(f)
+    config = TrainingConfig.model_validate(config_data)
 
     # Run training
     results = train(config)
@@ -42,6 +43,6 @@ def run_experiment(
     res_path.parent.mkdir(parents=True, exist_ok=True)
 
     with res_path.open("w") as f:
-        json.dump(results, f, indent=2)
+        json.dump(results.model_dump(), f, indent=2)
 
     return results

@@ -11,7 +11,10 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from torch.utils.data import DataLoader
 
 import torch
 import torch.nn
@@ -20,7 +23,6 @@ from torch import nn, optim
 from tqdm import tqdm
 
 from src.constants import (
-    CIFAR10_DATASET,
     CIFAR100_DATASET,
     CIFAR100_NUM_CLASSES,
     CPU_DEVICE,
@@ -31,8 +33,6 @@ from src.constants import (
     PERCENTAGE_MULTIPLIER,
     RESULTS_DIR,
     SGD_OPTIMIZER,
-    USE_MIXED_PRECISION_KEY,
-    ZSHARP_OPTIMIZER,
     ExperimentResults,
     TrainingConfig,
 )
@@ -54,7 +54,7 @@ def get_device(config: TrainingConfig) -> torch.device:
         torch.device: Best available device (mps/cuda/cpu)
 
     """
-    device_config = config["train"]["device"]
+    device_config = config.train.device
 
     if device_config == MPS_DEVICE and torch.backends.mps.is_available():
         return torch.device(MPS_DEVICE)
@@ -80,12 +80,12 @@ def _setup_optimizer(
     model: nn.Module,
 ) -> tuple[torch.optim.SGD | ZSharp, bool]:
     """Initialize the optimizer based on configuration."""
-    opt_config = config["optimizer"]
-    opt_type = opt_config.get("type", ZSHARP_OPTIMIZER)
+    opt_config = config.optimizer
+    opt_type = opt_config.type
     params = list(model.parameters())
-    lr = float(opt_config["lr"])
-    momentum = float(opt_config["momentum"])
-    wd = float(opt_config["weight_decay"])
+    lr = float(opt_config.lr)
+    momentum = float(opt_config.momentum)
+    wd = float(opt_config.weight_decay)
 
     if opt_type == SGD_OPTIMIZER:
         optimizer = optim.SGD(
@@ -97,11 +97,11 @@ def _setup_optimizer(
     optimizer = ZSharp(
         params,
         base_optimizer=optim.SGD,
-        rho=float(opt_config["rho"]),
+        rho=float(opt_config.rho),
         lr=lr,
         momentum=momentum,
         weight_decay=wd,
-        percentile=int(opt_config["percentile"]),
+        percentile=int(opt_config.percentile),
     )
     return optimizer, True
 
@@ -153,7 +153,9 @@ def _validate(
             total_loss += loss.item()
             correct += (outputs.argmax(dim=1) == y).sum().item()
             total += y.size(0)
-            pbar.set_postfix({"Acc": f"{PERCENTAGE_MULTIPLIER * correct / total:.2f}%"})
+            pbar.set_postfix(
+                {"Acc": f"{PERCENTAGE_MULTIPLIER * correct / total:.2f}%"}
+            )
     acc = PERCENTAGE_MULTIPLIER * correct / total if total > 0 else 0.0
     return acc, total_loss / len(loader) if len(loader) > 0 else 0.0
 
@@ -183,15 +185,15 @@ def _run_epoch(
 def _save_results(
     results: ExperimentResults,
     dataset_name: str,
-    *args: str,  # model_name, opt_type
+    model_name: str,
+    opt_type: str,
 ) -> None:
     """Save results to a JSON file."""
-    model_name, opt_type = args
     path = Path(RESULTS_DIR)
     file_path = path / f"zsharp_{dataset_name}_{model_name}_{opt_type}.json"
     path.mkdir(parents=True, exist_ok=True)
     with file_path.open("w") as f:
-        json.dump(results, f, indent=2)
+        json.dump(results.model_dump(), f, indent=2)
 
 
 def _init_components(
@@ -199,71 +201,83 @@ def _init_components(
     device: torch.device,
 ) -> tuple[nn.Module, torch.optim.SGD | ZSharp, bool]:
     """Initialize model and optimizer components."""
-    ds_name = config.get("dataset", CIFAR10_DATASET)
+    ds_name = config.dataset
     classes = CIFAR100_NUM_CLASSES if ds_name == CIFAR100_DATASET else 10
-    model_name = config.get("model", "resnet18")
+    model_name = config.model
     model = get_model(model_name, num_classes=classes).to(device)
     optimizer, use_zs = _setup_optimizer(config, model)
     return model, optimizer, use_zs
+
+
+def _prepare_training(
+    config: TrainingConfig,
+    device: torch.device,
+) -> tuple[TrainingContext, tuple[DataLoader, DataLoader], int]:
+    """Prepare training context and loaders."""
+    cfg = config.train
+    m, opt, uz = _init_components(config, device)
+    uh = bool(device.type == "mps" and cfg.use_mixed_precision)
+    if uh:
+        m = m.half()
+    ctx = TrainingContext(m, opt, nn.CrossEntropyLoss(), device, uz, uh)
+    ldrs = get_dataset(
+        dataset_name=config.dataset,
+        batch_size=int(cfg.batch_size),
+        num_workers=int(cfg.num_workers),
+        pin_memory=cfg.pin_memory,
+    )
+    return ctx, ldrs, int(cfg.epochs)
+
+
+def _create_results(
+    config: TrainingConfig,
+    ctx: TrainingContext,
+    metrics: tuple[list[float], list[float], list[float]],
+    final: tuple[float, float],
+    duration: float,
+) -> ExperimentResults:
+    """Consolidate results into dictionary."""
+    fa, fl = final
+    return ExperimentResults(
+        config=config,
+        final_test_accuracy=fa,
+        final_test_loss=fl,
+        train_losses=metrics[0],
+        train_accuracies=metrics[1],
+        test_accuracies=metrics[2],
+        total_training_time=duration,
+        device=str(ctx.device),
+        optimizer_type="zsharp",
+    )
 
 
 def train(config: TrainingConfig) -> ExperimentResults | None:
     """Train a model using the provided configuration."""
     set_seed(DEFAULT_SEED)
     device = get_device(config)
-    cfg = config["train"]
-    use_half = device.type == "mps" and cfg.get(USE_MIXED_PRECISION_KEY)
-
-    model, optimizer, use_zs = _init_components(config, device)
-    use_half_bool = bool(use_half)
-    if use_half_bool:
-        model = model.half()
-
-    ctx = TrainingContext(
-        model, optimizer, nn.CrossEntropyLoss(), device, use_zs, use_half_bool
-    )
-    ldrs = get_dataset(
-        dataset_name=config.get("dataset", CIFAR10_DATASET),
-        batch_size=int(cfg["batch_size"]),
-        num_workers=int(cfg.get("num_workers", 2)),
-        pin_memory=cfg.get("pin_memory", False),
-    )
-    train_ldr, test_ldr = ldrs
+    ctx, (train_ldr, test_ldr), epochs = _prepare_training(config, device)
     start_time = time.time()
-    losses, train_accs, test_accs = [], [], []
+    l_list, t_list, v_list = [], [], []
 
     try:
-        for epoch in range(int(cfg["epochs"])):
+        for epoch in range(epochs):
             e_loss, a = _run_epoch(ctx, epoch, train_ldr)
             va, _ = _validate(ctx, test_ldr)
-            losses.append(e_loss)
-            train_accs.append(a)
-            test_accs.append(va)
+            l_list.append(e_loss)
+            t_list.append(a)
+            v_list.append(va)
             logger.info(
-                "Epoch %d: Train Acc: %.2f%%, Test Acc: %.2f%%",
-                epoch + 1,
-                a,
-                va,
+                "Epoch %d: Acc: %.2f%%, Test: %.2f%%", epoch + 1, a, va
             )
     except KeyboardInterrupt:
         return None
 
-    fa, fl = _validate(ctx, test_ldr)
-    results: ExperimentResults = {
-        "config": config,
-        "final_test_accuracy": fa,
-        "final_test_loss": fl,
-        "train_losses": losses,
-        "train_accuracies": train_accs,
-        "test_accuracies": test_accs,
-        "total_training_time": time.time() - start_time,
-        "device": str(device),
-        "optimizer_type": "zsharp",
-    }
-    _save_results(
-        results,
-        str(config.get("dataset", "c10")),
-        str(config.get("model", "r18")),
-        "zsharp",
+    res = _create_results(
+        config,
+        ctx,
+        (l_list, t_list, v_list),
+        _validate(ctx, test_ldr),
+        time.time() - start_time,
     )
-    return results
+    _save_results(res, config.dataset, config.model, "zsharp")
+    return res
