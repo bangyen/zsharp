@@ -11,7 +11,7 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from torch.utils.data import DataLoader
@@ -68,7 +68,7 @@ class TrainingContext:
     """Encapsulates training components and flags."""
 
     model: nn.Module
-    optimizer: torch.optim.SGD | ZSharp
+    optimizer: torch.optim.Optimizer
     criterion: nn.Module
     device: torch.device
     use_zsharp: bool
@@ -78,7 +78,7 @@ class TrainingContext:
 def _setup_optimizer(
     config: TrainingConfig,
     model: nn.Module,
-) -> tuple[torch.optim.SGD | ZSharp, bool]:
+) -> tuple[torch.optim.Optimizer, bool]:
     """Initialize the optimizer based on configuration."""
     opt_config = config.optimizer
     opt_type = opt_config.type
@@ -88,7 +88,7 @@ def _setup_optimizer(
     wd = float(opt_config.weight_decay)
 
     if opt_type == SGD_OPTIMIZER:
-        optimizer = optim.SGD(
+        optimizer: torch.optim.Optimizer = optim.SGD(
             params, lr=lr, momentum=momentum, weight_decay=wd
         )
         return optimizer, False
@@ -199,7 +199,7 @@ def _save_results(
 def _init_components(
     config: TrainingConfig,
     device: torch.device,
-) -> tuple[nn.Module, torch.optim.SGD | ZSharp, bool]:
+) -> tuple[nn.Module, torch.optim.Optimizer, bool]:
     """Initialize model and optimizer components."""
     ds_name = config.dataset
     classes = CIFAR100_NUM_CLASSES if ds_name == CIFAR100_DATASET else 10
@@ -212,7 +212,7 @@ def _init_components(
 def _prepare_training(
     config: TrainingConfig,
     device: torch.device,
-) -> tuple[TrainingContext, tuple[DataLoader, DataLoader], int]:
+) -> tuple[TrainingContext, tuple[DataLoader[Any], DataLoader[Any]], int]:
     """Prepare training context and loaders."""
     cfg = config.train
     m, opt, uz = _init_components(config, device)

@@ -6,7 +6,10 @@ and ZSharp optimizers for deep learning training with gradient filtering.
 
 from __future__ import annotations
 
-from typing import Callable, Union, cast, overload
+from typing import TYPE_CHECKING, Any, cast, overload
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 import torch
 import torch.nn
@@ -23,16 +26,16 @@ from src.constants import (
 )
 
 # Type for optimizer kwargs
-OptimizerKwargs = Union[float, int, bool]
+OptimizerKwargs = float | int | bool
 """Type alias for optimizer keyword arguments."""
 
 # Type for base optimizer constructor
 # Type for base optimizer constructor
-BaseOptimizerConstructor = Callable[..., Optimizer]  # type: ignore[explicit-any]
+BaseOptimizerConstructor = type[Optimizer]
 """Type alias for base optimizer constructor functions."""
 
 
-class SAM(Optimizer):  # type: ignore[misc]
+class SAM(Optimizer):
     """Sharpness-Aware Minimization (SAM) optimizer.
 
     SAM is a two-step optimizer that first perturbs parameters in the direction
@@ -67,7 +70,7 @@ class SAM(Optimizer):  # type: ignore[misc]
         super().__init__(params, defaults)
         self.base_optimizer: Optimizer = base_optimizer(
             self.param_groups,
-            **kwargs,
+            **cast("dict[str, Any]", kwargs),
         )
         self.rho = rho
 
@@ -79,16 +82,15 @@ class SAM(Optimizer):  # type: ignore[misc]
             for p in group["params"]
             if p.grad is not None
         ]
-        return torch.norm(torch.stack(norms), p=2)
+        return cast("torch.Tensor", torch.norm(torch.stack(norms), p=2))
 
     def _apply_to_param(self, p: torch.nn.Parameter, scale: float) -> None:
         """Apply perturbation to a single parameter."""
         if p.grad is not None:
             e = p.grad * scale
             p.add_(e)
-            if not hasattr(p, "state"):
-                p.state = {}
-            p.state["e"] = e
+            state = p.__dict__.setdefault("state", {})
+            state["e"] = e
 
     def _apply_perturbation(self, scale: float) -> None:
         """Add e to each parameter."""
@@ -113,10 +115,12 @@ class SAM(Optimizer):  # type: ignore[misc]
             self.base_optimizer.step()
 
     @overload
-    def step(self, closure: None = None) -> None: ...
+    def step(self, closure: None = None) -> None:  # noqa: D418
+        """Perform a step with no closure."""
 
     @overload
-    def step(self, closure: Callable[[], float]) -> float: ...
+    def step(self, closure: Callable[[], float]) -> float:  # noqa: D418
+        """Perform a step with a closure."""
 
     def step(
         self,

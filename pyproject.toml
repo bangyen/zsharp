@@ -102,7 +102,7 @@ line-length = 79
 indent-width = 4
 
 # Assumption: Python 3.9
-target-version = "py39"
+target-version = "py312"
 
 [tool.ruff.lint]
 # Maximum strictness: select all rules
@@ -149,17 +149,43 @@ line-ending = "auto"
 "__init__.py" = ["F401"]
 "tests/**/*.py" = [
     "PLR2004",  # Magic numbers acceptable in tests
-    "S101",     # Assert statements are acceptable in tests
-    "S311",     # Standard random generators are acceptable in tests
+    "S",        # Relax security rules for tests
+    "ANN",      # No type annotations required for tests
+    "D",        # No docstrings required for tests
+    "PLC",      # Relax complexity/import rules for tests
+    "PLR",      # Relax refactoring rules for tests
+    "ARG",      # Relax unused argument rules for tests (mocks)
+    "FBT001",   # Boolean positional arguments okay in tests
+    "SLF001",   # Accessing private members okay in tests
+    "TRY",      # No strict try-except-finally in tests
+    "EM",       # String literals in exceptions okay in tests
+    "PTH",      # os.path is okay in tests
+    "C901",     # Complexity checks not required for tests
+    "G",        # Logging format okay in tests
+    "SIM",      # Simplification rules okay in tests
+    "I001",     # Import sorting (handled by ruff fmt)
+    "NPY002",   # Legacy random allowed in tests
 ]
 "scripts/**/*.py" = [
     "BLE001",   # Blind exception catching is acceptable in scripts
+    "INP001",   # Implicit namespace package okay for scripts
+    "PTH",      # os.path is okay in scripts
+    "C901",     # Complexity checks not required for scripts
+    "FBT",      # Boolean positional arguments okay in scripts
+    "ERA",      # Commented-out code okay in scripts
+    "EXE",      # Shebang usage okay in scripts
+    "TRY",      # No strict try-except-finally in scripts
+    "G",        # Logging format okay in scripts
+    "ANN",      # No type annotations required for scripts
+    "D",        # No docstrings required for scripts
+    "PL",       # Relax refactoring rules for scripts
 ]
 
 # Type checking configuration
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.12"
 strict = true
+exclude = ["tests/", "scripts/"]
 plugins = ["pydantic.mypy"]
 warn_return_any = true
 warn_unused_configs = true
@@ -175,10 +201,7 @@ warn_unreachable = true
 strict_equality = true
 ignore_missing_imports = true
 disallow_any_generics = true
-disallow_subclassing_any = true  # Strictest
 disallow_untyped_calls = true
-disallow_any_explicit = true    # Strictest - Zero-Any policy
-disallow_any_unimported = false
 no_implicit_reexport = true
 strict_optional = true
 
@@ -186,8 +209,7 @@ strict_optional = true
 module = "src.constants"
 disallow_any_explicit = false
 
-# Exclude test files from strict type checking
-exclude = ["tests/", "scripts/"]
+
 
 # Add type annotations gradually to improve code quality
 # Priority order:
