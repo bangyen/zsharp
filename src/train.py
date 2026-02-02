@@ -3,12 +3,13 @@
 This module provides comprehensive training functionality including
 device management, data loading, model training, and result saving.
 """
+from __future__ import annotations
 
 import json
 import logging
-import os
 import time
-from typing import Any, Optional, Union, cast
+from pathlib import Path
+from typing import Any, cast
 
 import torch
 import torch.nn
@@ -64,6 +65,7 @@ def get_device(config: TrainingConfig) -> torch.device:
 
     Returns:
         torch.device: Best available device (mps/cuda/cpu)
+
     """
     device_config = config[TRAIN_CONFIG_KEY][DEVICE_KEY]
 
@@ -77,7 +79,7 @@ def get_device(config: TrainingConfig) -> torch.device:
 TrainingResults = dict[str, Any]
 
 
-def train(config: TrainingConfig) -> Optional[TrainingResults]:
+def train(config: TrainingConfig) -> TrainingResults | None:
     """Train a model using the provided configuration.
 
     Args:
@@ -85,6 +87,7 @@ def train(config: TrainingConfig) -> Optional[TrainingResults]:
 
     Returns:
         dict: Training results including losses, accuracies, and timing
+
     """
     # Set seed for reproducibility
     set_seed(DEFAULT_SEED)
@@ -128,7 +131,7 @@ def train(config: TrainingConfig) -> Optional[TrainingResults]:
         ZSHARP_OPTIMIZER,
     )
 
-    optimizer: Union[torch.optim.SGD, ZSharp]
+    optimizer: torch.optim.SGD | ZSharp
 
     if optimizer_type == SGD_OPTIMIZER:
         optimizer = optim.SGD(
@@ -263,7 +266,10 @@ def train(config: TrainingConfig) -> Optional[TrainingResults]:
 
             # Log epoch results
             logger.info(
-                f"Epoch {epoch + 1}: Train Acc: {train_accuracy:.2f}%, Test Acc: {test_accuracy:.2f}%"
+                "Epoch %d: Train Acc: %.2f%%, Test Acc: %.2f%%",
+                epoch + 1,
+                train_accuracy,
+                test_accuracy,
             )
 
     except KeyboardInterrupt:
@@ -328,13 +334,14 @@ def train(config: TrainingConfig) -> Optional[TrainingResults]:
     }
 
     # Save results to file
+    results_path = Path(RESULTS_DIR)
     results_file = (
-        f"{RESULTS_DIR}/zsharp_{dataset_name}"
-        f"_{model_name}_{optimizer_type}.json"
+        results_path
+        / f"zsharp_{dataset_name}_{model_name}_{optimizer_type}.json"
     )
 
-    os.makedirs(RESULTS_DIR, exist_ok=True)
-    with open(results_file, "w") as f:
+    results_path.mkdir(parents=True, exist_ok=True)
+    with results_file.open("w") as f:
         json.dump(results, f, indent=2)
 
     return results

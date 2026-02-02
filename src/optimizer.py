@@ -3,8 +3,9 @@
 This module provides implementations of SAM (Sharpness-Aware Minimization)
 and ZSharp optimizers for deep learning training with gradient filtering.
 """
+from __future__ import annotations
 
-from typing import Callable, Optional, Union, cast, overload
+from typing import Callable, Union, cast, overload
 
 import torch
 import torch.nn
@@ -30,8 +31,7 @@ BaseOptimizerConstructor = Callable[..., Optimizer]
 
 
 class SAM(Optimizer):
-    """
-    Sharpness-Aware Minimization (SAM) optimizer.
+    """Sharpness-Aware Minimization (SAM) optimizer.
 
     SAM is a two-step optimizer that first perturbs parameters in the direction
     of the gradient to find a sharp minimum, then updates parameters using the
@@ -42,6 +42,7 @@ class SAM(Optimizer):
         base_optimizer: Base optimizer class (e.g., torch.optim.SGD)
         rho: Perturbation radius for SAM
         **kwargs: Additional arguments passed to base_optimizer
+
     """
 
     def __init__(
@@ -58,6 +59,7 @@ class SAM(Optimizer):
             base_optimizer: Base optimizer class (e.g., torch.optim.SGD)
             rho: Perturbation radius for SAM
             **kwargs: Additional arguments passed to base_optimizer
+
         """
         defaults = {"rho": rho, **kwargs}
         super().__init__(params, defaults)
@@ -69,8 +71,7 @@ class SAM(Optimizer):
 
     @torch.no_grad()
     def first_step(self) -> None:
-        """
-        First step of SAM: perturb parameters in gradient direction.
+        """First step of SAM: perturb parameters in gradient direction.
 
         This step adds a perturbation to each parameter in the direction of
         its gradient, scaled by the perturbation radius rho.
@@ -99,8 +100,7 @@ class SAM(Optimizer):
 
     @torch.no_grad()
     def second_step(self) -> None:
-        """
-        Second step of SAM: remove perturbation and update parameters.
+        """Second step of SAM: remove perturbation and update parameters.
 
         This step removes the perturbation added in first_step and then
         updates parameters using the base optimizer.
@@ -113,31 +113,28 @@ class SAM(Optimizer):
 
     @overload
     def step(self, closure: None = None) -> None:
-        """Overload for step method with no closure."""
         ...
 
     @overload
     def step(self, closure: Callable[[], float]) -> float:
-        """Overload for step method with closure returning float."""
         ...
 
     def step(
         self,
-        closure: Optional[Callable[[], float]] = None,
-    ) -> Optional[float]:
-        """
-        Raises an error since SAM requires two-step calls.
+        closure: Callable[[], float] | None = None,
+    ) -> float | None:
+        """Raise an error since SAM requires two-step calls.
 
         SAM must be used with explicit first_step() and second_step() calls
         rather than the standard step() method.
         """
+        _ = closure
         msg = "SAM requires two-step calls: first_step and second_step"
         raise RuntimeError(msg)
 
 
 class ZSharp(SAM):
-    """
-    ZSharp: Sharpness-Aware Minimization with Z-Score Gradient Filtering.
+    """ZSharp: Sharpness-Aware Minimization with Z-Score Gradient Filtering.
 
     ZSharp extends SAM by applying layer-wise Z-score normalization and
     percentile-based gradient filtering before the SAM perturbation step.
@@ -150,6 +147,7 @@ class ZSharp(SAM):
         rho: Perturbation radius for SAM
         percentile: Percentile threshold for gradient filtering (0-100)
         **kwargs: Additional arguments passed to base_optimizer
+
     """
 
     def __init__(
@@ -168,14 +166,14 @@ class ZSharp(SAM):
             rho: Perturbation radius for SAM
             percentile: Percentile threshold for gradient filtering (0-100)
             **kwargs: Additional arguments passed to base_optimizer
+
         """
         super().__init__(params, base_optimizer, rho=rho, **kwargs)
         self.percentile = percentile
 
     @torch.no_grad()
     def first_step(self) -> None:
-        """
-        First step of ZSharp: apply gradient filtering and SAM perturbation.
+        """First step of ZSharp: apply gradient filtering and SAM perturbation.
 
         This step:
         1. Computes layer-wise Z-scores for all gradients

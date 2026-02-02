@@ -1,5 +1,4 @@
-"""
-Constants used throughout the ZSharp codebase.
+"""Constants used throughout the ZSharp codebase.
 
 This module defines all the magic numbers and configuration values
 that were previously hardcoded throughout the codebase.

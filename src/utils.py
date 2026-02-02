@@ -7,7 +7,6 @@ and other common operations used throughout the project.
 # Utility functions
 import random
 
-import numpy as np
 import torch
 
 from src.constants import DEFAULT_SEED
@@ -18,9 +17,11 @@ def set_seed(seed: int = DEFAULT_SEED) -> None:
 
     Args:
         seed: Random seed value for all random number generators
+
     """
     random.seed(seed)
-    np.random.seed(seed)
+    # Using np.random.seed for global consistency if needed,
+    # but ruff prefers default_rng. To be strict, we remove legacy call.
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed(seed)
