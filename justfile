@@ -61,12 +61,20 @@ dead-code:
 arch:
     {{PYTHON}} -c "from importlinter.cli import lint_imports_command; lint_imports_command()"
 
+# Run security linting
+security-lint:
+    {{PYTHON}} -m bandit -r src/ -ll
+
+# Audit dependencies for vulnerabilities
+security-audit:
+    {{PYTHON}} -m pip_audit
+
 # Run mutation testing (slow)
 mutation:
     {{PYTHON}} -m mutmut run
 
-# Run extended quality checks (dependencies, dead code, architecture)
-quality: verify-deps dead-code arch
+# Run extended quality checks (dependencies, dead code, architecture, security)
+quality: verify-deps dead-code arch security-lint security-audit
 
 # Run all checks (fmt, lint, type, test, quality)
 all: fmt lint type test quality
