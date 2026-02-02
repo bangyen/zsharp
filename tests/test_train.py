@@ -392,15 +392,22 @@ class TestTrain:
 
         with (
             patch("torch.device", return_value=torch.device("cpu")),
+            patch("src.train.Path") as mock_path,
             patch("builtins.open", create=True) as mock_open,
         ):
             mock_file = MagicMock()
             mock_open.return_value.__enter__.return_value = mock_file
+            mock_path_instance = MagicMock()
+            mock_path.return_value = mock_path_instance
+            mock_path_instance.__truediv__.return_value = mock_path_instance
+            mock_path_instance.open.return_value.__enter__.return_value = (
+                mock_file
+            )
 
             train(config)
 
             # Check that file was opened for writing
-            mock_open.assert_called()
+            assert mock_path_instance.open.called
             assert mock_file.write.called
 
     @patch("src.train.get_dataset")
@@ -781,7 +788,11 @@ class TestTrain:
 
             # Mock tqdm for evaluation
             mock_eval_pbar = MagicMock()
-            mock_tqdm.side_effect = [mock_pbar, mock_eval_pbar]
+            # The code calls _run_epoch (1 tqdm), _validate (1 tqdm), and final _validate (1 tqdm)? 
+            # Actually, per epoch: _run_epoch, _validate.
+            # Then final _validate.
+            # For 1 epoch: tqdm, tqdm, tqdm.
+            mock_tqdm.side_effect = [mock_pbar, mock_eval_pbar, mock_eval_pbar]
             mock_eval_pbar.__iter__ = lambda self: iter(
                 [(torch.randn(4, 3, 32, 32), torch.randint(0, 10, (4,)))]
             )
