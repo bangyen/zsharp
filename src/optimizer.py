@@ -6,7 +6,7 @@ and ZSharp optimizers for deep learning training with gradient filtering.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast, overload
+from typing import TYPE_CHECKING, Any, Optional, Union, cast, overload
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -27,7 +27,7 @@ from src.constants import (
 )
 
 # Type for optimizer kwargs
-OptimizerKwargs = float | int | bool
+OptimizerKwargs = Union[float, int, bool]
 """Type alias for optimizer keyword arguments."""
 
 # Type for base optimizer constructor
@@ -125,8 +125,8 @@ class SAM(Optimizer):
 
     def step(
         self,
-        closure: Callable[[], float] | None = None,
-    ) -> float | None:
+        closure: Optional[Callable[[], float]] = None,
+    ) -> Optional[float]:
         """Raise an error since SAM requires two-step calls.
 
         SAM must be used with explicit first_step() and second_step() calls
@@ -195,7 +195,7 @@ class ZSharp(SAM):
 
     def _collect_for_param(
         self, p: torch.nn.Parameter, s_idx: int
-    ) -> tuple[torch.Tensor, int, int] | None:
+    ) -> Optional[tuple[torch.Tensor, int, int]]:
         """Process a single parameter for gradient collection."""
         if p.grad is None:
             return None

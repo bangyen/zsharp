@@ -116,7 +116,7 @@ line-length = 79
 indent-width = 4
 
 # Assumption: Python 3.9
-target-version = "py312"
+target-version = "py39"
 
 [tool.ruff.lint]
 # Maximum strictness: select all rules
@@ -129,6 +129,8 @@ ignore = [
     "ISC001",  # single-line-implicit-string-concatenation (formatter conflict)
     "PLW2901", # Loop variable overwrites (common in ML code)
     "N812",    # Lowercase imported as non-lowercase (allow common aliases)
+    "UP007",   # Use X | Y for type annotations (Python 3.10+)
+    "UP045",   # Use X | None instead of Optional (Python 3.10+)
     # We remove manually allowed complexity ignores
 ]
 

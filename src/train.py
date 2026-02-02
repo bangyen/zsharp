@@ -11,7 +11,7 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Optional, cast
 
 if TYPE_CHECKING:
     from torch.utils.data import DataLoader
@@ -255,7 +255,7 @@ def _create_results(
     )
 
 
-def train(config: TrainingConfig) -> ExperimentResults | None:
+def train(config: TrainingConfig) -> Optional[ExperimentResults]:
     """Train a model using the provided configuration."""
     set_seed(DEFAULT_SEED)
     device = get_device(config)

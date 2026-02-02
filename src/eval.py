@@ -6,6 +6,8 @@ on test datasets, including accuracy computation.
 
 from __future__ import annotations
 
+from typing import Union
+
 import torch
 import torch.nn
 import torch.utils.data
@@ -16,7 +18,7 @@ from src.constants import PERCENTAGE_MULTIPLIER
 def evaluate_model(
     model: torch.nn.Module,
     testloader: torch.utils.data.DataLoader[torch.Tensor],
-    device: torch.device | str,
+    device: Union[torch.device, str],
 ) -> float:
     """Evaluate model on test set.
 
