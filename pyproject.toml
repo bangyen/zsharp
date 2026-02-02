@@ -40,10 +40,12 @@ dev = [
     "deptry",
     "vulture",
     "hypothesis",
+    "bandit",
+    "pip-audit",
 ]
 
 [tool.deptry.per_rule_ignores]
-DEP002 = ["pytest", "pytest-cov", "ruff", "mypy", "interrogate", "pre-commit", "types-PyYAML", "mutmut", "import-linter", "deptry", "vulture", "hypothesis"]
+DEP002 = ["pytest", "pytest-cov", "ruff", "mypy", "interrogate", "pre-commit", "types-PyYAML", "mutmut", "import-linter", "deptry", "vulture", "hypothesis", "bandit", "pip-audit"]
 
 [tool.vulture]
 exclude = ["tests/", "scripts/", "venv/"]
@@ -138,7 +140,11 @@ unfixable = []
 max-complexity = 4
 
 [tool.ruff.lint.pylint]
+max-args = 5
 max-branches = 6
+max-locals = 15
+max-nested-blocks = 3
+max-returns = 3
 max-statements = 20
 
 [tool.ruff.lint.pydocstyle]
@@ -213,6 +219,9 @@ warn_unreachable = true
 strict_equality = true
 ignore_missing_imports = true
 disallow_any_generics = true
+disallow_any_unimported = true
+disallow_any_decorated = true
+disallow_any_explicit = true
 disallow_untyped_calls = true
 no_implicit_reexport = true
 strict_optional = true
@@ -234,15 +243,42 @@ root_package = "src"
 name = "Layered Architecture"
 type = "layers"
 layers = [
-    "experiments",
-    "train | eval",
-    "optimizer | models | data",
-    "utils",
-    "constants",
+    "src.experiments",
+    "src.train | src.eval",
+    "src.optimizer | src.models | src.data",
+    "src.utils",
+    "src.constants",
 ]
+
+[[tool.importlinter.contracts]]
+name = "No Circular Dependencies"
+type = "independence"
+modules = [
+    "src.models",
+    "src.optimizer",
+    "src.data",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests/", "scripts/", "venv/"]
+skips = []  # Don't skip any security checks
 
 [tool.mutmut]
 paths_to_mutate = ["src/"]
 backup = false
 runner = "python -m pytest tests/"
 tests_dir = ["tests/"]
+
+[tool.coverage.report]
+fail_under = 100
+skip_covered = false
+skip_empty = false
+exclude_lines = [
+    "if TYPE_CHECKING:",
+    "@overload",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+omit = []
