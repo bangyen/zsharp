@@ -9,6 +9,9 @@ from pydantic import BaseModel, Field
 # Random seed for reproducibility
 DEFAULT_SEED = 42
 
+# Math constants
+MIN_NUM_FOR_STD = 2
+
 # Dataset constants
 CIFAR10_NUM_CLASSES = 10
 CIFAR100_NUM_CLASSES = 100

@@ -49,8 +49,19 @@ test:
 test-fast:
     {{PYTHON}} -m pytest tests/ -v
 
-# Run all checks (fmt, lint, type, test)
-all: fmt lint type test
+# Verify dependencies
+verify-deps:
+    {{PYTHON}} -m deptry .
+
+# Check for dead code
+dead-code:
+    {{PYTHON}} -m vulture src/
+
+# Run Titan Mode checks
+titan: verify-deps dead-code
+
+# Run all checks (fmt, lint, type, test, titan)
+all: fmt lint type test titan
     @echo "All checks completed!"
 
 # Clean up generated files
