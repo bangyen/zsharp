@@ -22,6 +22,7 @@ from src.constants import (
     DEFAULT_TOP_K_RATIO,
     EPSILON,
     EPSILON_STD,
+    MIN_NUM_FOR_STD,
     PERCENTAGE_MULTIPLIER,
 )
 
@@ -236,9 +237,13 @@ class ZSharp(SAM):
         """
         zscores_list: list[torch.Tensor] = []
         for grad_flat in layer_grads:
-            layer_mean = torch.mean(grad_flat)
-            layer_std = torch.std(grad_flat) + EPSILON_STD
-            layer_zscores = (grad_flat - layer_mean) / layer_std
+            if grad_flat.numel() < MIN_NUM_FOR_STD:
+                # Handle edge case for single-element or empty tensors
+                layer_zscores = torch.zeros_like(grad_flat)
+            else:
+                layer_mean = torch.mean(grad_flat)
+                layer_std = torch.std(grad_flat) + EPSILON_STD
+                layer_zscores = (grad_flat - layer_mean) / layer_std
             zscores_list.append(layer_zscores)
         return zscores_list
 

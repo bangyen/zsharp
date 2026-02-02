@@ -21,8 +21,6 @@ dependencies = [
     "torch>=2.0.0",
     "torchvision>=0.15.0",
     "numpy",
-    "scipy",
-    "matplotlib",
     "tqdm",
     "pyyaml",
     "pydantic>=2.0.0",
@@ -39,7 +37,20 @@ dev = [
     "types-PyYAML",
     "mutmut",
     "import-linter",
+    "deptry",
+    "vulture",
+    "hypothesis",
 ]
+
+[tool.deptry.per_rule_ignores]
+DEP002 = ["pytest", "pytest-cov", "ruff", "mypy", "interrogate", "pre-commit", "types-PyYAML", "mutmut", "import-linter", "deptry", "vulture", "hypothesis"]
+
+[tool.vulture]
+exclude = ["tests/", "scripts/", "venv/"]
+ignore_decorators = ["@overload", "@dataclass"]
+ignore_names = ["final_test_accuracy", "final_test_loss", "train_losses", "train_accuracies", "test_accuracies", "total_training_time", "optimizer_type"]
+min_confidence = 80
+
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
