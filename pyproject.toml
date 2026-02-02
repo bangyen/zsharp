@@ -80,6 +80,7 @@ filterwarnings = [
     "ignore::PendingDeprecationWarning:torch.*",
     "ignore::DeprecationWarning:numpy.*",
     "ignore::PendingDeprecationWarning:numpy.*",
+    "ignore:dtype\\(\\). align:Warning",
 ]
 
 [tool.ruff]
