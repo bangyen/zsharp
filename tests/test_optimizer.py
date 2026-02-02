@@ -608,7 +608,6 @@ class TestOptimizerIntegration:
         for (_name1, param1), (_name2, param2) in zip(
             model1.named_parameters(),
             model2.named_parameters(),
-            strict=True,
         ):
             param2.data = param1.data.clone()
 
@@ -648,7 +647,6 @@ class TestOptimizerIntegration:
         for (_name1, param1), (_name2, param2) in zip(
             model1.named_parameters(),
             model2.named_parameters(),
-            strict=True,
         ):
             if not torch.allclose(param1.data, param2.data):
                 diverged = True

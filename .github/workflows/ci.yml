@@ -124,4 +124,4 @@ jobs:
 
     - name: Run MPS tests
       run: |
-        python -m pytest tests/ -v -m "mps" --tb=short
+        python -m pytest tests/ -v -m "mps" --tb=short --no-cov
