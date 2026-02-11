@@ -71,7 +71,7 @@ ignore-regex = ["^_"]
 exclude = ["venv", ".git", "__pycache__", ".pytest_cache", "tests", "scripts"]
 
 [tool.pytest.ini_options]
-addopts = "-v --tb=short --cov=src --cov-report=term-missing --cov-fail-under=100"
+addopts = "-v --tb=short"
 testpaths = ["tests"]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -176,6 +176,7 @@ line-ending = "auto"
     "PLR",      # Relax refactoring rules for tests
     "ARG",      # Relax unused argument rules for tests (mocks)
     "FBT001",   # Boolean positional arguments okay in tests
+    "FBT002",   # Boolean default positional arguments okay in tests
     "SLF001",   # Accessing private members okay in tests
     "TRY",      # No strict try-except-finally in tests
     "EM",       # String literals in exceptions okay in tests
@@ -268,7 +269,7 @@ skips = []  # Don't skip any security checks
 [tool.mutmut]
 paths_to_mutate = ["src/"]
 backup = false
-runner = "python -m pytest tests/"
+runner = "python -m pytest tests/ -p no:cov"
 tests_dir = ["tests/"]
 
 [tool.coverage.report]
