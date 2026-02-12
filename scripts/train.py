@@ -8,6 +8,7 @@ import sys
 
 import yaml
 
+from src.constants import TrainingConfig
 from src.train import train
 
 
@@ -39,10 +40,11 @@ def main():
     logging.basicConfig(level=level, format="%(message)s")
     logger = logging.getLogger(__name__)
 
-    # Load configuration
+    # Load and validate configuration
     try:
         with open(args.config) as f:
-            config = yaml.safe_load(f)
+            config_dict = yaml.safe_load(f)
+        config = TrainingConfig.model_validate(config_dict)
     except FileNotFoundError:
         logger.error(f"Error: Configuration file '{args.config}' not found")
         return 1
@@ -57,18 +59,10 @@ def main():
             logger.warning("Training was interrupted by user")
             return 0
         logger.info("Training completed!")
+        logger.info(f"Final test accuracy: {results.final_test_accuracy:.2f}%")
+        logger.info(f"Final test loss: {results.final_test_loss:.4f}")
         logger.info(
-            "Final test accuracy: {:.2f}%".format(
-                results["final_test_accuracy"]
-            )
-        )
-        logger.info(
-            "Final test loss: {:.4f}".format(results["final_test_loss"])
-        )
-        logger.info(
-            "Training time: {:.2f} seconds".format(
-                results["total_training_time"]
-            )
+            f"Training time: {results.total_training_time:.2f} seconds"
         )
         return 0
     except KeyboardInterrupt:
