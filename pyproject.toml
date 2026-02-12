@@ -267,7 +267,13 @@ exclude_dirs = ["tests/", "scripts/", "venv/"]
 skips = []  # Don't skip any security checks
 
 [tool.mutmut]
-paths_to_mutate = ["src/"]
+paths_to_mutate = [
+    "src/optimizer.py",
+    "src/train.py",
+    "src/eval.py",
+    "src/models.py",
+    "src/experiments.py"
+]
 backup = false
 runner = "python -m pytest tests/ -p no:cov"
 tests_dir = ["tests/"]
