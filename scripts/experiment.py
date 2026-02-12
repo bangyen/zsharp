@@ -18,6 +18,7 @@ from src.constants import (
     DEFAULT_RHO,
     DEFAULT_WEIGHT_DECAY,
     RESULTS_DIR,
+    TrainingConfig,
 )
 
 # Import the training function directly
@@ -37,9 +38,10 @@ logger = logging.getLogger(__name__)
 
 def run_experiment(config_path):
     """Run a single experiment and save results"""
-    # Load config
+    # Load and validate config
     with open(config_path) as f:
-        config = yaml.safe_load(f)
+        config_dict = yaml.safe_load(f)
+    config = TrainingConfig.model_validate(config_dict)
 
     try:
         # Run training directly using the imported function
@@ -91,21 +93,21 @@ def run_comparison_experiments(fast_mode=False):
         if output:
             results[experiment_name] = {
                 "config_path": config_path,
-                "final_test_accuracy": output.get("final_test_accuracy", 0),
-                "final_test_loss": output.get("final_test_loss", 0),
+                "final_test_accuracy": output.final_test_accuracy,
+                "final_test_loss": output.final_test_loss,
                 "runtime": end_time - start_time,
                 "status": "success",
                 "history": [
                     {
                         "epoch": i + 1,
-                        "train_accuracy": output.get("train_accuracies", [])[i]
-                        if i < len(output.get("train_accuracies", []))
+                        "train_accuracy": output.train_accuracies[i]
+                        if i < len(output.train_accuracies)
                         else 0,
-                        "test_accuracy": output.get("test_accuracies", [])[i]
-                        if i < len(output.get("test_accuracies", []))
+                        "test_accuracy": output.test_accuracies[i]
+                        if i < len(output.test_accuracies)
                         else 0,
                     }
-                    for i in range(len(output.get("test_accuracies", [])))
+                    for i in range(len(output.test_accuracies))
                 ],
             }
         else:
@@ -181,8 +183,8 @@ def run_hyperparameter_study():
         if output:
             results[f"percentile_{percentile}"] = {
                 "percentile": percentile,
-                "final_test_accuracy": output.get("final_test_accuracy", 0),
-                "final_test_loss": output.get("final_test_loss", 0),
+                "final_test_accuracy": output.final_test_accuracy,
+                "final_test_loss": output.final_test_loss,
                 "runtime": end_time - start_time,
                 "status": "success",
             }
