@@ -246,7 +246,7 @@ def _init_components(
 
     classes = cast("int", DATASET_METADATA[ds_name]["num_classes"])
     model_name = config.model
-    model = get_model(model_name, num_classes=classes).to(device)
+    model = get_model(model_name=model_name, num_classes=classes).to(device)
     optimizer, use_zs = _setup_optimizer(config, model)
     return model, optimizer, use_zs
 

@@ -311,7 +311,9 @@ class TestTrain:
             results = train(config)
 
             # Check that model was created with correct num_classes
-            mock_get_model.assert_called_with("resnet18", num_classes=100)
+            mock_get_model.assert_called_with(
+                model_name="resnet18", num_classes=100
+            )
 
             assert isinstance(results, ExperimentResults)
 

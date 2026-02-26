@@ -6,7 +6,7 @@ and ZSharp optimizers for deep learning training with gradient filtering.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union, cast, overload
+from typing import TYPE_CHECKING, Any, Optional, cast, overload
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -26,7 +26,7 @@ from src.constants import (
 )
 
 # Type for optimizer kwargs
-OptimizerKwargs = Union[float, int, bool]
+OptimizerKwargs = Any
 """Type alias for optimizer keyword arguments."""
 
 
@@ -65,7 +65,7 @@ class SAM(Optimizer):
         super().__init__(params, defaults)
         self.base_optimizer: Optimizer = base_optimizer(
             self.param_groups,
-            **cast("dict[str, Any]", kwargs),
+            **kwargs,
         )
         self.rho = rho
 
@@ -89,15 +89,15 @@ class SAM(Optimizer):
                     if p.grad is not None:
                         e = p.grad * scale
                         p.add_(e)
-                        p.__dict__.setdefault("state", {})["e"] = e
+                        self.state[p]["e"] = e
 
     def second_step(self) -> None:
         """Second step of SAM: remove perturbation and update parameters."""
         with torch.no_grad():
             for group in self.param_groups:
                 for p in group["params"]:
-                    if hasattr(p, "state") and "e" in p.state:
-                        p.sub_(p.state["e"])
+                    if "e" in self.state[p]:
+                        p.sub_(self.state[p]["e"])
             self.base_optimizer.step()
 
     @overload
@@ -189,7 +189,7 @@ class ZSharp(SAM):
                 layer_grad_info, zscores_list, threshold
             )
 
-            self._apply_sam_perturbation()
+            super().first_step()
 
     def _collect_gradients_for_filtering(
         self,
@@ -292,14 +292,3 @@ class ZSharp(SAM):
 
             mask = mask.view_as(original_grad)
             p.grad = cast("torch.Tensor", p.grad) * mask
-
-    def _apply_sam_perturbation(self) -> None:
-        """Apply the final SAM perturbation with filtered gradients."""
-        grad_norm = self._get_grad_norm()
-        scale = float(self.rho / (grad_norm + EPSILON))
-        for group in self.param_groups:
-            for p in group["params"]:
-                if p.grad is not None:
-                    e = p.grad * scale
-                    p.add_(e)
-                    p.__dict__.setdefault("state", {})["e"] = e

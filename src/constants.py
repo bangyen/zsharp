@@ -12,12 +12,6 @@ DEFAULT_SEED = 42
 # Math constants
 MIN_NUM_FOR_STD = 2
 
-# Random seed for reproducibility
-DEFAULT_SEED = 42
-
-# Math constants
-MIN_NUM_FOR_STD = 2
-
 # Dataset names
 CIFAR10_DATASET = "cifar10"
 CIFAR100_DATASET = "cifar100"
