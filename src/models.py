@@ -14,13 +14,13 @@ from src.constants import RESNET18_NAME
 
 
 def get_model(
-    name: str = RESNET18_NAME,
+    model_name: str = RESNET18_NAME,
     num_classes: int = 10,
 ) -> nn.Module:
     """Get a PyTorch model by name.
 
     Args:
-        name: Name of the model to load
+        model_name: Name of the model to load
         num_classes: Number of output classes
 
     Returns:
@@ -36,8 +36,8 @@ def get_model(
         "vit_b_16": lambda: vit_b_16(num_classes=num_classes),
     }
 
-    if name not in model_map:
-        error_msg = f"Unknown model {name}"
+    if model_name not in model_map:
+        error_msg = f"Unknown model {model_name}"
         raise ValueError(error_msg)
 
-    return cast("nn.Module", model_map[name]())
+    return cast("nn.Module", model_map[model_name]())
