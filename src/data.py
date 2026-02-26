@@ -4,23 +4,38 @@ This module provides functions to load and preprocess CIFAR-10 and CIFAR-100
 datasets with appropriate data augmentation and normalization.
 """
 
+from typing import Union
+
 import torch
 import torch.utils.data
 import torchvision
 import torchvision.transforms as T
 
 from src.constants import (
-    CIFAR10_MEAN,
-    CIFAR10_STD,
-    CIFAR100_MEAN,
-    CIFAR100_STD,
-    CIFAR_CROP_PADDING,
-    CIFAR_IMAGE_SIZE,
     DATA_ROOT,
     DEFAULT_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
     DEFAULT_PIN_MEMORY,
 )
+
+# Dataset metadata registry
+DatasetValue = Union[tuple[float, float, float], int, str]
+DATASET_METADATA: dict[str, dict[str, DatasetValue]] = {
+    "cifar10": {
+        "mean": (0.4914, 0.4822, 0.4465),
+        "std": (0.2023, 0.1994, 0.2010),
+        "num_classes": 10,
+        "image_size": 32,
+        "crop_padding": 4,
+    },
+    "cifar100": {
+        "mean": (0.5071, 0.4867, 0.4408),
+        "std": (0.2675, 0.2565, 0.2761),
+        "num_classes": 100,
+        "image_size": 32,
+        "crop_padding": 4,
+    },
+}
 
 
 def get_cifar10(
@@ -43,18 +58,19 @@ def get_cifar10(
         tuple: (train_loader, test_loader) for CIFAR-10 dataset
 
     """
+    meta = DATASET_METADATA["cifar10"]
     transform_train = T.Compose(
         [
-            T.RandomCrop(CIFAR_IMAGE_SIZE, padding=CIFAR_CROP_PADDING),
+            T.RandomCrop(meta["image_size"], padding=meta["crop_padding"]),
             T.RandomHorizontalFlip(),
             T.ToTensor(),
-            T.Normalize(CIFAR10_MEAN, CIFAR10_STD),  # CIFAR-10 normalization
+            T.Normalize(meta["mean"], meta["std"]),  # CIFAR-10 normalization
         ],
     )
     transform_test = T.Compose(
         [
             T.ToTensor(),
-            T.Normalize(CIFAR10_MEAN, CIFAR10_STD),  # CIFAR-10 normalization
+            T.Normalize(meta["mean"], meta["std"]),  # CIFAR-10 normalization
         ],
     )
 
@@ -109,14 +125,15 @@ def get_cifar100(
         tuple: (train_loader, test_loader) for CIFAR-100 dataset
 
     """
+    meta = DATASET_METADATA["cifar100"]
     transform_train = T.Compose(
         [
-            T.RandomCrop(CIFAR_IMAGE_SIZE, padding=CIFAR_CROP_PADDING),
+            T.RandomCrop(meta["image_size"], padding=meta["crop_padding"]),
             T.RandomHorizontalFlip(),
             T.ToTensor(),
             T.Normalize(
-                CIFAR100_MEAN,
-                CIFAR100_STD,
+                meta["mean"],
+                meta["std"],
             ),  # CIFAR-100 normalization
         ],
     )
@@ -124,8 +141,8 @@ def get_cifar100(
         [
             T.ToTensor(),
             T.Normalize(
-                CIFAR100_MEAN,
-                CIFAR100_STD,
+                meta["mean"],
+                meta["std"],
             ),  # CIFAR-100 normalization
         ],
     )

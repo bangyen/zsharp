@@ -127,8 +127,8 @@ class TestSAM:
 
         assert updated, "Parameters should be updated after second_step"
 
-    def test_sam_step_raises_error(self):
-        """Test that calling step() directly raises an error"""
+    def test_sam_step_with_closure(self):
+        """Test SAM step() with a closure."""
         model = SimpleModel()
         base_optimizer = optim.SGD
         sam = SAM(
@@ -138,7 +138,42 @@ class TestSAM:
             lr=DEFAULT_LEARNING_RATE,
         )
 
-        with pytest.raises(RuntimeError, match="SAM requires two-step calls"):
+        # Create dummy data
+        x = torch.randn(4, 10)
+        y = torch.randint(0, 2, (4,))
+        criterion = nn.CrossEntropyLoss()
+
+        def closure():
+            sam.zero_grad()
+            output = model(x)
+            loss = criterion(output, y)
+            loss.backward()
+            return loss
+
+        # Initial call to backward for first_step
+        loss = criterion(model(x), y)
+        loss.backward()
+
+        # Original parameters
+        original_params = [p.data.clone() for p in model.parameters()]
+
+        # Step with closure
+        sam.step(closure)
+
+        # Check that parameters have been updated
+        updated = any(
+            not torch.allclose(p.data, op)
+            for p, op in zip(model.parameters(), original_params)
+        )
+        assert updated, "Parameters should be updated after sam.step(closure)"
+
+    def test_sam_step_without_closure_raises_error(self):
+        """Test that calling step() without a closure raises an error"""
+        model = SimpleModel()
+        sam = SAM(list(model.parameters()), optim.SGD)
+        with pytest.raises(
+            RuntimeError, match="SAM requires a closure that returns the loss"
+        ):
             sam.step()
 
     def test_sam_with_zero_gradients(self):

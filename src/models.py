@@ -10,12 +10,12 @@ from torch import nn
 from torchvision import models
 from torchvision.models import vit_b_16
 
-from src.constants import CIFAR10_NUM_CLASSES, RESNET18_NAME
+from src.constants import RESNET18_NAME
 
 
 def get_model(
     name: str = RESNET18_NAME,
-    num_classes: int = CIFAR10_NUM_CLASSES,
+    num_classes: int = 10,
 ) -> nn.Module:
     """Get a PyTorch model by name.
 

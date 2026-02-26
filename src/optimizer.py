@@ -112,14 +112,27 @@ class SAM(Optimizer):
         self,
         closure: Optional[Callable[[], float]] = None,
     ) -> Optional[float]:
-        """Raise an error since SAM requires two-step calls.
+        """Perform a standard optimizer step with SAM.
 
-        SAM must be used with explicit first_step() and second_step() calls
-        rather than the standard step() method.
+        This method allows SAM to be used like a standard PyTorch optimizer.
+        It requires a closure that re-evaluates the model and returns the loss,
+        as SAM needs to compute gradients twice (at the current point and at
+        the perturbed point).
+
+        Args:
+            closure: A closure that re-evaluates the model and returns the loss.
+
+        Returns:
+            Optional[float]: The loss value from the closure.
         """
-        _ = closure
-        msg = "SAM requires two-step calls: first_step and second_step"
-        raise RuntimeError(msg)
+        if closure is None:
+            msg = "SAM requires a closure that returns the loss"
+            raise RuntimeError(msg)
+
+        self.first_step()
+        loss = closure()
+        self.second_step()
+        return loss
 
 
 class ZSharp(SAM):

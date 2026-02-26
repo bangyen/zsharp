@@ -12,21 +12,15 @@ DEFAULT_SEED = 42
 # Math constants
 MIN_NUM_FOR_STD = 2
 
-# Dataset constants
-CIFAR10_NUM_CLASSES = 10
-CIFAR100_NUM_CLASSES = 100
+# Random seed for reproducibility
+DEFAULT_SEED = 42
 
-# CIFAR-10 normalization values
-CIFAR10_MEAN = (0.4914, 0.4822, 0.4465)
-CIFAR10_STD = (0.2023, 0.1994, 0.2010)
+# Math constants
+MIN_NUM_FOR_STD = 2
 
-# CIFAR-100 normalization values
-CIFAR100_MEAN = (0.5071, 0.4867, 0.4408)
-CIFAR100_STD = (0.2675, 0.2565, 0.2761)
-
-# Image dimensions
-CIFAR_IMAGE_SIZE = 32
-CIFAR_CROP_PADDING = 4
+# Dataset names
+CIFAR10_DATASET = "cifar10"
+CIFAR100_DATASET = "cifar100"
 
 # Default batch and training parameters
 DEFAULT_BATCH_SIZE = 128
@@ -53,10 +47,6 @@ DEFAULT_TOP_K_RATIO = 0.2  # Keep top 20% if no gradients pass threshold
 # Model architecture constants
 RESNET18_NAME = "resnet18"
 
-# Dataset names
-CIFAR10_DATASET = "cifar10"
-CIFAR100_DATASET = "cifar100"
-
 # Optimizer types
 SGD_OPTIMIZER = "sgd"
 ZSHARP_OPTIMIZER = "zsharp"
@@ -65,6 +55,7 @@ ZSHARP_OPTIMIZER = "zsharp"
 MPS_DEVICE = "mps"
 CUDA_DEVICE = "cuda"
 CPU_DEVICE = "cpu"
+AUTO_DEVICE = "auto"
 
 # File paths
 DATA_ROOT = "./data"
@@ -89,7 +80,7 @@ class OptimizerConfig(BaseModel):
 class TrainingSubConfig(BaseModel):
     """Sub-configuration for training parameters."""
 
-    device: str = Field(default=CPU_DEVICE)
+    device: str = Field(default=AUTO_DEVICE)
     batch_size: int = Field(default=DEFAULT_BATCH_SIZE)
     epochs: int = Field(default=10)
     num_workers: int = Field(default=DEFAULT_NUM_WORKERS)
