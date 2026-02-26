@@ -32,10 +32,8 @@ def get_model(
     """
     model_map = {
         "resnet18": lambda: models.resnet18(num_classes=num_classes),
-        "resnet56": lambda: models.resnet18(num_classes=num_classes),
         "vgg11": lambda: models.vgg11(num_classes=num_classes),
         "vit_b_16": lambda: vit_b_16(num_classes=num_classes),
-        "vit_s_16": lambda: vit_b_16(num_classes=num_classes),
     }
 
     if name not in model_map:
