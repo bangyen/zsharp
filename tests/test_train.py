@@ -33,10 +33,17 @@ class TestTrain:
     """Test cases for training functions"""
 
     def test_get_device_cpu(self):
-        """Test get_device returns CPU when specified"""
+        """Test get_device returns CPU when specified."""
         config = TrainingConfig.model_validate({"train": {"device": "cpu"}})
         device = get_device(config)
         assert device.type == "cpu"
+
+    def test_get_device_auto(self):
+        """Test get_device returns best available when specified as 'auto'."""
+        config = TrainingConfig.model_validate({"train": {"device": "auto"}})
+        device = get_device(config)
+        # Should return one of cuda, mps, or cpu
+        assert device.type in ["cuda", "mps", "cpu"]
 
     def test_get_device_cuda_available(self):
         """Test get_device with CUDA when available"""

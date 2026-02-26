@@ -8,7 +8,7 @@ optimizer:
 train:
   batch_size: 128
   epochs: 20
-  device: mps
+  device: auto
   num_workers: 4
   pin_memory: false
   use_mixed_precision: false

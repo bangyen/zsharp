@@ -26,8 +26,7 @@ from torch import nn, optim
 from tqdm import tqdm
 
 from src.constants import (
-    CIFAR100_DATASET,
-    CIFAR100_NUM_CLASSES,
+    AUTO_DEVICE,
     CPU_DEVICE,
     CUDA_DEVICE,
     DEFAULT_SEED,
@@ -38,7 +37,7 @@ from src.constants import (
     ExperimentResults,
     TrainingConfig,
 )
-from src.data import get_dataset
+from src.data import DATASET_METADATA, get_dataset
 from src.models import get_model
 from src.optimizer import ZSharp
 
@@ -62,6 +61,19 @@ def set_seed(seed: int = DEFAULT_SEED) -> None:
     torch.backends.cudnn.benchmark = False
 
 
+def _detect_best_device() -> torch.device:
+    """Detect the best available hardware device.
+
+    Returns:
+        torch.device: CUDA if available, then MPS, then CPU.
+    """
+    if torch.cuda.is_available():
+        return torch.device(CUDA_DEVICE)
+    if torch.backends.mps.is_available():
+        return torch.device(MPS_DEVICE)
+    return torch.device(CPU_DEVICE)
+
+
 def get_device(config: TrainingConfig) -> torch.device:
     """Get the best available device for training.
 
@@ -72,13 +84,23 @@ def get_device(config: TrainingConfig) -> torch.device:
         torch.device: Best available device (mps/cuda/cpu)
 
     """
-    device_config = config.train.device
+    dev = config.train.device
 
-    if device_config == MPS_DEVICE and torch.backends.mps.is_available():
-        return torch.device(MPS_DEVICE)
-    if device_config == CUDA_DEVICE and torch.cuda.is_available():
-        return torch.device(CUDA_DEVICE)
-    return torch.device(CPU_DEVICE)
+    if dev == AUTO_DEVICE:
+        return _detect_best_device()
+
+    # Determine availability
+    is_cuda = bool(dev == CUDA_DEVICE and torch.cuda.is_available())
+    is_mps = bool(dev == MPS_DEVICE and torch.backends.mps.is_available())
+
+    # Map to final device
+    res = CPU_DEVICE
+    if is_cuda:
+        res = CUDA_DEVICE
+    elif is_mps:
+        res = MPS_DEVICE
+
+    return torch.device(res)
 
 
 @dataclass(frozen=True)
@@ -218,7 +240,11 @@ def _init_components(
 ) -> tuple[nn.Module, torch.optim.Optimizer, bool]:
     """Initialize model and optimizer components."""
     ds_name = config.dataset
-    classes = CIFAR100_NUM_CLASSES if ds_name == CIFAR100_DATASET else 10
+    if ds_name not in DATASET_METADATA:
+        error_msg = f"Unknown dataset: {ds_name}"
+        raise ValueError(error_msg)
+
+    classes = cast("int", DATASET_METADATA[ds_name]["num_classes"])
     model_name = config.model
     model = get_model(model_name, num_classes=classes).to(device)
     optimizer, use_zs = _setup_optimizer(config, model)
