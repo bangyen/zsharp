@@ -23,17 +23,11 @@ from src.constants import (
     EPSILON,
     EPSILON_STD,
     MIN_NUM_FOR_STD,
-    PERCENTAGE_MULTIPLIER,
 )
 
 # Type for optimizer kwargs
 OptimizerKwargs = Union[float, int, bool]
 """Type alias for optimizer keyword arguments."""
-
-# Type for base optimizer constructor
-# Type for base optimizer constructor
-BaseOptimizerConstructor = type[Optimizer]
-"""Type alias for base optimizer constructor functions."""
 
 
 class SAM(Optimizer):
@@ -54,7 +48,7 @@ class SAM(Optimizer):
     def __init__(
         self,
         params: list[torch.nn.Parameter],
-        base_optimizer: BaseOptimizerConstructor,
+        base_optimizer: type[Optimizer],
         rho: float = DEFAULT_RHO,
         **kwargs: OptimizerKwargs,
     ) -> None:
@@ -85,26 +79,17 @@ class SAM(Optimizer):
         ]
         return cast("torch.Tensor", torch.norm(torch.stack(norms), p=2))
 
-    def _apply_to_param(self, p: torch.nn.Parameter, scale: float) -> None:
-        """Apply perturbation to a single parameter."""
-        if p.grad is not None:
-            e = p.grad * scale
-            p.add_(e)
-            state = p.__dict__.setdefault("state", {})
-            state["e"] = e
-
-    def _apply_perturbation(self, scale: float) -> None:
-        """Add e to each parameter."""
-        for group in self.param_groups:
-            for p in group["params"]:
-                self._apply_to_param(p, scale)
-
     def first_step(self) -> None:
         """First step of SAM: perturb parameters in gradient direction."""
         with torch.no_grad():
             grad_norm = self._get_grad_norm()
-            scale = self.rho / (grad_norm + EPSILON)
-            self._apply_perturbation(float(scale))
+            scale = float(self.rho / (grad_norm + EPSILON))
+            for group in self.param_groups:
+                for p in group["params"]:
+                    if p.grad is not None:
+                        e = p.grad * scale
+                        p.add_(e)
+                        p.__dict__.setdefault("state", {})["e"] = e
 
     def second_step(self) -> None:
         """Second step of SAM: remove perturbation and update parameters."""
@@ -157,7 +142,7 @@ class ZSharp(SAM):
     def __init__(
         self,
         params: list[torch.nn.Parameter],
-        base_optimizer: BaseOptimizerConstructor,
+        base_optimizer: type[Optimizer],
         rho: float = 0.05,
         percentile: int = DEFAULT_PERCENTILE,
         **kwargs: OptimizerKwargs,
@@ -193,17 +178,6 @@ class ZSharp(SAM):
 
             self._apply_sam_perturbation()
 
-    def _collect_for_param(
-        self, p: torch.nn.Parameter, s_idx: int
-    ) -> Optional[tuple[torch.Tensor, int, int]]:
-        """Process a single parameter for gradient collection."""
-        if p.grad is None:
-            return None
-        gf = p.grad.detach().flatten()
-        if gf.dtype == torch.float16:
-            gf = gf.float()
-        return gf, s_idx, s_idx + gf.numel()
-
     def _collect_gradients_for_filtering(
         self,
     ) -> tuple[
@@ -215,13 +189,24 @@ class ZSharp(SAM):
         curr_idx = 0
         for g in self.param_groups:
             for p in g["params"]:
-                res = self._collect_for_param(p, curr_idx)
+                res = self._get_flattened_grad(p, curr_idx)
                 if res:
                     gf, start, end = res
                     grads.append(gf)
                     info.append((p, p.grad, start, end))
                     curr_idx = end
         return info, grads
+
+    def _get_flattened_grad(
+        self, p: torch.nn.Parameter, start: int
+    ) -> Optional[tuple[torch.Tensor, int, int]]:
+        """Extract and flatten gradient from a parameter."""
+        if p.grad is None:
+            return None
+        gf = p.grad.detach().flatten()
+        if gf.dtype == torch.float16:
+            gf = gf.float()
+        return gf, start, start + gf.numel()
 
     def _compute_layer_zscores(
         self,
@@ -263,7 +248,7 @@ class ZSharp(SAM):
         return float(
             torch.quantile(
                 all_zscores.abs(),
-                self.percentile / PERCENTAGE_MULTIPLIER,
+                self.percentile / 100,
             ).item(),
         )
 
@@ -298,5 +283,10 @@ class ZSharp(SAM):
     def _apply_sam_perturbation(self) -> None:
         """Apply the final SAM perturbation with filtered gradients."""
         grad_norm = self._get_grad_norm()
-        scale = self.rho / (grad_norm + EPSILON)
-        self._apply_perturbation(float(scale))
+        scale = float(self.rho / (grad_norm + EPSILON))
+        for group in self.param_groups:
+            for p in group["params"]:
+                if p.grad is not None:
+                    e = p.grad * scale
+                    p.add_(e)
+                    p.__dict__.setdefault("state", {})["e"] = e

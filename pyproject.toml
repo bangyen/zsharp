@@ -246,10 +246,8 @@ root_package = "src"
 name = "Layered Architecture"
 type = "layers"
 layers = [
-    "src.experiments",
-    "src.train | src.eval",
+    "src.train",
     "src.optimizer | src.models | src.data",
-    "src.utils",
     "src.constants",
 ]
 
@@ -270,9 +268,7 @@ skips = []  # Don't skip any security checks
 paths_to_mutate = [
     "src/optimizer.py",
     "src/train.py",
-    "src/eval.py",
     "src/models.py",
-    "src/experiments.py"
 ]
 backup = false
 runner = "python -m pytest tests/ -p no:cov"

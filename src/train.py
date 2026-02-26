@@ -8,10 +8,13 @@ from __future__ import annotations
 
 import json
 import logging
+import random
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, cast
+
+import numpy as np
 
 if TYPE_CHECKING:
     from torch.utils.data import DataLoader
@@ -30,7 +33,6 @@ from src.constants import (
     DEFAULT_SEED,
     MAX_GRADIENT_NORM,
     MPS_DEVICE,
-    PERCENTAGE_MULTIPLIER,
     RESULTS_DIR,
     SGD_OPTIMIZER,
     ExperimentResults,
@@ -39,9 +41,25 @@ from src.constants import (
 from src.data import get_dataset
 from src.models import get_model
 from src.optimizer import ZSharp
-from src.utils import set_seed
 
 logger = logging.getLogger(__name__)
+
+
+def set_seed(seed: int = DEFAULT_SEED) -> None:
+    """Set random seed for reproducibility.
+
+    Args:
+        seed: Random seed value for all random number generators
+
+    """
+    random.seed(seed)
+    np.random.seed(seed)  # noqa: NPY002
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 def get_device(config: TrainingConfig) -> torch.device:
@@ -153,10 +171,8 @@ def _validate(
             total_loss += loss.item()
             correct += (outputs.argmax(dim=1) == y).sum().item()
             total += y.size(0)
-            pbar.set_postfix(
-                {"Acc": f"{PERCENTAGE_MULTIPLIER * correct / total:.2f}%"}
-            )
-    acc = PERCENTAGE_MULTIPLIER * correct / total if total > 0 else 0.0
+            pbar.set_postfix({"Acc": f"{100 * correct / total:.2f}%"})
+    acc = 100 * correct / total if total > 0 else 0.0
     return acc, total_loss / len(loader) if len(loader) > 0 else 0.0
 
 
@@ -179,7 +195,7 @@ def _run_epoch(
         correct += (ctx.model(x).argmax(dim=1) == y).sum().item()
         total += y.size(0)
         pbar.set_postfix({"Loss": f"{loss:.4f}"})
-    return epoch_loss / len(loader), PERCENTAGE_MULTIPLIER * correct / total
+    return epoch_loss / len(loader), 100 * correct / total
 
 
 def _save_results(

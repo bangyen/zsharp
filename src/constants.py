@@ -50,12 +50,8 @@ MAX_GRADIENT_NORM = 1.0
 # Z-score filtering constants
 DEFAULT_TOP_K_RATIO = 0.2  # Keep top 20% if no gradients pass threshold
 
-# Percentage conversion
-PERCENTAGE_MULTIPLIER = 100
-
 # Model architecture constants
 RESNET18_NAME = "resnet18"
-VIT_NAME = "vit"
 
 # Dataset names
 CIFAR10_DATASET = "cifar10"
@@ -74,25 +70,8 @@ CPU_DEVICE = "cpu"
 DATA_ROOT = "./data"
 RESULTS_DIR = "results"
 
-# Training configuration keys
-TRAIN_CONFIG_KEY = "train"
-OPTIMIZER_CONFIG_KEY = "optimizer"
-DATASET_CONFIG_KEY = "dataset"
-MODEL_CONFIG_KEY = "model"
-
 # Configuration parameter keys
-BATCH_SIZE_KEY = "batch_size"
-NUM_WORKERS_KEY = "num_workers"
-PIN_MEMORY_KEY = "pin_memory"
-USE_MIXED_PRECISION_KEY = "use_mixed_precision"
-EPOCHS_KEY = "epochs"
-DEVICE_KEY = "device"
-TYPE_KEY = "type"
-LR_KEY = "lr"
-MOMENTUM_KEY = "momentum"
-WEIGHT_DECAY_KEY = "weight_decay"
-RHO_KEY = "rho"
-PERCENTILE_KEY = "percentile"
+# Removed unused *_KEY constants
 
 
 # Type definitions for configuration
