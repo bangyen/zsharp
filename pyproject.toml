@@ -246,7 +246,7 @@ root_package = "src"
 name = "Layered Architecture"
 type = "layers"
 layers = [
-    "src.train",
+    "src.trainer",
     "src.optimizer | src.models | src.data",
     "src.constants",
 ]
@@ -267,7 +267,7 @@ skips = []  # Don't skip any security checks
 [tool.mutmut]
 paths_to_mutate = [
     "src/optimizer.py",
-    "src/train.py",
+    "src/trainer.py",
     "src/models.py",
 ]
 backup = false

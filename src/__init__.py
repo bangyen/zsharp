@@ -8,7 +8,7 @@ from src.constants import ExperimentResults, TrainingConfig
 from src.data import get_dataset
 from src.models import get_model
 from src.optimizer import SAM, ZSharp
-from src.train import train
+from src.trainer import train
 
 __all__ = [
     "SAM",
