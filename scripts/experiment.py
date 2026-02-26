@@ -22,7 +22,7 @@ from src.constants import (
 )
 
 # Import the training function and set_seed
-from src.train import train
+from src.trainer import train
 
 # Configure logging without prefix
 logging.basicConfig(
