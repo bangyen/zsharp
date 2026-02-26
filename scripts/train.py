@@ -9,7 +9,7 @@ import sys
 import yaml
 
 from src.constants import TrainingConfig
-from src.train import train
+from src.trainer import train
 
 
 def signal_handler(_sig, _frame):  # pylint: disable=unused-argument
