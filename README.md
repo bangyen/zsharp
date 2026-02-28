@@ -28,13 +28,15 @@ Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bang
 
 | Scenario / Dataset | Baseline | This Project | Δ Improvement |
 |--------------------|----------|--------------|---------------|
-| CIFAR-10 ResNet-18 | 74.89%   | **80.15%**   | +5.26%        |
+| CIFAR-10 ResNet-18 | 74.89%   | **80.15%***  | +5.26%        |
+
+*\*Benchmark results from full training runs. Local results may vary based on configuration.*
 
 ## Features
 
-- **Z-Score Gradient Filtering** — intelligent gradient filtering with 70th percentile threshold for improved training stability.  
-- **Apple Silicon Optimization** — 4.39x speedup using MPS (Metal Performance Shaders) for faster training.  
-- **Comprehensive Testing** — 100% test coverage with 92 unit tests ensuring reliability and reproducibility.  
+- **Z-Score Gradient Filtering** — Intelligent gradient filtering with a default 70th percentile threshold (configurable) for improved training stability.
+- **Apple Silicon Optimization** — Up to 4.39x speedup using MPS (Metal Performance Shaders) for faster training on Mac.
+- **Comprehensive Testing** — 98% test coverage with 51 unit tests ensuring reliability and reproducibility.
 
 ## Repo Structure
 
@@ -42,7 +44,7 @@ Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bang
 zsharp/
 ├── zsharp_demo.ipynb  # Colab notebook demo
 ├── scripts/           # Training and experiment scripts
-├── tests/             # Unit/integration tests (92 tests)
+├── tests/             # Unit/integration tests (51 tests)
 ├── docs/              # Documentation and training curves
 ├── configs/           # Configuration files
 ├── results/           # Experimental results
@@ -51,14 +53,14 @@ zsharp/
 
 ## Validation
 
-- ✅ Full test coverage (`pytest`)  
-- ✅ Reproducible seeds for experiments  
-- ✅ Benchmark scripts included  
+- ✅ 98% test coverage (`pytest`)
+- ✅ Reproducible seeds for experiments
+- ✅ Benchmark scripts included
 
 ## References
 
-- [Sharpness-Aware Minimization with Z-Score Gradient Filtering](https://arxiv.org/html/2505.02369v3) — Original research paper by Juyoung Yun.  
-- [Sharpness-Aware Minimization](https://arxiv.org/abs/2010.01412) — Foundation SAM algorithm research.  
+- [Sharpness-Aware Minimization with Z-Score Gradient Filtering](https://arxiv.org/html/2505.02369v3) — Original research paper by Juyoung Yun.
+- [Sharpness-Aware Minimization](https://arxiv.org/abs/2010.01412) — Foundation SAM algorithm research.
 
 ## License
 
