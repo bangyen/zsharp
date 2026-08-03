@@ -37,11 +37,87 @@ DATASET_METADATA: dict[str, dict[str, DatasetValue]] = {
     },
 }
 
+_DATASET_CLASSES: dict[str, type[torchvision.datasets.VisionDataset]] = {
+    "cifar10": torchvision.datasets.CIFAR10,
+    "cifar100": torchvision.datasets.CIFAR100,
+}
+
+
+def _get_cifar(
+    dataset_name: str,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    num_workers: int = DEFAULT_NUM_WORKERS,
+    *,
+    pin_memory: bool = DEFAULT_PIN_MEMORY,
+) -> tuple[
+    torch.utils.data.DataLoader[torch.Tensor],
+    torch.utils.data.DataLoader[torch.Tensor],
+]:
+    """Load a CIFAR dataset by name with train and test data loaders.
+
+    Args:
+        dataset_name: Name of the CIFAR dataset ('cifar10' or 'cifar100')
+        batch_size: Batch size for data loaders
+        num_workers: Number of worker processes for data loading
+        pin_memory: Whether to pin memory for faster GPU transfer
+
+    Returns:
+        tuple: (train_loader, test_loader) for the specified CIFAR dataset
+
+    """
+    meta = DATASET_METADATA[dataset_name]
+    dataset_cls = _DATASET_CLASSES[dataset_name]
+
+    transform_train = T.Compose(
+        [
+            T.RandomCrop(meta["image_size"], padding=meta["crop_padding"]),
+            T.RandomHorizontalFlip(),
+            T.ToTensor(),
+            T.Normalize(meta["mean"], meta["std"]),
+        ],
+    )
+    transform_test = T.Compose(
+        [
+            T.ToTensor(),
+            T.Normalize(meta["mean"], meta["std"]),
+        ],
+    )
+
+    trainset = dataset_cls(
+        root=DATA_ROOT,
+        train=True,
+        download=True,
+        transform=transform_train,
+    )
+    trainloader = torch.utils.data.DataLoader(
+        trainset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+    )
+
+    testset = dataset_cls(
+        root=DATA_ROOT,
+        train=False,
+        download=True,
+        transform=transform_test,
+    )
+    testloader = torch.utils.data.DataLoader(
+        testset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+    )
+
+    return trainloader, testloader
+
 
 def get_cifar10(
     batch_size: int = DEFAULT_BATCH_SIZE,
     num_workers: int = DEFAULT_NUM_WORKERS,
-    *,  # Force keyword-only arguments
+    *,
     pin_memory: bool = DEFAULT_PIN_MEMORY,
 ) -> tuple[
     torch.utils.data.DataLoader[torch.Tensor],
@@ -58,57 +134,18 @@ def get_cifar10(
         tuple: (train_loader, test_loader) for CIFAR-10 dataset
 
     """
-    meta = DATASET_METADATA["cifar10"]
-    transform_train = T.Compose(
-        [
-            T.RandomCrop(meta["image_size"], padding=meta["crop_padding"]),
-            T.RandomHorizontalFlip(),
-            T.ToTensor(),
-            T.Normalize(meta["mean"], meta["std"]),  # CIFAR-10 normalization
-        ],
-    )
-    transform_test = T.Compose(
-        [
-            T.ToTensor(),
-            T.Normalize(meta["mean"], meta["std"]),  # CIFAR-10 normalization
-        ],
-    )
-
-    trainset = torchvision.datasets.CIFAR10(
-        root=DATA_ROOT,
-        train=True,
-        download=True,
-        transform=transform_train,
-    )
-    trainloader = torch.utils.data.DataLoader(
-        trainset,
+    return _get_cifar(
+        "cifar10",
         batch_size=batch_size,
-        shuffle=True,
         num_workers=num_workers,
         pin_memory=pin_memory,
     )
-
-    testset = torchvision.datasets.CIFAR10(
-        root=DATA_ROOT,
-        train=False,
-        download=True,
-        transform=transform_test,
-    )
-    testloader = torch.utils.data.DataLoader(
-        testset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=pin_memory,
-    )
-
-    return trainloader, testloader
 
 
 def get_cifar100(
     batch_size: int = DEFAULT_BATCH_SIZE,
     num_workers: int = DEFAULT_NUM_WORKERS,
-    *,  # Force keyword-only arguments
+    *,
     pin_memory: bool = DEFAULT_PIN_MEMORY,
 ) -> tuple[
     torch.utils.data.DataLoader[torch.Tensor],
@@ -125,64 +162,19 @@ def get_cifar100(
         tuple: (train_loader, test_loader) for CIFAR-100 dataset
 
     """
-    meta = DATASET_METADATA["cifar100"]
-    transform_train = T.Compose(
-        [
-            T.RandomCrop(meta["image_size"], padding=meta["crop_padding"]),
-            T.RandomHorizontalFlip(),
-            T.ToTensor(),
-            T.Normalize(
-                meta["mean"],
-                meta["std"],
-            ),  # CIFAR-100 normalization
-        ],
-    )
-    transform_test = T.Compose(
-        [
-            T.ToTensor(),
-            T.Normalize(
-                meta["mean"],
-                meta["std"],
-            ),  # CIFAR-100 normalization
-        ],
-    )
-
-    trainset = torchvision.datasets.CIFAR100(
-        root=DATA_ROOT,
-        train=True,
-        download=True,
-        transform=transform_train,
-    )
-    trainloader = torch.utils.data.DataLoader(
-        trainset,
+    return _get_cifar(
+        "cifar100",
         batch_size=batch_size,
-        shuffle=True,
         num_workers=num_workers,
         pin_memory=pin_memory,
     )
-
-    testset = torchvision.datasets.CIFAR100(
-        root=DATA_ROOT,
-        train=False,
-        download=True,
-        transform=transform_test,
-    )
-    testloader = torch.utils.data.DataLoader(
-        testset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=pin_memory,
-    )
-
-    return trainloader, testloader
 
 
 def get_dataset(
     dataset_name: str,
     batch_size: int = DEFAULT_BATCH_SIZE,
     num_workers: int = DEFAULT_NUM_WORKERS,
-    *,  # Force keyword-only arguments
+    *,
     pin_memory: bool = DEFAULT_PIN_MEMORY,
 ) -> tuple[
     torch.utils.data.DataLoader[torch.Tensor],
@@ -203,9 +195,12 @@ def get_dataset(
         ValueError: If dataset name is not supported
 
     """
-    if dataset_name == "cifar10":
-        return get_cifar10(batch_size, num_workers, pin_memory=pin_memory)
-    if dataset_name == "cifar100":
-        return get_cifar100(batch_size, num_workers, pin_memory=pin_memory)
+    if dataset_name in _DATASET_CLASSES:
+        return _get_cifar(
+            dataset_name,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+        )
     error_msg = f"Unknown dataset: {dataset_name}"
     raise ValueError(error_msg)

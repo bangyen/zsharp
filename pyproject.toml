@@ -88,6 +88,7 @@ filterwarnings = [
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
 exclude = [
+    "*.ipynb",   # Jupyter notebooks (Colab demo, not linted)
     ".bzr",
     ".direnv",
     ".eggs",
@@ -233,6 +234,14 @@ strict_optional = true
 
 [[tool.mypy.overrides]]
 module = "src.constants"
+disallow_any_explicit = false
+
+[[tool.mypy.overrides]]
+module = "src.data"
+disallow_any_unimported = false
+
+[[tool.mypy.overrides]]
+module = "src.optimizer"
 disallow_any_explicit = false
 
 

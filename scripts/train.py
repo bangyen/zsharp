@@ -3,20 +3,12 @@
 
 import argparse
 import logging
-import signal
 import sys
 
 import yaml
 
 from src.constants import TrainingConfig
 from src.trainer import train
-
-
-def signal_handler(_sig, _frame):  # pylint: disable=unused-argument
-    """Handle Ctrl+C gracefully by logging and exiting cleanly."""
-    logger = logging.getLogger(__name__)
-    logger.warning("Interrupted by user. Cleaning up...")
-    sys.exit(0)
 
 
 def main():
@@ -31,9 +23,6 @@ def main():
     )
 
     args = parser.parse_args()
-
-    # Set up signal handler for graceful interruption
-    signal.signal(signal.SIGINT, signal_handler)
 
     # Setup logging without prefix
     level = logging.INFO if args.verbose else logging.WARNING

@@ -4,7 +4,6 @@ import argparse
 import json
 import logging
 import os
-import signal
 import sys
 import tempfile
 import time
@@ -100,15 +99,15 @@ def run_comparison_experiments(fast_mode=False):
                 "status": "success",
                 "history": [
                     {
-                        "epoch": i + 1,
-                        "train_accuracy": output.train_accuracies[i]
-                        if i < len(output.train_accuracies)
+                        "epoch": epoch_idx + 1,
+                        "train_accuracy": output.train_accuracies[epoch_idx]
+                        if epoch_idx < len(output.train_accuracies)
                         else 0,
-                        "test_accuracy": output.test_accuracies[i]
-                        if i < len(output.test_accuracies)
+                        "test_accuracy": output.test_accuracies[epoch_idx]
+                        if epoch_idx < len(output.test_accuracies)
                         else 0,
                     }
-                    for i in range(len(output.test_accuracies))
+                    for epoch_idx in range(len(output.test_accuracies))
                 ],
             }
         else:
@@ -216,12 +215,6 @@ def run_hyperparameter_study():
     return results
 
 
-def signal_handler(_sig, _frame):
-    """Handle Ctrl+C gracefully by logging and exiting cleanly."""
-    logger.warning("Interrupted by user. Cleaning up...")
-    sys.exit(0)
-
-
 if __name__ == "__main__":
     """Main entry point for running ZSharp paper reproduction experiments."""
     # Parse command line arguments
@@ -239,9 +232,6 @@ if __name__ == "__main__":
         help="Run hyperparameter study instead of comparison experiments",
     )
     args = parser.parse_args()
-
-    # Set up signal handler for graceful interruption
-    signal.signal(signal.SIGINT, signal_handler)
 
     try:
         if args.hp_study:
