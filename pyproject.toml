@@ -1,6 +1,6 @@
 [project]
 name = "zsharp"
-version = "0.1.0"
+version = "0.2.0"
 description = "Sharpness-Aware Minimization with Z-Score Gradient Filtering"
 authors = [
     {name = "Bangyen Pham", email = "bangyen99@gmail.com"}
