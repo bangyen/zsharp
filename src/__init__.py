@@ -8,7 +8,7 @@ from src.constants import ExperimentResults, TrainingConfig
 from src.data import get_dataset
 from src.models import get_model
 from src.optimizer import SAM, ZSharp
-from src.trainer import train
+from src.trainer import get_device, set_seed, train
 
 __all__ = [
     "SAM",
@@ -16,6 +16,8 @@ __all__ = [
     "TrainingConfig",
     "ZSharp",
     "get_dataset",
+    "get_device",
     "get_model",
+    "set_seed",
     "train",
 ]

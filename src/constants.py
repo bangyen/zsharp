@@ -4,7 +4,7 @@ This module defines all the magic numbers and configuration values
 that were previously hardcoded throughout the codebase.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # Random seed for reproducibility
 DEFAULT_SEED = 42
@@ -64,20 +64,29 @@ class OptimizerConfig(BaseModel):
     """Configuration for the optimizer."""
 
     type: str = Field(default=ZSHARP_OPTIMIZER)
-    lr: float = Field(default=DEFAULT_LEARNING_RATE)
-    momentum: float = Field(default=DEFAULT_MOMENTUM)
-    weight_decay: float = Field(default=DEFAULT_WEIGHT_DECAY)
-    rho: float = Field(default=DEFAULT_RHO)
-    percentile: int = Field(default=DEFAULT_PERCENTILE)
+    lr: float = Field(default=DEFAULT_LEARNING_RATE, gt=0)
+    momentum: float = Field(default=DEFAULT_MOMENTUM, ge=0, lt=1)
+    weight_decay: float = Field(default=DEFAULT_WEIGHT_DECAY, ge=0)
+    rho: float = Field(default=DEFAULT_RHO, gt=0)
+    percentile: int = Field(default=DEFAULT_PERCENTILE, ge=0, le=100)
+
+    @field_validator("type")
+    @classmethod
+    def _validate_type(cls, value: str) -> str:
+        """Reject unknown optimizer types instead of silently using ZSharp."""
+        if value not in (SGD_OPTIMIZER, ZSHARP_OPTIMIZER):
+            msg = f"Unknown optimizer type: {value}"
+            raise ValueError(msg)
+        return value
 
 
 class TrainingSubConfig(BaseModel):
     """Sub-configuration for training parameters."""
 
     device: str = Field(default=AUTO_DEVICE)
-    batch_size: int = Field(default=DEFAULT_BATCH_SIZE)
-    epochs: int = Field(default=10)
-    num_workers: int = Field(default=DEFAULT_NUM_WORKERS)
+    batch_size: int = Field(default=DEFAULT_BATCH_SIZE, gt=0)
+    epochs: int = Field(default=10, gt=0)
+    num_workers: int = Field(default=DEFAULT_NUM_WORKERS, ge=0)
     pin_memory: bool = Field(default=DEFAULT_PIN_MEMORY)
     use_mixed_precision: bool = Field(default=False)
 

@@ -1,5 +1,7 @@
 """Comprehensive experiment runner for ZSharp paper reproduction."""
 
+from __future__ import annotations
+
 import argparse
 import json
 import logging
@@ -7,6 +9,7 @@ import os
 import sys
 import tempfile
 import time
+from typing import Optional
 
 import yaml
 
@@ -18,10 +21,9 @@ from src.constants import (
     DEFAULT_RHO,
     DEFAULT_WEIGHT_DECAY,
     RESULTS_DIR,
+    ExperimentResults,
     TrainingConfig,
 )
-
-# Import the training function and set_seed
 from src.trainer import train
 
 # Configure logging without prefix
@@ -36,8 +38,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def run_experiment(config_path):
-    """Run a single experiment and save results"""
+def run_experiment(config_path: str) -> Optional[ExperimentResults]:
+    """Run a single experiment and save results."""
     # Load and validate config
     with open(config_path) as f:
         config_dict = yaml.safe_load(f)
@@ -59,7 +61,7 @@ def run_experiment(config_path):
         return None
 
 
-def run_comparison_experiments(fast_mode=False):
+def run_comparison_experiments(fast_mode: bool = False) -> dict:
     """Run comparison experiments as described in the ZSharp paper"""
     if fast_mode:
         experiments = [
@@ -138,7 +140,7 @@ def run_comparison_experiments(fast_mode=False):
     return results
 
 
-def run_hyperparameter_study():
+def run_hyperparameter_study() -> dict:
     """Run hyperparameter study for percentile threshold as mentioned in the paper"""
     percentiles = [50, 60, 70, 80, 90]
     results = {}

@@ -4,10 +4,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
+from pydantic import ValidationError
 from torch import nn
 
 from src.constants import ExperimentResults, TrainingConfig
-from src.trainer import get_device, train
+from src.trainer import (
+    _detect_best_device,
+    _init_components,
+    get_device,
+    set_seed,
+    train,
+)
 
 
 class SimpleTestModel(nn.Module):
@@ -27,6 +34,41 @@ class SimpleTestModel(nn.Module):
         x = self.pool(x)
         x = x.view(x.size(0), -1)
         return self.linear(x)
+
+
+class TestConfigValidation:
+    """Test cases for configuration validation"""
+
+    def test_rejects_unknown_optimizer_type(self):
+        """Test unknown optimizer type raises validation error"""
+        with pytest.raises(ValidationError, match="Unknown optimizer type"):
+            TrainingConfig.model_validate({"optimizer": {"type": "adam"}})
+
+    def test_rejects_percentile_out_of_range(self):
+        """Test percentile outside [0, 100] raises validation error"""
+        with pytest.raises(ValidationError):
+            TrainingConfig.model_validate({"optimizer": {"percentile": 150}})
+
+    def test_rejects_non_positive_learning_rate(self):
+        """Test non-positive learning rate raises validation error"""
+        with pytest.raises(ValidationError):
+            TrainingConfig.model_validate({"optimizer": {"lr": -0.1}})
+
+    def test_rejects_non_positive_epochs(self):
+        """Test non-positive epoch count raises validation error"""
+        with pytest.raises(ValidationError):
+            TrainingConfig.model_validate({"train": {"epochs": 0}})
+
+    def test_accepts_valid_config(self):
+        """Test a valid config validates without error"""
+        config = TrainingConfig.model_validate(
+            {
+                "optimizer": {"type": "sgd", "percentile": 70, "lr": 0.01},
+                "train": {"epochs": 10},
+            }
+        )
+        assert config.optimizer.type == "sgd"
+        assert config.train.epochs == 10
 
 
 class TestTrain:
@@ -84,6 +126,39 @@ class TestTrain:
         )
         device = get_device(config)
         assert device.type == "cpu"
+
+    def test_set_seed_cuda(self):
+        """Test set_seed seeds CUDA generators when CUDA is available."""
+        with (
+            patch("torch.cuda.is_available", return_value=True),
+            patch("torch.cuda.manual_seed") as mock_manual_seed,
+            patch("torch.cuda.manual_seed_all") as mock_manual_seed_all,
+        ):
+            set_seed(42)
+        mock_manual_seed.assert_called_once_with(42)
+        # torch.manual_seed internally seeds CUDA, so this may fire twice
+        mock_manual_seed_all.assert_any_call(42)
+
+    def test_detect_best_device_cuda(self):
+        """Test device detection prefers CUDA when available."""
+        with patch("torch.cuda.is_available", return_value=True):
+            device = _detect_best_device()
+        assert device.type == "cuda"
+
+    def test_detect_best_device_cpu(self):
+        """Test device detection falls back to CPU without an accelerator."""
+        with (
+            patch("torch.cuda.is_available", return_value=False),
+            patch("torch.backends.mps.is_available", return_value=False),
+        ):
+            device = _detect_best_device()
+        assert device.type == "cpu"
+
+    def test_init_components_unknown_dataset(self):
+        """Test init components rejects unknown datasets."""
+        config = TrainingConfig.model_validate({"dataset": "unknown"})
+        with pytest.raises(ValueError, match="Unknown dataset"):
+            _init_components(config, torch.device("cpu"))
 
     @patch("src.trainer.get_dataset")
     @patch("src.trainer.get_model")

@@ -146,8 +146,10 @@ train:
   use_mixed_precision: false
 ```
 
-The optimizer `type` accepts `zsharp` or `sgd`; any value other than `sgd`
-is treated as `zsharp`.
+The optimizer `type` accepts `zsharp` or `sgd`; any other value is rejected
+at validation time rather than silently defaulting to `zsharp`. Numeric fields
+are also range-checked (`percentile` in [0, 100], positive `lr`, `rho`, and
+`epochs`, etc.).
 
 ## Usage Examples
 
