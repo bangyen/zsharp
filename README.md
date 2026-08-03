@@ -36,7 +36,7 @@ Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bang
 
 - **Z-Score Gradient Filtering** — Intelligent gradient filtering with a default 70th percentile threshold (configurable) for improved training stability.
 - **Apple Silicon Optimization** — Up to 4.39x speedup using MPS (Metal Performance Shaders) for faster training on Mac.
-- **Comprehensive Testing** — 98% test coverage with 51 unit tests ensuring reliability and reproducibility.
+- **Comprehensive Testing** — 95%+ test coverage with 51 unit tests ensuring reliability and reproducibility.
 
 ## Repo Structure
 
@@ -53,7 +53,7 @@ zsharp/
 
 ## Validation
 
-- ✅ 98% test coverage (`pytest`)
+- ✅ 95%+ test coverage (`pytest`)
 - ✅ Reproducible seeds for experiments
 - ✅ Benchmark scripts included
 

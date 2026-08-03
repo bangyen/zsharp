@@ -6,6 +6,7 @@ import logging
 import os
 import signal
 import sys
+import tempfile
 import time
 
 import yaml
@@ -163,34 +164,37 @@ def run_hyperparameter_study():
             "train": {
                 "batch_size": DEFAULT_BATCH_SIZE,
                 "epochs": 10,
-                "device": "mps",
+                "device": "auto",
                 "num_workers": DEFAULT_NUM_WORKERS,
                 "pin_memory": False,
                 "use_mixed_precision": True,
             },
         }
 
-        # Save temporary config
-        temp_config_path = f"configs/temp_percentile_{percentile}.yaml"
-        with open(temp_config_path, "w") as f:
-            yaml.dump(config, f)
+        # Save temporary config to the system temp dir so that tracked
+        # directories are never polluted and nothing leaks on interrupt
+        fd, temp_config_path = tempfile.mkstemp(
+            prefix=f"percentile_{percentile}_", suffix=".yaml"
+        )
+        try:
+            with os.fdopen(fd, "w") as f:
+                yaml.dump(config, f)
 
-        # Run experiment
-        start_time = time.time()
-        output = run_experiment(temp_config_path)
-        end_time = time.time()
+            # Run experiment
+            start_time = time.time()
+            output = run_experiment(temp_config_path)
+            end_time = time.time()
 
-        if output:
-            results[f"percentile_{percentile}"] = {
-                "percentile": percentile,
-                "final_test_accuracy": output.final_test_accuracy,
-                "final_test_loss": output.final_test_loss,
-                "runtime": end_time - start_time,
-                "status": "success",
-            }
-
-        # Clean up
-        os.remove(temp_config_path)
+            if output:
+                results[f"percentile_{percentile}"] = {
+                    "percentile": percentile,
+                    "final_test_accuracy": output.final_test_accuracy,
+                    "final_test_loss": output.final_test_loss,
+                    "runtime": end_time - start_time,
+                    "status": "success",
+                }
+        finally:
+            os.remove(temp_config_path)
         logger.info("")
 
     # Print summary

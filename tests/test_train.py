@@ -138,7 +138,7 @@ class TestTrain:
             assert results.train_accuracies is not None
             assert results.total_training_time is not None
             assert results.device is not None
-            assert results.optimizer_type is not None
+            assert results.optimizer_type == "sgd"
 
     @patch("src.trainer.get_dataset")
     @patch("src.trainer.get_model")
