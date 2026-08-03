@@ -125,5 +125,6 @@ dmypy.json
 .pyre/
 
 # Project-specific
+.claude/
 results/
 data/
