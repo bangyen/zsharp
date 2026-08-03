@@ -231,6 +231,12 @@ class TestSAM:
         # Verify optimizer is still in valid state
         assert len(sam.param_groups) > 0
 
+    def test_sam_get_grad_norm_without_gradients(self):
+        """Test grad norm is zero when no parameter has a gradient."""
+        param = nn.Parameter(torch.randn(2, 2))
+        sam = SAM([param], optim.SGD, rho=DEFAULT_RHO, lr=0.01)
+        assert sam._get_grad_norm().item() == 0.0
+
 
 class TestZSharp:
     """Test cases for ZSharp optimizer"""
