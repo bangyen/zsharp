@@ -76,6 +76,8 @@ class SAM(Optimizer):
             for p in group["params"]
             if p.grad is not None
         ]
+        if not norms:
+            return torch.tensor(0.0)
         return cast("torch.Tensor", torch.norm(torch.stack(norms), p=2))
 
     def first_step(self) -> None:
@@ -193,32 +195,30 @@ class ZSharp(SAM):
     def _collect_gradients_for_filtering(
         self,
     ) -> tuple[
-        list[tuple[torch.nn.Parameter, torch.Tensor, int, int]],
+        list[tuple[torch.nn.Parameter, torch.Tensor]],
         list[torch.Tensor],
     ]:
         """Collect and flatten gradients for each layer."""
-        info, grads = [], []
-        curr_idx = 0
+        info: list[tuple[torch.nn.Parameter, torch.Tensor]] = []
+        grads: list[torch.Tensor] = []
         for g in self.param_groups:
             for p in g["params"]:
-                res = self._get_flattened_grad(p, curr_idx)
-                if res:
-                    gf, start, end = res
+                gf = self._get_flattened_grad(p)
+                if gf is not None:
                     grads.append(gf)
-                    info.append((p, p.grad, start, end))
-                    curr_idx = end
+                    info.append((p, p.grad))
         return info, grads
 
     def _get_flattened_grad(
-        self, p: torch.nn.Parameter, start: int
-    ) -> Optional[tuple[torch.Tensor, int, int]]:
+        self, p: torch.nn.Parameter
+    ) -> Optional[torch.Tensor]:
         """Extract and flatten gradient from a parameter."""
         if p.grad is None:
             return None
         gf = p.grad.detach().flatten()
         if gf.dtype == torch.float16:
             gf = gf.float()
-        return gf, start, start + gf.numel()
+        return gf
 
     def _compute_layer_zscores(
         self,
@@ -266,9 +266,7 @@ class ZSharp(SAM):
 
     def _apply_gradient_filtering(
         self,
-        layer_grad_info: list[
-            tuple[torch.nn.Parameter, torch.Tensor, int, int]
-        ],
+        layer_grad_info: list[tuple[torch.nn.Parameter, torch.Tensor]],
         zscores_list: list[torch.Tensor],
         threshold: float,
     ) -> None:
@@ -279,7 +277,7 @@ class ZSharp(SAM):
             zscores_list: Precomputed Z-scores.
             threshold: Absolute Z-score threshold.
         """
-        for i, (p, original_grad, _, _) in enumerate(layer_grad_info):
+        for i, (p, original_grad) in enumerate(layer_grad_info):
             layer_zscores = zscores_list[i]
             mask = layer_zscores.abs() >= threshold
 
