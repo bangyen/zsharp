@@ -74,7 +74,6 @@ exclude = ["venv", ".git", "__pycache__", ".pytest_cache", "tests", "scripts"]
 addopts = "-v --tb=short"
 testpaths = ["tests"]
 markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "mps: marks tests that require MPS support",
 ]
 filterwarnings = [
