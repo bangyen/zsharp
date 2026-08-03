@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from torch.utils.data import DataLoader
 
 import torch
-import torch.nn
 import torch.optim
 from torch import nn, optim
 from tqdm import tqdm
@@ -34,6 +33,7 @@ from src.constants import (
     MPS_DEVICE,
     RESULTS_DIR,
     SGD_OPTIMIZER,
+    ZSHARP_OPTIMIZER,
     ExperimentResults,
     TrainingConfig,
 )
@@ -118,8 +118,17 @@ class TrainingContext:
 def _setup_optimizer(
     config: TrainingConfig,
     model: nn.Module,
-) -> tuple[torch.optim.Optimizer, bool]:
-    """Initialize the optimizer based on configuration."""
+) -> tuple[torch.optim.Optimizer, str]:
+    """Initialize the optimizer based on configuration.
+
+    Args:
+        config: Training configuration.
+        model: Model whose parameters will be optimized.
+
+    Returns:
+        tuple: The optimizer and its resolved type
+        (``SGD_OPTIMIZER`` or ``ZSHARP_OPTIMIZER``).
+    """
     opt_config = config.optimizer
     opt_type = opt_config.type
     params = list(model.parameters())
@@ -131,7 +140,7 @@ def _setup_optimizer(
         optimizer: torch.optim.Optimizer = optim.SGD(
             params, lr=lr, momentum=momentum, weight_decay=wd
         )
-        return optimizer, False
+        return optimizer, SGD_OPTIMIZER
 
     # ZSharp optimizer
     optimizer = ZSharp(
@@ -143,7 +152,7 @@ def _setup_optimizer(
         weight_decay=wd,
         percentile=int(opt_config.percentile),
     )
-    return optimizer, True
+    return optimizer, ZSHARP_OPTIMIZER
 
 
 def _run_train_step(
@@ -237,7 +246,7 @@ def _save_results(
 def _init_components(
     config: TrainingConfig,
     device: torch.device,
-) -> tuple[nn.Module, torch.optim.Optimizer, bool]:
+) -> tuple[nn.Module, torch.optim.Optimizer, str]:
     """Initialize model and optimizer components."""
     ds_name = config.dataset
     if ds_name not in DATASET_METADATA:
@@ -247,8 +256,8 @@ def _init_components(
     classes = cast("int", DATASET_METADATA[ds_name]["num_classes"])
     model_name = config.model
     model = get_model(model_name=model_name, num_classes=classes).to(device)
-    optimizer, use_zs = _setup_optimizer(config, model)
-    return model, optimizer, use_zs
+    optimizer, opt_type = _setup_optimizer(config, model)
+    return model, optimizer, opt_type
 
 
 def _prepare_training(
@@ -258,42 +267,61 @@ def _prepare_training(
     TrainingContext,
     tuple[DataLoader[torch.Tensor], DataLoader[torch.Tensor]],
     int,
+    str,
 ]:
-    """Prepare training context and loaders."""
+    """Prepare training context and loaders.
+
+    Returns:
+        tuple: Training context, data loaders, epoch count, and the
+        resolved optimizer type.
+    """
     cfg = config.train
-    m, opt, uz = _init_components(config, device)
+    m, opt, opt_type = _init_components(config, device)
+    use_zsharp = opt_type == ZSHARP_OPTIMIZER
     uh = bool(device.type == "mps" and cfg.use_mixed_precision)
     if uh:
         m = m.half()
-    ctx = TrainingContext(m, opt, nn.CrossEntropyLoss(), device, uz, uh)
+    ctx = TrainingContext(
+        m, opt, nn.CrossEntropyLoss(), device, use_zsharp, uh
+    )
     ldrs = get_dataset(
         dataset_name=config.dataset,
         batch_size=int(cfg.batch_size),
         num_workers=int(cfg.num_workers),
         pin_memory=cfg.pin_memory,
     )
-    return ctx, ldrs, int(cfg.epochs)
+    return ctx, ldrs, int(cfg.epochs), opt_type
+
+
+@dataclass(frozen=True)
+class TrainingHistory:
+    """Accumulated per-epoch metrics and final results."""
+
+    train_losses: list[float]
+    train_accuracies: list[float]
+    test_accuracies: list[float]
+    final_test_accuracy: float
+    final_test_loss: float
+    total_training_time: float
 
 
 def _create_results(
     config: TrainingConfig,
     ctx: TrainingContext,
-    metrics: tuple[list[float], list[float], list[float]],
-    final: tuple[float, float],
-    duration: float,
+    history: TrainingHistory,
+    opt_type: str,
 ) -> ExperimentResults:
     """Consolidate results into dictionary."""
-    fa, fl = final
     return ExperimentResults(
         config=config,
-        final_test_accuracy=fa,
-        final_test_loss=fl,
-        train_losses=metrics[0],
-        train_accuracies=metrics[1],
-        test_accuracies=metrics[2],
-        total_training_time=duration,
+        final_test_accuracy=history.final_test_accuracy,
+        final_test_loss=history.final_test_loss,
+        train_losses=history.train_losses,
+        train_accuracies=history.train_accuracies,
+        test_accuracies=history.test_accuracies,
+        total_training_time=history.total_training_time,
         device=str(ctx.device),
-        optimizer_type="zsharp",
+        optimizer_type=opt_type,
     )
 
 
@@ -301,7 +329,9 @@ def train(config: TrainingConfig) -> Optional[ExperimentResults]:
     """Train a model using the provided configuration."""
     set_seed(DEFAULT_SEED)
     device = get_device(config)
-    ctx, (train_ldr, test_ldr), epochs = _prepare_training(config, device)
+    ctx, (train_ldr, test_ldr), epochs, opt_type = _prepare_training(
+        config, device
+    )
     start_time = time.time()
     l_list, t_list, v_list = [], [], []
 
@@ -318,12 +348,19 @@ def train(config: TrainingConfig) -> Optional[ExperimentResults]:
     except KeyboardInterrupt:
         return None
 
+    final_acc, final_loss = _validate(ctx, test_ldr)
     res = _create_results(
         config,
         ctx,
-        (l_list, t_list, v_list),
-        _validate(ctx, test_ldr),
-        time.time() - start_time,
+        TrainingHistory(
+            train_losses=l_list,
+            train_accuracies=t_list,
+            test_accuracies=v_list,
+            final_test_accuracy=final_acc,
+            final_test_loss=final_loss,
+            total_training_time=time.time() - start_time,
+        ),
+        opt_type,
     )
-    _save_results(res, config.dataset, config.model, "zsharp")
+    _save_results(res, config.dataset, config.model, opt_type)
     return res

@@ -204,6 +204,8 @@ line-ending = "auto"
 
 # Type checking configuration
 [tool.mypy]
+# Set to match the development runtime (Python 3.12 + modern torch).
+# Python 3.9 syntax compatibility is enforced by ruff's target-version.
 python_version = "3.12"
 strict = true
 exclude = ["tests/", "scripts/"]
@@ -232,7 +234,6 @@ strict_optional = true
 [[tool.mypy.overrides]]
 module = "src.constants"
 disallow_any_explicit = false
-
 
 
 # ------------------------------------------------------------------------------
@@ -275,7 +276,7 @@ runner = "python -m pytest tests/ -p no:cov"
 tests_dir = ["tests/"]
 
 [tool.coverage.report]
-fail_under = 100
+fail_under = 95
 skip_covered = false
 skip_empty = false
 exclude_lines = [

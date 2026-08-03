@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 import torch
-import torch.nn
 import torch.optim
 from torch.optim import Optimizer
 
@@ -156,7 +155,7 @@ class ZSharp(SAM):
         self,
         params: list[torch.nn.Parameter],
         base_optimizer: type[Optimizer],
-        rho: float = 0.05,
+        rho: float = DEFAULT_RHO,
         percentile: int = DEFAULT_PERCENTILE,
         **kwargs: OptimizerKwargs,
     ) -> None:
