@@ -159,11 +159,18 @@ def _run_train_step(
     ctx: TrainingContext,
     x: torch.Tensor,
     y: torch.Tensor,
-) -> float:
-    """Perform a single training step."""
+) -> tuple[float, torch.Tensor]:
+    """Perform a single training step.
+
+    Returns:
+        tuple: The loss and the model predictions from the first forward
+        pass, so callers can compute training accuracy without re-running
+        the model.
+    """
     if ctx.use_zsharp:
         # ZSharp two-step training
-        loss = ctx.criterion(ctx.model(x), y)
+        outputs = ctx.model(x)
+        loss = ctx.criterion(outputs, y)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(
             ctx.model.parameters(), MAX_GRADIENT_NORM
@@ -175,13 +182,14 @@ def _run_train_step(
     else:
         # Standard SGD training
         ctx.optimizer.zero_grad()
-        loss = ctx.criterion(ctx.model(x), y)
+        outputs = ctx.model(x)
+        loss = ctx.criterion(outputs, y)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(
             ctx.model.parameters(), MAX_GRADIENT_NORM
         )
         ctx.optimizer.step()
-    return float(loss.item())
+    return float(loss.item()), outputs.detach()
 
 
 def _validate(
@@ -221,9 +229,9 @@ def _run_epoch(
         x, y = x.to(ctx.device), y.to(ctx.device)
         if ctx.use_half:
             x = x.half()
-        loss = _run_train_step(ctx, x, y)
+        loss, outputs = _run_train_step(ctx, x, y)
         epoch_loss += loss
-        correct += (ctx.model(x).argmax(dim=1) == y).sum().item()
+        correct += (outputs.argmax(dim=1) == y).sum().item()
         total += y.size(0)
         pbar.set_postfix({"Loss": f"{loss:.4f}"})
     return epoch_loss / len(loader), 100 * correct / total

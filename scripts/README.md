@@ -35,17 +35,16 @@ python -m scripts.experiment --hp-study       # Run hyperparameter study
 - Fast mode for testing
 - Comprehensive logging and result saving
 
-## Makefile Integration
+## Task Runner Integration
 
-All scripts are integrated with the project Makefile:
+All scripts are integrated with the project's task runner (`just`):
 
 ```bash
-make run-train        # Run ZSharp training
-make run-train-sgd    # Run SGD baseline
-make run-train-quick  # Run quick experiment
-make run-experiments  # Run comprehensive experiments
-make demo             # Run quick demo
+just run-train        # Run ZSharp training (configs/zsharp_baseline.yaml)
+just run-experiments  # Run comprehensive experiments
 ```
+
+Run `just` (or `just --list`) to see the full set of targets.
 
 ## Configuration Files
 
