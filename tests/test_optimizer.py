@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Bangyen Pham
 """Test suite for optimizer implementations (SAM and ZSharp)."""
 
 import pytest

@@ -1,3 +1,5 @@
+# Copyright (c) 2025 Bangyen Pham
+
 import multiprocessing
 
 # Monkeypatch set_start_method to avoid RuntimeError when called multiple times

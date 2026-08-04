@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Bangyen Pham
 """Model loading utilities for various architectures.
 
 This module provides functions to load and configure different

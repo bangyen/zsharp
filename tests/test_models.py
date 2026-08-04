@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Bangyen Pham
 """Test suite for model creation and management functions."""
 
 import pytest

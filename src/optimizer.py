@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Bangyen Pham
 """Optimizer implementations for SAM and ZSharp.
 
 This module provides implementations of SAM (Sharpness-Aware Minimization)

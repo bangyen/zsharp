@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Bangyen Pham
 """Constants used throughout the ZSharp codebase.
 
 This module defines all the magic numbers and configuration values

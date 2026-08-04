@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Bangyen Pham
 """Property-based tests for optimizer stability using Hypothesis."""
 
 import torch

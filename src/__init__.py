@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Bangyen Pham
 """ZSharp: Sharpness-Aware Minimization with Z-Score Gradient Filtering.
 
 This package provides implementations of SAM (Sharpness-Aware Minimization)
