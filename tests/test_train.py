@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Bangyen Pham
 """Test suite for training functions and utilities."""
 
 from unittest.mock import MagicMock, patch

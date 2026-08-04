@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Bangyen Pham
 """Training utilities for deep learning models.
 
 This module provides comprehensive training functionality including

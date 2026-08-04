@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Bangyen Pham
 """Comprehensive experiment runner for ZSharp paper reproduction."""
 
 from __future__ import annotations

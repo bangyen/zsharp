@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Copyright (c) 2025 Bangyen Pham
 """Simple training script for running individual experiments."""
 
 import argparse

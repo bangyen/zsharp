@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Bangyen Pham
 """Data loading utilities for CIFAR-10 and CIFAR-100 datasets.
 
 This module provides functions to load and preprocess CIFAR-10 and CIFAR-100

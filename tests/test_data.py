@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Bangyen Pham
 """Test suite for data loading and processing functions."""
 
 from unittest.mock import patch
