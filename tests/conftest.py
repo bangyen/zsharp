@@ -2,6 +2,8 @@
 
 import multiprocessing
 
+import pytest
+
 # Monkeypatch set_start_method to avoid RuntimeError when called multiple times
 # This is specifically to fix mutmut on macOS with Python 3.12+
 _orig_set_start_method = multiprocessing.set_start_method
@@ -31,3 +33,14 @@ try:
     mutmut.__main__.record_trampoline_hit = _patched_record_trampoline_hit
 except (ImportError, AttributeError):
     pass
+
+
+@pytest.fixture(autouse=True)
+def _isolate_results_dir(tmp_path, monkeypatch):
+    """Redirect training result writes to a temp dir.
+
+    train() calls _save_results unconditionally, so without this every test
+    that trains would overwrite the real results/ directory with throwaway
+    output.
+    """
+    monkeypatch.setattr("src.trainer.RESULTS_DIR", str(tmp_path / "results"))
