@@ -164,7 +164,7 @@ class TestSAM:
         # Check that parameters have been updated
         updated = any(
             not torch.allclose(p.data, op)
-            for p, op in zip(model.parameters(), original_params)
+            for p, op in zip(model.parameters(), original_params, strict=True)
         )
         assert updated, "Parameters should be updated after sam.step(closure)"
 
@@ -650,6 +650,7 @@ class TestOptimizerIntegration:
         for (_name1, param1), (_name2, param2) in zip(
             model1.named_parameters(),
             model2.named_parameters(),
+            strict=True,
         ):
             param2.data = param1.data.clone()
 
@@ -689,6 +690,7 @@ class TestOptimizerIntegration:
         for (_name1, param1), (_name2, param2) in zip(
             model1.named_parameters(),
             model2.named_parameters(),
+            strict=True,
         ):
             if not torch.allclose(param1.data, param2.data):
                 diverged = True
