@@ -22,6 +22,7 @@ from src.constants import (
     DEFAULT_TOP_K_RATIO,
     EPSILON,
     EPSILON_STD,
+    MAX_QUANTILE_NUMEL,
     MIN_NUM_FOR_STD,
 )
 
@@ -257,10 +258,19 @@ class ZSharp(SAM):
         Returns:
             float: The absolute Z-score threshold for the requested percentile.
         """
-        all_zscores = torch.cat(zscores_list)
+        all_zscores = torch.cat(zscores_list).abs()
+        n = all_zscores.numel()
+        if n == 0:
+            return 0.0
+        if n > MAX_QUANTILE_NUMEL:
+            # torch.quantile rejects inputs above ~2**24 elements, which
+            # large models (e.g. ViT-B/16) exceed. kthvalue has no such
+            # limit and gives the same order statistic.
+            k = min(n, max(1, round(self.percentile / 100 * n)))
+            return float(all_zscores.kthvalue(k).values.item())
         return float(
             torch.quantile(
-                all_zscores.abs(),
+                all_zscores,
                 self.percentile / 100,
             ).item(),
         )
