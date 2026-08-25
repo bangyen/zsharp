@@ -274,7 +274,7 @@ exclude_dirs = ["tests/", "scripts/", "venv/"]
 skips = []  # Don't skip any security checks
 
 [tool.mutmut]
-paths_to_mutate = [
+source_paths = [
     "src/optimizer.py",
     "src/trainer.py",
     "src/models.py",
