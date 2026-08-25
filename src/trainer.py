@@ -170,6 +170,7 @@ def _run_train_step(
     """
     if ctx.use_zsharp:
         # ZSharp two-step training
+        ctx.optimizer.zero_grad()
         outputs = ctx.model(x)
         loss = ctx.criterion(outputs, y)
         loss.backward()
@@ -178,7 +179,13 @@ def _run_train_step(
         )
         zsharp_opt = cast("ZSharp", ctx.optimizer)
         zsharp_opt.first_step()
+        # Zero before the second backward: the update must use the gradient
+        # at the perturbed point only, not the filtered first-pass gradient.
+        zsharp_opt.zero_grad()
         ctx.criterion(ctx.model(x), y).backward()
+        torch.nn.utils.clip_grad_norm_(
+            ctx.model.parameters(), MAX_GRADIENT_NORM
+        )
         zsharp_opt.second_step()
     else:
         # Standard SGD training
