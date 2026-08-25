@@ -6,12 +6,19 @@ from unittest.mock import MagicMock, patch
 import pytest
 import torch
 from pydantic import ValidationError
-from torch import nn
+from torch import nn, optim
 
-from src.constants import ExperimentResults, TrainingConfig
+from src.constants import (
+    MAX_QUANTILE_NUMEL,
+    ExperimentResults,
+    TrainingConfig,
+)
+from src.optimizer import ZSharp
 from src.trainer import (
+    TrainingContext,
     _detect_best_device,
     _init_components,
+    _run_train_step,
     get_device,
     set_seed,
     train,
@@ -915,3 +922,108 @@ class TestTrain:
             result = train(config)
             assert isinstance(result, ExperimentResults)
             assert result.device == "mps"
+
+
+class TestZSharpGradientHygiene:
+    """Regression tests for gradient zeroing in the ZSharp training step."""
+
+    @staticmethod
+    def _make_ctx():
+        """Build a ZSharp training context with no-op updates."""
+        torch.manual_seed(0)
+        model = nn.Linear(4, 2)
+        # lr=0 and rho=0 make every step a no-op, so any change in the
+        # gradient between steps can only come from stale accumulation.
+        optimizer = ZSharp(
+            list(model.parameters()),
+            base_optimizer=optim.SGD,
+            lr=0.0,
+            rho=0.0,
+        )
+        ctx = TrainingContext(
+            model,
+            optimizer,
+            nn.CrossEntropyLoss(),
+            torch.device("cpu"),
+            use_zsharp=True,
+            use_half=False,
+        )
+        return ctx, model
+
+    def test_gradients_do_not_accumulate_across_steps(self):
+        """Repeating an identical step must not grow the gradient."""
+        ctx, model = self._make_ctx()
+        x = torch.randn(8, 4)
+        y = torch.randint(0, 2, (8,))
+
+        norms = []
+        for _ in range(4):
+            _run_train_step(ctx, x, y)
+            norms.append(model.weight.grad.norm().item())
+
+        for norm in norms[1:]:
+            assert norm == pytest.approx(norms[0], rel=1e-6)
+
+    def test_step_zeroes_before_first_backward(self):
+        """Pre-existing gradients must not leak into the step."""
+        ctx, model = self._make_ctx()
+        x = torch.randn(8, 4)
+        y = torch.randint(0, 2, (8,))
+
+        _run_train_step(ctx, x, y)
+        clean = model.weight.grad.clone()
+
+        # Poison the gradients; a correct step discards them.
+        for p in model.parameters():
+            p.grad = torch.ones_like(p)
+        _run_train_step(ctx, x, y)
+
+        assert torch.allclose(model.weight.grad, clean, atol=1e-6)
+
+
+class TestZSharpLargeModelThreshold:
+    """Threshold computation must handle models above the quantile cap."""
+
+    def test_threshold_handles_more_elements_than_quantile_allows(self):
+        """torch.quantile rejects >2**24 elements; ZSharp must not."""
+        model = nn.Linear(4, 2)
+        optimizer = ZSharp(
+            list(model.parameters()),
+            base_optimizer=optim.SGD,
+            lr=0.01,
+            percentile=70,
+        )
+        oversized = [torch.randn(MAX_QUANTILE_NUMEL + 1)]
+
+        threshold = optimizer._compute_filtering_threshold(oversized)
+
+        assert isinstance(threshold, float)
+        assert threshold > 0
+
+    def test_threshold_of_empty_gradients_is_zero(self):
+        """Zero-element gradients yield a zero threshold, not a crash."""
+        model = nn.Linear(4, 2)
+        optimizer = ZSharp(
+            list(model.parameters()),
+            base_optimizer=optim.SGD,
+            lr=0.01,
+            percentile=70,
+        )
+
+        assert optimizer._compute_filtering_threshold([torch.empty(0)]) == 0.0
+
+    def test_threshold_matches_quantile_below_cap(self):
+        """The fallback must agree with torch.quantile on small inputs."""
+        model = nn.Linear(4, 2)
+        optimizer = ZSharp(
+            list(model.parameters()),
+            base_optimizer=optim.SGD,
+            lr=0.01,
+            percentile=70,
+        )
+        values = [torch.randn(100_000)]
+
+        threshold = optimizer._compute_filtering_threshold(values)
+        expected = torch.quantile(values[0].abs(), 0.7).item()
+
+        assert threshold == pytest.approx(expected, abs=1e-4)
