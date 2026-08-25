@@ -58,7 +58,7 @@ min_confidence = 80
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[interrogate]
+[tool.interrogate]
 fail-under = 100
 ignore-init-method = false
 ignore-init-module = false
@@ -296,7 +296,3 @@ exclude_lines = [
 branch = true
 source = ["src"]
 omit = []
-
-[[tool.mypy.overrides]]
-module = "src.optimizer"
-disallow_any_explicit = false
