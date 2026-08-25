@@ -13,6 +13,10 @@ DEFAULT_SEED = 42
 # Math constants
 MIN_NUM_FOR_STD = 2
 
+# torch.quantile rejects inputs larger than 2**24 elements; above this we
+# fall back to kthvalue, which computes the same order statistic unbounded.
+MAX_QUANTILE_NUMEL = 2**24
+
 # Dataset names
 CIFAR10_DATASET = "cifar10"
 CIFAR100_DATASET = "cifar100"
