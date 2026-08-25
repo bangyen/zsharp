@@ -45,22 +45,26 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # Lint on the highest supported Python: the security audit below can only
+    # pass on 3.10+, where patched torch/pillow are installable. Python 3.9
+    # compatibility is still enforced by ruff's target-version and the test
+    # matrix.
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: 3.9
+        python-version: '3.11'
 
     - name: Cache pip dependencies
       uses: actions/cache@v4
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-3.9-${{ hashFiles('pyproject.toml') }}
+        key: ${{ runner.os }}-pip-3.11-${{ hashFiles('pyproject.toml') }}
         restore-keys: |
-          ${{ runner.os }}-pip-3.9-
+          ${{ runner.os }}-pip-3.11-
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools
         pip install -e ".[dev]"
 
     - name: Run ruff check
@@ -88,7 +92,7 @@ jobs:
       run: bandit -r src/ -ll
 
     - name: Run pip-audit security audit
-      run: pip-audit || true
+      run: pip-audit
 
   test-mps:
     runs-on: macos-latest
