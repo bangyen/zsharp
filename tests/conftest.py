@@ -26,9 +26,11 @@ try:
 
     _orig_record_trampoline_hit = mutmut.__main__.record_trampoline_hit
 
-    def _patched_record_trampoline_hit(name):
+    def _patched_record_trampoline_hit(name, *args, **kwargs):
+        # Pass through extra args (e.g. mutmut 3.7's `caller`) unchanged so
+        # this shim survives upstream signature changes.
         name = name.removeprefix("src.")
-        return _orig_record_trampoline_hit(name)
+        return _orig_record_trampoline_hit(name, *args, **kwargs)
 
     mutmut.__main__.record_trampoline_hit = _patched_record_trampoline_hit
 except (ImportError, AttributeError):
