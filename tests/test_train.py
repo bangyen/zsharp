@@ -239,8 +239,12 @@ class TestTrain:
         mock_model = SimpleTestModel()
         mock_get_model.return_value = mock_model
 
-        # Mock ZSharp optimizer
+        # Mock ZSharp optimizer. ``base_optimizer`` must be a real
+        # optimizer because the trainer attaches the LR scheduler to it.
         mock_optimizer = MagicMock()
+        mock_optimizer.base_optimizer = torch.optim.AdamW(
+            mock_model.parameters(), lr=0.001
+        )
         mock_zsharp.return_value = mock_optimizer
 
         # Mock data
@@ -395,7 +399,7 @@ class TestTrain:
 
             # Check that model was created with correct num_classes
             mock_get_model.assert_called_with(
-                model_name="resnet18", num_classes=100
+                model_name="resnet18", num_classes=100, image_size=32
             )
 
             assert isinstance(results, ExperimentResults)
@@ -519,8 +523,14 @@ class TestTrain:
 
     @patch("zsharp.trainer.get_dataset")
     @patch("zsharp.trainer.get_model")
-    def test_train_gradient_clipping(self, mock_get_model, mock_get_dataset):
-        """Test that gradient clipping is applied"""
+    def test_train_no_gradient_clipping(
+        self, mock_get_model, mock_get_dataset
+    ):
+        """Test that no gradient clipping is applied.
+
+        The paper (arXiv:2505.02369) specifies no gradient clipping, so the
+        trainer must not rescale gradients before the optimizer step.
+        """
         # Mock dataset
         mock_trainloader = MagicMock()
         mock_testloader = MagicMock()
@@ -566,8 +576,8 @@ class TestTrain:
         ):
             train(config)
 
-            # Check that gradient clipping was called
-            mock_clip.assert_called()
+            # Check that gradient clipping was not called
+            mock_clip.assert_not_called()
 
     @patch("zsharp.trainer.get_dataset")
     @patch("zsharp.trainer.get_model")

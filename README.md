@@ -32,11 +32,17 @@ Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bang
 
 *\*Benchmark results from full training runs. Local results may vary based on configuration.*
 
+> **Note**: this benchmark predates the alignment of the implementation to
+> the paper (see [docs/algorithm.md](docs/algorithm.md)). It was produced
+> with 70th-percentile filtering, an SGD base optimizer, and gradient
+> clipping, and has not been regenerated under the current defaults.
+
 ## Features
 
-- **Z-Score Gradient Filtering** — Intelligent gradient filtering with a default 70th percentile threshold (configurable) for improved training stability.
+- **Z-Score Gradient Filtering** — Layer-wise Z-score normalization with a global 95th percentile threshold (configurable), matching the paper's $Q_p = 0.95$.
 - **Apple Silicon Optimization** — Up to 4.39x speedup using MPS (Metal Performance Shaders) for faster training on Mac.
-- **Comprehensive Testing** — 95%+ test coverage with 62 unit tests ensuring reliability and reproducibility.
+- **Paper Architectures** — CIFAR-style ResNet-56/110, VGG-16BN, and the paper's compact ViTs, on CIFAR-10/100 and Tiny-ImageNet.
+- **Comprehensive Testing** — 95%+ test coverage with 85 unit tests ensuring reliability and reproducibility.
 
 ## Repo Structure
 
@@ -44,7 +50,7 @@ Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bang
 zsharp/
 ├── zsharp_demo.ipynb  # Colab notebook demo
 ├── scripts/           # Training and experiment scripts
-├── tests/             # Unit/integration tests (62 tests)
+├── tests/             # Unit/integration tests (85 tests)
 ├── docs/              # Documentation and training curves
 ├── configs/           # Configuration files
 ├── results/           # Experimental results
@@ -59,7 +65,7 @@ zsharp/
 
 ## References
 
-- [Sharpness-Aware Minimization with Z-Score Gradient Filtering](https://arxiv.org/html/2505.02369v3) — Original research paper by Juyoung Yun.
+- [Sharpness-Aware Minimization with Z-Score Gradient Filtering](https://arxiv.org/html/2505.02369v3) — Original research paper by Juyoung Yun. The optimizer and default hyperparameters follow this paper: $Q_p = 0.95$, $\rho = 0.05$, AdamW base optimizer (lr 1e-3, weight decay 5e-5), and an LR step decay of 0.75 every 10 epochs.
 - [Sharpness-Aware Minimization](https://arxiv.org/abs/2010.01412) — Foundation SAM algorithm research.
 
 ## License

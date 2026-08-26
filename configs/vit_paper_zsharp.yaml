@@ -1,7 +1,7 @@
-# Paper hyperparameters (arXiv:2505.02369) with the larger of the paper's
-# two ViT variants: 7 layers, 8 patches per side, 12 heads, MLP 768.
+# Paper configuration (arXiv:2505.02369) with ViT-7/8/8-384: 7 layers,
+# 8 heads, 8 patches per side, MLP dimension 384.
 dataset: cifar10
-model: vit_7_8_12_768
+model: vit_7_8_8_384
 optimizer:
   type: zsharp
   rho: 0.05
@@ -15,4 +15,4 @@ train:
   device: auto
   num_workers: 4
   pin_memory: false
-  use_mixed_precision: true
+  use_mixed_precision: false

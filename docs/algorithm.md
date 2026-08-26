@@ -43,14 +43,15 @@ For each layer $l$ with gradients $g_l$:
 
 2. **Global filtering threshold**:
    $$t = \text{quantile}\left(\bigcup_l |z_l|,\; p\right)$$
-   where $p$ is the percentile (default: 70). The threshold is computed over
-   the absolute Z-scores of **all layers concatenated**, not per layer.
+   where $p$ is the percentile (default: 95, i.e. $Q_p = 0.95$). The
+   threshold is computed over the absolute Z-scores of **all layers
+   concatenated**, not per layer.
 
 3. **Masking**:
-   $$g_l^{filtered} = g_l \odot \mathbb{I}[|z_l| \geq t]$$
-   If no component in a layer passes the threshold, the top
-   $\lceil 0.2 \cdot \text{numel}(g_l) \rceil$ components are kept so the
-   layer is never fully zeroed.
+   $$g_l^{filtered} = g_l \odot \mathbb{I}[|z_l| > t]$$
+   Because the threshold is pooled across the network, a layer whose
+   Z-scores are all small may be zeroed entirely. If filtering zeroes the
+   gradient everywhere, the unfiltered gradient is used instead (Eq. 9).
 
 4. **SAM perturbation**:
    $$\epsilon = \rho \frac{g^{filtered}}{\|g^{filtered}\|_2}$$
@@ -65,10 +66,15 @@ For each layer $l$ with gradients $g_l$:
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `rho` | 0.05 | SAM perturbation radius |
-| `percentile` | 70 | Global filtering threshold (%) |
-| `lr` | 0.01 | Learning rate |
-| `momentum` | 0.9 | Momentum coefficient |
-| `weight_decay` | 5e-4 | Weight decay |
+| `percentile` | 95 | Global filtering threshold (%) |
+| `lr` | 0.001 | Learning rate |
+| `momentum` | 0.9 | Momentum coefficient (SGD baseline only) |
+| `weight_decay` | 5e-5 | Weight decay |
+
+ZSharp uses **AdamW** as its base optimizer, with the learning rate
+multiplied by 0.75 every 10 epochs, matching the paper's experimental
+settings. No gradient clipping is applied. The `momentum` field applies
+only to the SGD baseline and is ignored when `type: zsharp`.
 
 ## Key Benefits
 
@@ -122,6 +128,40 @@ parameters += parameters.grad * scale  # first_step
 parameters -= state["e"]               # second_step (after re-backward)
 ```
 
+## Architectures and Datasets
+
+The paper evaluates ResNet-56/110, VGG-16BN, and compact ViTs on CIFAR-10,
+CIFAR-100, and Tiny-ImageNet; all are implemented here. Two details the
+paper leaves unstated were taken from the author's reference
+implementation ([YUNBLAK/Sharpness-Aware-Minimization-with-Z-Score-Gradient-Filtering](https://github.com/YUNBLAK/Sharpness-Aware-Minimization-with-Z-Score-Gradient-Filtering)):
+
+- **ResNet style.** The paper cites He et al. but does not say which
+  family. Depths 56 and 110 exist only as CIFAR-style ResNets (6n+2
+  layers, 16/32/64 channels, option-A shortcuts), and the reference code
+  confirms this. Parameter counts match the published table: 0.85M for
+  ResNet-56, 1.7M for ResNet-110.
+- **ViT dimensions.** The paper reads `ViT-7/8/8-384` as layers / heads /
+  patch size / MLP dimension, but that is not self-consistent: it makes
+  both variants 8-headed with patch size 8, leaving the differing third
+  field unexplained, and the `12` of `ViT-7/8/12-768` does not divide a
+  32x32 input as a patch count. The reference code fixes patches at 8 per
+  side and varies heads (8 and 12) at an embedding width of 384 that the
+  paper never states, which is the reading implemented here.
+
+- **VGG-16BN.** The reference implementation uses a CIFAR-adapted head —
+  global average pooling into a single 512-unit linear classifier — rather
+  than torchvision's three 4096-wide ImageNet layers, which carry roughly
+  nine times the parameters on 32x32 inputs.
+
+Normalization statistics and augmentation are also unspecified in the
+paper. CIFAR uses conventional per-dataset statistics and Tiny-ImageNet
+its own commonly cited values, with random crop, horizontal flip, and
+normalization throughout, matching the reference implementation.
+
+Note that the paper describes Tiny-ImageNet as "90,000 training and
+10,000 test images", while the canonical dataset has 100,000 training
+images. The real dataset is used as distributed.
+
 ## Experimental Results
 
 ### Performance Metrics
@@ -130,6 +170,11 @@ parameters -= state["e"]               # second_step (after re-backward)
 |--------|-----|--------|-------------|
 | Test Accuracy | 74.89% | 80.15% | +5.26% |
 | Training Time | Baseline | ~4.39x faster on MPS | Speedup |
+
+> **Note**: these numbers were produced *before* the codebase was aligned
+> to the paper (70th-percentile filtering, SGD base optimizer, gradient
+> clipping). They have not been regenerated and no longer describe the
+> current defaults.
 
 ### Hyperparameter Sensitivity
 
@@ -149,7 +194,8 @@ ZSharp is robust to hyperparameter variations:
 ## Best Practices
 
 1. **Start with defaults**: Use default hyperparameters for initial experiments
-2. **Adjust percentile**: Lower percentile (50-60%) for noisy datasets
+2. **Adjust percentile**: The paper ablates $Q_p \in [0.75, 0.95]$ and
+   reports 0.95 as best; lower values retain more components
 3. **Monitor convergence**: ZSharp typically converges in fewer epochs
 4. **Use appropriate batch size**: 128 works well for most cases
 5. **Enable MPS**: Use Apple Silicon GPU for up to 4.39x speedup

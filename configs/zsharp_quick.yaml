@@ -1,12 +1,13 @@
+# Quick smoke test: paper hyperparameters, but only 2 epochs.
 dataset: cifar10
 model: resnet18
 optimizer:
   type: zsharp
   rho: 0.05
-  percentile: 70
-  lr: 0.01
-  momentum: 0.9
-  weight_decay: 5e-4
+  percentile: 95
+  lr: 0.001
+  momentum: 0.9  # unused by zsharp; AdamW is the base optimizer
+  weight_decay: 5e-5
 train:
   batch_size: 128
   epochs: 2
