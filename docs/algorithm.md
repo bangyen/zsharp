@@ -128,6 +128,40 @@ parameters += parameters.grad * scale  # first_step
 parameters -= state["e"]               # second_step (after re-backward)
 ```
 
+## Architectures and Datasets
+
+The paper evaluates ResNet-56/110, VGG-16BN, and compact ViTs on CIFAR-10,
+CIFAR-100, and Tiny-ImageNet; all are implemented here. Two details the
+paper leaves unstated were taken from the author's reference
+implementation ([YUNBLAK/Sharpness-Aware-Minimization-with-Z-Score-Gradient-Filtering](https://github.com/YUNBLAK/Sharpness-Aware-Minimization-with-Z-Score-Gradient-Filtering)):
+
+- **ResNet style.** The paper cites He et al. but does not say which
+  family. Depths 56 and 110 exist only as CIFAR-style ResNets (6n+2
+  layers, 16/32/64 channels, option-A shortcuts), and the reference code
+  confirms this. Parameter counts match the published table: 0.85M for
+  ResNet-56, 1.7M for ResNet-110.
+- **ViT dimensions.** The paper reads `ViT-7/8/8-384` as layers / heads /
+  patch size / MLP dimension, but that is not self-consistent: it makes
+  both variants 8-headed with patch size 8, leaving the differing third
+  field unexplained, and the `12` of `ViT-7/8/12-768` does not divide a
+  32x32 input as a patch count. The reference code fixes patches at 8 per
+  side and varies heads (8 and 12) at an embedding width of 384 that the
+  paper never states, which is the reading implemented here.
+
+- **VGG-16BN.** The reference implementation uses a CIFAR-adapted head —
+  global average pooling into a single 512-unit linear classifier — rather
+  than torchvision's three 4096-wide ImageNet layers, which carry roughly
+  nine times the parameters on 32x32 inputs.
+
+Normalization statistics and augmentation are also unspecified in the
+paper. CIFAR uses conventional per-dataset statistics and Tiny-ImageNet
+its own commonly cited values, with random crop, horizontal flip, and
+normalization throughout, matching the reference implementation.
+
+Note that the paper describes Tiny-ImageNet as "90,000 training and
+10,000 test images", while the canonical dataset has 100,000 training
+images. The real dataset is used as distributed.
+
 ## Experimental Results
 
 ### Performance Metrics
