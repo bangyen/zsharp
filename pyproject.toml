@@ -284,12 +284,15 @@ exclude_dirs = ["tests/", "scripts/", "venv/"]
 skips = []  # Don't skip any security checks
 
 [tool.mutmut]
-# Mutate the whole package: mutmut copies only source_paths into mutants/,
-# so listing individual modules leaves the rest unimportable for the tests.
-source_paths = ["zsharp"]
+# Keys must match the pinned mutmut (3.3.1), which reads paths_to_mutate and
+# tests_dir; the 3.4+ names (source_paths /
+# pytest_add_cli_args_test_selection) are silently ignored here.
+# Mutate the whole package: mutmut copies only these paths into mutants/, so
+# listing individual modules leaves the rest unimportable for the tests.
+paths_to_mutate = ["zsharp"]
 backup = false
 runner = "python -m pytest -p no:cov"
-pytest_add_cli_args_test_selection = ["tests/"]
+tests_dir = ["tests/"]
 
 [tool.coverage.report]
 fail_under = 95
