@@ -17,7 +17,6 @@ import yaml
 from zsharp.constants import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_LEARNING_RATE,
-    DEFAULT_MOMENTUM,
     DEFAULT_NUM_WORKERS,
     DEFAULT_RHO,
     DEFAULT_WEIGHT_DECAY,
@@ -73,9 +72,9 @@ def run_comparison_experiments(fast_mode: bool = False) -> dict:
         experiments = [
             ("configs/sgd_baseline.yaml", "SGD Baseline"),
             ("configs/zsharp_baseline.yaml", "ZSharp"),
-            # Temporarily disabled for testing:
-            # ("configs/cifar100_zsharp.yaml", "ZSharp CIFAR-100"),
-            # ("configs/vit_zsharp.yaml", "ZSharp ViT"),
+            ("configs/resnet56_zsharp.yaml", "ZSharp ResNet-56"),
+            ("configs/cifar100_zsharp.yaml", "ZSharp CIFAR-100"),
+            ("configs/vit_paper_zsharp.yaml", "ZSharp ViT-7/8/8-384"),
         ]
 
     results = {}
@@ -155,13 +154,14 @@ def run_hyperparameter_study() -> dict:
         # Create temporary config
         config = {
             "dataset": "cifar10",
-            "model": "resnet18",
+            # Table 2 ablates the percentile on ResNet-56.
+            "model": "resnet56",
             "optimizer": {
+                # ZSharp builds on AdamW, which takes no momentum.
                 "type": "zsharp",
                 "rho": DEFAULT_RHO,
                 "percentile": percentile,
                 "lr": DEFAULT_LEARNING_RATE,
-                "momentum": DEFAULT_MOMENTUM,
                 "weight_decay": DEFAULT_WEIGHT_DECAY,
             },
             "train": {

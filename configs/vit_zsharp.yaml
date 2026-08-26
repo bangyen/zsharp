@@ -1,6 +1,7 @@
-# Paper hyperparameters (arXiv:2505.02369) with a ViT backbone.
+# Paper hyperparameters (arXiv:2505.02369) with the larger of the paper's
+# two ViT variants: 7 layers, 8 patches per side, 12 heads, MLP 768.
 dataset: cifar10
-model: vit_b_16
+model: vit_7_8_12_768
 optimizer:
   type: zsharp
   rho: 0.05
@@ -9,7 +10,7 @@ optimizer:
   momentum: 0.9  # unused by zsharp; AdamW is the base optimizer
   weight_decay: 5e-5
 train:
-  batch_size: 128  # Smaller batch size for ViT
+  batch_size: 256
   epochs: 200
   device: auto
   num_workers: 4
