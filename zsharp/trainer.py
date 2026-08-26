@@ -183,9 +183,6 @@ def _run_train_step(
         # at the perturbed point only, not the filtered first-pass gradient.
         zsharp_opt.zero_grad()
         ctx.criterion(ctx.model(x), y).backward()
-        torch.nn.utils.clip_grad_norm_(
-            ctx.model.parameters(), MAX_GRADIENT_NORM
-        )
         zsharp_opt.second_step()
     else:
         # Standard SGD training
