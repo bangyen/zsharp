@@ -399,7 +399,7 @@ class TestTrain:
 
             # Check that model was created with correct num_classes
             mock_get_model.assert_called_with(
-                model_name="resnet18", num_classes=100
+                model_name="resnet18", num_classes=100, image_size=32
             )
 
             assert isinstance(results, ExperimentResults)

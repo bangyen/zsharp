@@ -262,8 +262,13 @@ def _init_components(
         raise ValueError(error_msg)
 
     classes = cast("int", DATASET_METADATA[ds_name]["num_classes"])
+    image_size = cast("int", DATASET_METADATA[ds_name]["image_size"])
     model_name = config.model
-    model = get_model(model_name=model_name, num_classes=classes).to(device)
+    model = get_model(
+        model_name=model_name,
+        num_classes=classes,
+        image_size=image_size,
+    ).to(device)
     optimizer, opt_type = _setup_optimizer(config, model)
     return model, optimizer, opt_type
 

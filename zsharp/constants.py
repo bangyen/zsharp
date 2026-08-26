@@ -20,6 +20,12 @@ MAX_QUANTILE_NUMEL = 2**24
 # Dataset names
 CIFAR10_DATASET = "cifar10"
 CIFAR100_DATASET = "cifar100"
+TINY_IMAGENET_DATASET = "tiny_imagenet"
+
+# Tiny-ImageNet is not distributed through torchvision; it is downloaded
+# from the canonical Stanford CS231n mirror and extracted under DATA_ROOT.
+TINY_IMAGENET_URL = "http://cs231n.stanford.edu/tiny-imagenet-200.zip"
+TINY_IMAGENET_DIRNAME = "tiny-imagenet-200"
 
 # Default batch and training parameters. Batch size matches the paper; the
 # epoch default below stays low deliberately, since the paper's 200 epochs
@@ -48,6 +54,20 @@ EPSILON_STD = 1e-8
 
 # Model architecture constants
 RESNET18_NAME = "resnet18"
+
+# CIFAR-style ResNets (He et al., Sec. 4.2): three stages of basic blocks
+# starting at 16 channels and doubling, for a depth of 6n + 2.
+CIFAR_RESNET_BASE_WIDTH = 16
+CIFAR_RESNET_STAGES = 3
+
+# The paper's compact ViTs: 7 layers, 8 heads, an embedding width of 384,
+# and 8 patches per side. Taken from the author's reference implementation
+# (github.com/YUNBLAK/Sharpness-Aware-Minimization-with-Z-Score-Gradient-Filtering),
+# since the paper itself does not state the embedding dimension.
+VIT_PAPER_LAYERS = 7
+VIT_PAPER_HEADS = 8
+VIT_PAPER_HIDDEN = 384
+VIT_PAPER_PATCHES_PER_SIDE = 8
 
 # Optimizer types
 SGD_OPTIMIZER = "sgd"

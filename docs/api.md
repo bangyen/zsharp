@@ -60,7 +60,8 @@ Training utilities and the main training loop.
 
 ### `zsharp.data`
 
-Data loading and preprocessing utilities for CIFAR-10 and CIFAR-100.
+Data loading and preprocessing utilities for CIFAR-10, CIFAR-100, and
+Tiny-ImageNet.
 
 **Functions:**
 
@@ -71,6 +72,14 @@ Data loading and preprocessing utilities for CIFAR-10 and CIFAR-100.
 - `get_cifar100(batch_size=128, num_workers=2, *, pin_memory=False)`:
   CIFAR-100 data loaders
 
+**Classes:**
+
+- `TinyImageNet(root, *, train=True, download=True, transform=None)`:
+  Tiny-ImageNet-200 dataset. Not distributed through torchvision, so the
+  archive is downloaded and extracted on first use. The validation split
+  ships as a flat directory, and its labels are resolved from
+  `val_annotations.txt`.
+
 **Data:**
 
 - `DATASET_METADATA`: Registry of normalization statistics, class counts,
@@ -78,8 +87,15 @@ Data loading and preprocessing utilities for CIFAR-10 and CIFAR-100.
 
 **Supported Datasets:**
 
-- `cifar10`: CIFAR-10 dataset
-- `cifar100`: CIFAR-100 dataset
+- `cifar10`: CIFAR-10 dataset (10 classes, 32x32)
+- `cifar100`: CIFAR-100 dataset (100 classes, 32x32)
+- `tiny_imagenet`: Tiny-ImageNet-200 (200 classes, 64x64)
+
+The paper does not state normalization statistics or augmentation for any
+dataset. CIFAR uses the conventional per-dataset statistics; Tiny-ImageNet
+uses the commonly cited Tiny-ImageNet values. All three apply the same
+augmentation as the author's reference implementation: random crop with
+padding, horizontal flip, then normalization.
 
 ### `zsharp.models`
 
@@ -87,14 +103,44 @@ Model loading utilities.
 
 **Functions:**
 
-- `get_model(model_name="resnet18", num_classes=10) -> nn.Module`: Get a
-  PyTorch model by name
+- `get_model(model_name="resnet18", num_classes=10, image_size=32) -> nn.Module`:
+  Get a PyTorch model by name. `image_size` is used by the paper's ViT
+  variants to derive their patch size.
+
+**Classes:**
+
+- `CifarResNet(blocks_per_stage, num_classes=10)`: CIFAR-style ResNet with
+  `6n+2` layers (He et al., Sec. 4.2)
+- `PaperViT(num_classes=10, image_size=32, *, ...)`: the paper's compact
+  Vision Transformer
 
 **Supported Models:**
+
+Architectures used in the ZSharp paper:
+
+- `resnet56`, `resnet110`: CIFAR-style ResNets — three stages of basic
+  blocks at 16/32/64 channels with parameter-free (option A) shortcuts.
+  These depths exist only in the CIFAR family; torchvision does not ship
+  them, so they are implemented here.
+- `vgg16_bn`: VGG-16 with batch normalization
+- `vit_7_8_8_384`, `vit_7_8_12_768`: compact ViTs with 7 layers, 8 heads,
+  and an embedding width of 384
+
+Also available:
 
 - `resnet18`: ResNet-18 architecture
 - `vgg11`: VGG-11 architecture
 - `vit_b_16`: Vision Transformer B-16
+
+> **On the ViT naming**: the paper writes `ViT-7/8/8-384` and
+> `ViT-7/8/12-768`, and its text reads the fields as layers / heads /
+> patch size / MLP dimension. That reading is not self-consistent — it
+> makes both variants 8-headed with patch size 8, leaving the differing
+> third field unexplained, and 12 patches per side does not divide a 32x32
+> input. The author's reference implementation fixes patches at 8 per side
+> and varies heads (8 and 12) at a constant embedding width of 384, which
+> is what is implemented here. The second field is patches *per side*, not
+> pixels: on a 32x32 input, 8 per side gives 4x4 pixel patches.
 
 ### `zsharp.constants`
 
