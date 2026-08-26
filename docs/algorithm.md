@@ -93,7 +93,7 @@ For each layer $l$ with gradients $g_l$:
 
 ### Gradient Filtering Implementation
 
-The reference implementation lives in `src/optimizer.py`
+The reference implementation lives in `zsharp/optimizer.py`
 (`ZSharp.first_step`). The filtering logic:
 
 ```python

@@ -58,6 +58,12 @@ min_confidence = 80
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+# Declare the package explicitly: the repo root holds non-package directories
+# (data/, docs/, results/, scripts/), so setuptools' flat-layout autodiscovery
+# cannot pick one.
+[tool.setuptools]
+packages = ["zsharp"]
+
 [tool.interrogate]
 fail-under = 100
 ignore-init-method = false
@@ -232,15 +238,15 @@ no_implicit_reexport = true
 strict_optional = true
 
 [[tool.mypy.overrides]]
-module = "src.constants"
+module = "zsharp.constants"
 disallow_any_explicit = false
 
 [[tool.mypy.overrides]]
-module = "src.data"
+module = "zsharp.data"
 disallow_any_unimported = false
 
 [[tool.mypy.overrides]]
-module = "src.optimizer"
+module = "zsharp.optimizer"
 disallow_any_explicit = false
 
 
@@ -249,24 +255,24 @@ disallow_any_explicit = false
 # ------------------------------------------------------------------------------
 
 [tool.importlinter]
-root_package = "src"
+root_package = "zsharp"
 
 [[tool.importlinter.contracts]]
 name = "Layered Architecture"
 type = "layers"
 layers = [
-    "src.trainer",
-    "src.optimizer | src.models | src.data",
-    "src.constants",
+    "zsharp.trainer",
+    "zsharp.optimizer | zsharp.models | zsharp.data",
+    "zsharp.constants",
 ]
 
 [[tool.importlinter.contracts]]
 name = "No Circular Dependencies"
 type = "independence"
 modules = [
-    "src.models",
-    "src.optimizer",
-    "src.data",
+    "zsharp.models",
+    "zsharp.optimizer",
+    "zsharp.data",
 ]
 
 [tool.bandit]
@@ -276,7 +282,7 @@ skips = []  # Don't skip any security checks
 [tool.mutmut]
 # Mutate the whole package: mutmut copies only source_paths into mutants/,
 # so listing individual modules leaves the rest unimportable for the tests.
-source_paths = ["src"]
+source_paths = ["zsharp"]
 backup = false
 runner = "python -m pytest -p no:cov"
 pytest_add_cli_args_test_selection = ["tests/"]
@@ -292,5 +298,5 @@ exclude_lines = [
 
 [tool.coverage.run]
 branch = true
-source = ["src"]
+source = ["zsharp"]
 omit = []

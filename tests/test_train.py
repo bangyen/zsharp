@@ -8,13 +8,13 @@ import torch
 from pydantic import ValidationError
 from torch import nn, optim
 
-from src.constants import (
+from zsharp.constants import (
     MAX_QUANTILE_NUMEL,
     ExperimentResults,
     TrainingConfig,
 )
-from src.optimizer import ZSharp
-from src.trainer import (
+from zsharp.optimizer import ZSharp
+from zsharp.trainer import (
     TrainingContext,
     _detect_best_device,
     _init_components,
@@ -168,8 +168,8 @@ class TestTrain:
         with pytest.raises(ValueError, match="Unknown dataset"):
             _init_components(config, torch.device("cpu"))
 
-    @patch("src.trainer.get_dataset")
-    @patch("src.trainer.get_model")
+    @patch("zsharp.trainer.get_dataset")
+    @patch("zsharp.trainer.get_model")
     def test_train_basic_sgd(self, mock_get_model, mock_get_dataset):
         """Test basic training with SGD optimizer"""
         # Mock dataset
@@ -223,9 +223,9 @@ class TestTrain:
             assert results.device is not None
             assert results.optimizer_type == "sgd"
 
-    @patch("src.trainer.get_dataset")
-    @patch("src.trainer.get_model")
-    @patch("src.trainer.ZSharp")
+    @patch("zsharp.trainer.get_dataset")
+    @patch("zsharp.trainer.get_model")
+    @patch("zsharp.trainer.ZSharp")
     def test_train_zsharp_optimizer(
         self, mock_zsharp, mock_get_model, mock_get_dataset
     ):
@@ -287,8 +287,8 @@ class TestTrain:
 
             assert results.optimizer_type == "zsharp"
 
-    @patch("src.trainer.get_dataset")
-    @patch("src.trainer.get_model")
+    @patch("zsharp.trainer.get_dataset")
+    @patch("zsharp.trainer.get_model")
     @pytest.mark.mps
     def test_train_mixed_precision(self, mock_get_model, mock_get_dataset):
         """Test training with mixed precision"""
@@ -347,8 +347,8 @@ class TestTrain:
             assert isinstance(results, ExperimentResults)
             assert results.device == "mps"
 
-    @patch("src.trainer.get_dataset")
-    @patch("src.trainer.get_model")
+    @patch("zsharp.trainer.get_dataset")
+    @patch("zsharp.trainer.get_model")
     def test_train_cifar100(self, mock_get_model, mock_get_dataset):
         """Test training with CIFAR-100 dataset"""
         # Mock dataset
@@ -400,8 +400,8 @@ class TestTrain:
 
             assert isinstance(results, ExperimentResults)
 
-    @patch("src.trainer.get_dataset")
-    @patch("src.trainer.get_model")
+    @patch("zsharp.trainer.get_dataset")
+    @patch("zsharp.trainer.get_model")
     def test_train_multiple_epochs(self, mock_get_model, mock_get_dataset):
         """Test training with multiple epochs"""
         # Mock dataset
@@ -454,8 +454,8 @@ class TestTrain:
             assert len(results.train_losses) == 3
             assert len(results.train_accuracies) == 3
 
-    @patch("src.trainer.get_dataset")
-    @patch("src.trainer.get_model")
+    @patch("zsharp.trainer.get_dataset")
+    @patch("zsharp.trainer.get_model")
     def test_train_results_saving(self, mock_get_model, mock_get_dataset):
         """Test that training results are saved to file"""
         # Mock dataset
@@ -499,7 +499,7 @@ class TestTrain:
 
         with (
             patch("torch.device", return_value=torch.device("cpu")),
-            patch("src.trainer.Path") as mock_path,
+            patch("zsharp.trainer.Path") as mock_path,
             patch("builtins.open", create=True) as mock_open,
         ):
             mock_file = MagicMock()
@@ -517,8 +517,8 @@ class TestTrain:
             assert mock_path_instance.open.called
             assert mock_file.write.called
 
-    @patch("src.trainer.get_dataset")
-    @patch("src.trainer.get_model")
+    @patch("zsharp.trainer.get_dataset")
+    @patch("zsharp.trainer.get_model")
     def test_train_gradient_clipping(self, mock_get_model, mock_get_dataset):
         """Test that gradient clipping is applied"""
         # Mock dataset
@@ -569,8 +569,8 @@ class TestTrain:
             # Check that gradient clipping was called
             mock_clip.assert_called()
 
-    @patch("src.trainer.get_dataset")
-    @patch("src.trainer.get_model")
+    @patch("zsharp.trainer.get_dataset")
+    @patch("zsharp.trainer.get_model")
     def test_train_progress_bar(self, mock_get_model, mock_get_dataset):
         """Test that progress bars are used during training"""
         # Mock dataset
@@ -619,7 +619,7 @@ class TestTrain:
 
         with (
             patch("torch.device", return_value=torch.device("cpu")),
-            patch("src.trainer.tqdm") as mock_tqdm,
+            patch("zsharp.trainer.tqdm") as mock_tqdm,
         ):
             mock_pbar = MagicMock()
             mock_tqdm.return_value = mock_pbar
@@ -680,12 +680,12 @@ class TestTrain:
 
         with (
             patch(
-                "src.trainer.get_dataset",
+                "zsharp.trainer.get_dataset",
                 return_value=(mock_trainloader, mock_testloader),
             ),
-            patch("src.trainer.get_model", return_value=SimpleTestModel()),
+            patch("zsharp.trainer.get_model", return_value=SimpleTestModel()),
             patch("torch.device", return_value=torch.device("cpu")),
-            patch("src.trainer.tqdm") as mock_tqdm,
+            patch("zsharp.trainer.tqdm") as mock_tqdm,
         ):
             # Mock tqdm to raise KeyboardInterrupt
             mock_pbar = MagicMock()
@@ -744,12 +744,12 @@ class TestTrain:
 
         with (
             patch(
-                "src.trainer.get_dataset",
+                "zsharp.trainer.get_dataset",
                 return_value=(mock_trainloader, mock_testloader),
             ),
-            patch("src.trainer.get_model", return_value=SimpleTestModel()),
+            patch("zsharp.trainer.get_model", return_value=SimpleTestModel()),
             patch("torch.device", return_value=torch.device("cpu")),
-            patch("src.trainer.tqdm") as mock_tqdm,
+            patch("zsharp.trainer.tqdm") as mock_tqdm,
         ):
             # Mock tqdm for training
             mock_pbar = MagicMock()
@@ -812,12 +812,12 @@ class TestTrain:
 
         with (
             patch(
-                "src.trainer.get_dataset",
+                "zsharp.trainer.get_dataset",
                 return_value=(mock_trainloader, mock_testloader),
             ),
-            patch("src.trainer.get_model", return_value=SimpleTestModel()),
+            patch("zsharp.trainer.get_model", return_value=SimpleTestModel()),
             patch("torch.device", return_value=torch.device("cpu")),
-            patch("src.trainer.tqdm") as mock_tqdm,
+            patch("zsharp.trainer.tqdm") as mock_tqdm,
         ):
             # Mock tqdm for training
             mock_pbar = MagicMock()
@@ -888,13 +888,13 @@ class TestTrain:
 
         with (
             patch(
-                "src.trainer.get_dataset",
+                "zsharp.trainer.get_dataset",
                 return_value=(mock_trainloader, mock_testloader),
             ),
-            patch("src.trainer.get_model", return_value=SimpleTestModel()),
+            patch("zsharp.trainer.get_model", return_value=SimpleTestModel()),
             patch("torch.device", return_value=torch.device("mps")),
             patch("torch.backends.mps.is_available", return_value=True),
-            patch("src.trainer.tqdm") as mock_tqdm,
+            patch("zsharp.trainer.tqdm") as mock_tqdm,
         ):
             # Mock tqdm for training
             mock_pbar = MagicMock()

@@ -5,7 +5,7 @@ import torch
 from hypothesis import given, settings, strategies as st
 from torch import nn, optim
 
-from src.optimizer import SAM, ZSharp
+from zsharp.optimizer import SAM, ZSharp
 
 # Hypothesis strategies for generating training parameters
 batch_sizes = st.integers(min_value=1, max_value=32)

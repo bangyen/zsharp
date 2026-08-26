@@ -25,7 +25,7 @@ import torch.optim
 from torch import nn, optim
 from tqdm import tqdm
 
-from src.constants import (
+from zsharp.constants import (
     AUTO_DEVICE,
     CPU_DEVICE,
     CUDA_DEVICE,
@@ -38,9 +38,9 @@ from src.constants import (
     ExperimentResults,
     TrainingConfig,
 )
-from src.data import DATASET_METADATA, get_dataset
-from src.models import get_model
-from src.optimizer import ZSharp
+from zsharp.data import DATASET_METADATA, get_dataset
+from zsharp.models import get_model
+from zsharp.optimizer import ZSharp
 
 logger = logging.getLogger(__name__)
 

@@ -48,7 +48,7 @@ zsharp/
 ├── docs/              # Documentation and training curves
 ├── configs/           # Configuration files
 ├── results/           # Experimental results
-└── src/               # Core implementation
+└── zsharp/               # Core implementation
 ```
 
 ## Validation

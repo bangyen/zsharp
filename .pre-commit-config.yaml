@@ -15,14 +15,14 @@ repos:
         entry: uv run --no-sync python -m mypy
         language: system
         types: [python]
-        files: ^src/
+        files: ^zsharp/
 
   - repo: https://github.com/econchick/interrogate
     rev: 1.7.0
     hooks:
       - id: interrogate
         args: [--fail-under=100]
-        files: ^src/
+        files: ^zsharp/
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

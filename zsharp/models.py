@@ -11,7 +11,7 @@ from torch import nn
 from torchvision import models
 from torchvision.models import vit_b_16
 
-from src.constants import RESNET18_NAME
+from zsharp.constants import RESNET18_NAME
 
 
 def get_model(

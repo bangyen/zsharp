@@ -14,7 +14,7 @@ from typing import Optional
 
 import yaml
 
-from src.constants import (
+from zsharp.constants import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_LEARNING_RATE,
     DEFAULT_MOMENTUM,
@@ -25,7 +25,7 @@ from src.constants import (
     ExperimentResults,
     TrainingConfig,
 )
-from src.trainer import train
+from zsharp.trainer import train
 
 # Configure logging without prefix
 logging.basicConfig(
