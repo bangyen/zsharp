@@ -43,14 +43,15 @@ For each layer $l$ with gradients $g_l$:
 
 2. **Global filtering threshold**:
    $$t = \text{quantile}\left(\bigcup_l |z_l|,\; p\right)$$
-   where $p$ is the percentile (default: 70). The threshold is computed over
-   the absolute Z-scores of **all layers concatenated**, not per layer.
+   where $p$ is the percentile (default: 95, i.e. $Q_p = 0.95$). The
+   threshold is computed over the absolute Z-scores of **all layers
+   concatenated**, not per layer.
 
 3. **Masking**:
-   $$g_l^{filtered} = g_l \odot \mathbb{I}[|z_l| \geq t]$$
-   If no component in a layer passes the threshold, the top
-   $\lceil 0.2 \cdot \text{numel}(g_l) \rceil$ components are kept so the
-   layer is never fully zeroed.
+   $$g_l^{filtered} = g_l \odot \mathbb{I}[|z_l| > t]$$
+   Because the threshold is pooled across the network, a layer whose
+   Z-scores are all small may be zeroed entirely. If filtering zeroes the
+   gradient everywhere, the unfiltered gradient is used instead (Eq. 9).
 
 4. **SAM perturbation**:
    $$\epsilon = \rho \frac{g^{filtered}}{\|g^{filtered}\|_2}$$
@@ -65,10 +66,15 @@ For each layer $l$ with gradients $g_l$:
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `rho` | 0.05 | SAM perturbation radius |
-| `percentile` | 70 | Global filtering threshold (%) |
-| `lr` | 0.01 | Learning rate |
-| `momentum` | 0.9 | Momentum coefficient |
-| `weight_decay` | 5e-4 | Weight decay |
+| `percentile` | 95 | Global filtering threshold (%) |
+| `lr` | 0.001 | Learning rate |
+| `momentum` | 0.9 | Momentum coefficient (SGD baseline only) |
+| `weight_decay` | 5e-5 | Weight decay |
+
+ZSharp uses **AdamW** as its base optimizer, with the learning rate
+multiplied by 0.75 every 10 epochs, matching the paper's experimental
+settings. No gradient clipping is applied. The `momentum` field applies
+only to the SGD baseline and is ignored when `type: zsharp`.
 
 ## Key Benefits
 
@@ -131,6 +137,11 @@ parameters -= state["e"]               # second_step (after re-backward)
 | Test Accuracy | 74.89% | 80.15% | +5.26% |
 | Training Time | Baseline | ~4.39x faster on MPS | Speedup |
 
+> **Note**: these numbers were produced *before* the codebase was aligned
+> to the paper (70th-percentile filtering, SGD base optimizer, gradient
+> clipping). They have not been regenerated and no longer describe the
+> current defaults.
+
 ### Hyperparameter Sensitivity
 
 ZSharp is robust to hyperparameter variations:
@@ -149,7 +160,8 @@ ZSharp is robust to hyperparameter variations:
 ## Best Practices
 
 1. **Start with defaults**: Use default hyperparameters for initial experiments
-2. **Adjust percentile**: Lower percentile (50-60%) for noisy datasets
+2. **Adjust percentile**: The paper ablates $Q_p \in [0.75, 0.95]$ and
+   reports 0.95 as best; lower values retain more components
 3. **Monitor convergence**: ZSharp typically converges in fewer epochs
 4. **Use appropriate batch size**: 128 works well for most cases
 5. **Enable MPS**: Use Apple Silicon GPU for up to 4.39x speedup

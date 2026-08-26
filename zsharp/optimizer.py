@@ -19,7 +19,6 @@ from torch.optim import Optimizer
 from zsharp.constants import (
     DEFAULT_PERCENTILE,
     DEFAULT_RHO,
-    DEFAULT_TOP_K_RATIO,
     EPSILON,
     EPSILON_STD,
     MAX_QUANTILE_NUMEL,
@@ -145,6 +144,12 @@ class ZSharp(SAM):
     percentile-based gradient filtering before the SAM perturbation step.
     This helps focus on the most important gradients and improves training
     stability.
+
+    Following the paper (arXiv:2505.02369), Z-scores are normalized within
+    each layer, the threshold is the ``percentile``-th quantile of the
+    absolute Z-scores pooled across all layers, and filtering is applied to
+    the ascent step only. If the filtered gradient vanishes everywhere, the
+    unfiltered gradient is used instead (Eq. 9).
 
     Args:
         params: Parameters to optimize
@@ -283,20 +288,37 @@ class ZSharp(SAM):
     ) -> None:
         """Apply filtering mask to gradients based on threshold.
 
+        Components whose absolute Z-score does not exceed the threshold are
+        zeroed. Whole layers may be zeroed out, which the paper permits: the
+        threshold is pooled across the network, so a layer with uniformly
+        small Z-scores contributes nothing to the ascent direction. Only if
+        *every* layer is zeroed does the filtering back off, restoring the
+        unfiltered gradients per Eq. 9.
+
         Args:
             layer_grad_info: Metadata to map back to parameters.
             zscores_list: Precomputed Z-scores.
             threshold: Absolute Z-score threshold.
         """
+        retained = 0
         for i, (p, original_grad) in enumerate(layer_grad_info):
-            layer_zscores = zscores_list[i]
-            mask = layer_zscores.abs() >= threshold
-
-            if not mask.any():
-                top_k = max(1, int(DEFAULT_TOP_K_RATIO * mask.numel()))
-                _, indices = torch.topk(layer_zscores.abs(), top_k)
-                mask = torch.zeros_like(mask)
-                mask[indices] = True
-
-            mask = mask.view_as(original_grad)
+            mask = (zscores_list[i].abs() > threshold).view_as(original_grad)
+            retained += int(mask.any())
             p.grad = cast("torch.Tensor", p.grad) * mask
+
+        if not retained:
+            self._restore_unfiltered_gradients(layer_grad_info)
+
+    @staticmethod
+    def _restore_unfiltered_gradients(
+        layer_grad_info: list[tuple[torch.nn.Parameter, torch.Tensor]],
+    ) -> None:
+        """Undo filtering when it zeroed the gradient everywhere (Eq. 9).
+
+        Args:
+            layer_grad_info: Parameters paired with their pre-filter
+                gradients. Masking rebinds ``p.grad`` rather than mutating
+                it, so the originals are still intact.
+        """
+        for p, original_grad in layer_grad_info:
+            p.grad = original_grad

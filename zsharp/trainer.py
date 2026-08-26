@@ -29,8 +29,9 @@ from zsharp.constants import (
     AUTO_DEVICE,
     CPU_DEVICE,
     CUDA_DEVICE,
+    DEFAULT_LR_GAMMA,
+    DEFAULT_LR_STEP_SIZE,
     DEFAULT_SEED,
-    MAX_GRADIENT_NORM,
     MPS_DEVICE,
     RESULTS_DIR,
     SGD_OPTIMIZER,
@@ -143,13 +144,13 @@ def _setup_optimizer(
         )
         return optimizer, SGD_OPTIMIZER
 
-    # ZSharp optimizer
+    # ZSharp optimizer. The paper trains with AdamW as the base optimizer,
+    # so ``momentum`` is an SGD-only setting and is not forwarded here.
     optimizer = ZSharp(
         params,
-        base_optimizer=optim.SGD,
+        base_optimizer=optim.AdamW,
         rho=float(opt_config.rho),
         lr=lr,
-        momentum=momentum,
         weight_decay=wd,
         percentile=int(opt_config.percentile),
     )
@@ -174,9 +175,6 @@ def _run_train_step(
         outputs = ctx.model(x)
         loss = ctx.criterion(outputs, y)
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(
-            ctx.model.parameters(), MAX_GRADIENT_NORM
-        )
         zsharp_opt = cast("ZSharp", ctx.optimizer)
         zsharp_opt.first_step()
         # Zero before the second backward: the update must use the gradient
@@ -190,9 +188,6 @@ def _run_train_step(
         outputs = ctx.model(x)
         loss = ctx.criterion(outputs, y)
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(
-            ctx.model.parameters(), MAX_GRADIENT_NORM
-        )
         ctx.optimizer.step()
     return float(loss.item()), outputs.detach()
 
@@ -281,12 +276,13 @@ def _prepare_training(
     tuple[DataLoader[torch.Tensor], DataLoader[torch.Tensor]],
     int,
     str,
+    optim.lr_scheduler.StepLR,
 ]:
     """Prepare training context and loaders.
 
     Returns:
-        tuple: Training context, data loaders, epoch count, and the
-        resolved optimizer type.
+        tuple: Training context, data loaders, epoch count, the resolved
+        optimizer type, and the learning rate scheduler.
     """
     cfg = config.train
     m, opt, opt_type = _init_components(config, device)
@@ -303,7 +299,16 @@ def _prepare_training(
         num_workers=int(cfg.num_workers),
         pin_memory=cfg.pin_memory,
     )
-    return ctx, ldrs, int(cfg.epochs), opt_type
+    # Step decay from the paper: lr is multiplied by 0.75 every 10 epochs.
+    # For ZSharp the schedule is attached to the base optimizer, which is
+    # what actually applies the update.
+    scheduled = getattr(opt, "base_optimizer", opt)
+    scheduler = optim.lr_scheduler.StepLR(
+        scheduled,
+        step_size=DEFAULT_LR_STEP_SIZE,
+        gamma=DEFAULT_LR_GAMMA,
+    )
+    return ctx, ldrs, int(cfg.epochs), opt_type, scheduler
 
 
 @dataclass(frozen=True)
@@ -342,8 +347,8 @@ def train(config: TrainingConfig) -> Optional[ExperimentResults]:
     """Train a model using the provided configuration."""
     set_seed(DEFAULT_SEED)
     device = get_device(config)
-    ctx, (train_ldr, test_ldr), epochs, opt_type = _prepare_training(
-        config, device
+    ctx, (train_ldr, test_ldr), epochs, opt_type, scheduler = (
+        _prepare_training(config, device)
     )
     start_time = time.time()
     l_list, t_list, v_list = [], [], []
@@ -351,6 +356,7 @@ def train(config: TrainingConfig) -> Optional[ExperimentResults]:
     try:
         for epoch in range(epochs):
             e_loss, a = _run_epoch(ctx, epoch, train_ldr)
+            scheduler.step()
             va, _ = _validate(ctx, test_ldr)
             l_list.append(e_loss)
             t_list.append(a)

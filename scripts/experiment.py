@@ -143,7 +143,8 @@ def run_comparison_experiments(fast_mode: bool = False) -> dict:
 
 def run_hyperparameter_study() -> dict:
     """Run hyperparameter study for percentile threshold as mentioned in the paper"""
-    percentiles = [50, 60, 70, 80, 90]
+    # The paper's Table 2 ablates Q_p over {0.75, 0.80, 0.85, 0.90, 0.95}.
+    percentiles = [75, 80, 85, 90, 95]
     results = {}
 
     for percentile in percentiles:
