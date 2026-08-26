@@ -27,23 +27,23 @@ init:
 
 # Format code with ruff
 fmt:
-    {{PYTHON}} -m ruff format src/ tests/ scripts/
-    {{PYTHON}} -m ruff check --fix src/ tests/ scripts/
+    {{PYTHON}} -m ruff format zsharp/ tests/ scripts/
+    {{PYTHON}} -m ruff check --fix zsharp/ tests/ scripts/
 
 # Lint code
 lint:
-    {{PYTHON}} -m ruff check src/ tests/ scripts/
-    {{PYTHON}} -m ruff format --check src/ tests/ scripts/
-    {{PYTHON}} -m mypy src/
-    {{PYTHON}} -m interrogate src/ --fail-under=100
+    {{PYTHON}} -m ruff check zsharp/ tests/ scripts/
+    {{PYTHON}} -m ruff format --check zsharp/ tests/ scripts/
+    {{PYTHON}} -m mypy zsharp/
+    {{PYTHON}} -m interrogate zsharp/ --fail-under=100
 
 # Type-check
 type:
-    {{PYTHON}} -m mypy src/
+    {{PYTHON}} -m mypy zsharp/
 
 # Run tests with coverage
 test:
-    {{PYTHON}} -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term-missing --cov-fail-under=95
+    {{PYTHON}} -m pytest tests/ -v --cov=zsharp --cov-report=html --cov-report=term-missing --cov-fail-under=95
 
 # Run tests without coverage
 test-fast:
@@ -55,7 +55,7 @@ verify-deps:
 
 # Check for dead code
 dead-code:
-    {{PYTHON}} -m vulture src/
+    {{PYTHON}} -m vulture zsharp/
 
 # Verify architectural contracts
 arch:
@@ -63,7 +63,7 @@ arch:
 
 # Run security linting
 security-lint:
-    {{PYTHON}} -m bandit -r src/ -ll
+    {{PYTHON}} -m bandit -r zsharp/ -ll
 
 # Audit dependencies for vulnerabilities
 security-audit:

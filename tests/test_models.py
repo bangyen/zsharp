@@ -5,7 +5,7 @@ import pytest
 import torch
 from torch import nn
 
-from src.models import get_model
+from zsharp.models import get_model
 
 
 class TestModels:

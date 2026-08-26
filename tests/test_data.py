@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 import torch
 
-from src.data import get_cifar10, get_cifar100, get_dataset
+from zsharp.data import get_cifar10, get_cifar100, get_dataset
 
 # Patch the dataset classes so tests exercise the loader wiring without
 # downloading the real CIFAR datasets (which are ~163MB each and would
@@ -42,7 +42,7 @@ FAKE_DATASET_CLASSES = {
 class TestDataModule:
     """Test cases for data loading functions"""
 
-    @patch("src.data._DATASET_CLASSES", FAKE_DATASET_CLASSES)
+    @patch("zsharp.data._DATASET_CLASSES", FAKE_DATASET_CLASSES)
     def test_get_dataset_cifar10(self):
         """Test get_dataset function with cifar10"""
         trainloader, testloader = get_dataset(
@@ -57,7 +57,7 @@ class TestDataModule:
             assert data.shape[1:] == (3, 32, 32)
             break
 
-    @patch("src.data._DATASET_CLASSES", FAKE_DATASET_CLASSES)
+    @patch("zsharp.data._DATASET_CLASSES", FAKE_DATASET_CLASSES)
     def test_get_dataset_cifar100(self):
         """Test get_dataset function with cifar100"""
         trainloader, testloader = get_dataset(
@@ -77,7 +77,7 @@ class TestDataModule:
         with pytest.raises(ValueError, match="Unknown dataset"):
             get_dataset("unknown_dataset", batch_size=32, num_workers=0)
 
-    @patch("src.data._get_cifar")
+    @patch("zsharp.data._get_cifar")
     def test_get_cifar10_delegates(self, mock_get_cifar):
         """Test get_cifar10 delegates to the generic loader."""
         get_cifar10(batch_size=64, num_workers=1)
@@ -88,7 +88,7 @@ class TestDataModule:
             pin_memory=False,
         )
 
-    @patch("src.data._get_cifar")
+    @patch("zsharp.data._get_cifar")
     def test_get_cifar100_delegates(self, mock_get_cifar):
         """Test get_cifar100 delegates to the generic loader."""
         get_cifar100(batch_size=64, num_workers=1)
@@ -130,7 +130,7 @@ class TestDatasetWiring:
         """A known name must load; only unknown names raise."""
         calls = []
         with patch(
-            "src.data._DATASET_CLASSES", _recording_dataset_classes(calls)
+            "zsharp.data._DATASET_CLASSES", _recording_dataset_classes(calls)
         ):
             get_dataset("cifar10", batch_size=4, num_workers=0)
 
@@ -140,7 +140,7 @@ class TestDatasetWiring:
         """One loader must be train=True and the other train=False."""
         calls = []
         with patch(
-            "src.data._DATASET_CLASSES", _recording_dataset_classes(calls)
+            "zsharp.data._DATASET_CLASSES", _recording_dataset_classes(calls)
         ):
             get_dataset("cifar100", batch_size=4, num_workers=0)
 
@@ -151,7 +151,7 @@ class TestDatasetWiring:
     def test_loader_params_reach_the_dataloaders(self):
         """batch_size / num_workers / pin_memory must not be dropped."""
         with patch(
-            "src.data._DATASET_CLASSES", _recording_dataset_classes([])
+            "zsharp.data._DATASET_CLASSES", _recording_dataset_classes([])
         ):
             train, test = get_dataset(
                 "cifar10", batch_size=2, num_workers=0, pin_memory=False
@@ -165,7 +165,7 @@ class TestDatasetWiring:
     def test_only_train_loader_shuffles(self):
         """Train shuffles; test must not, or eval order becomes random."""
         with patch(
-            "src.data._DATASET_CLASSES", _recording_dataset_classes([])
+            "zsharp.data._DATASET_CLASSES", _recording_dataset_classes([])
         ):
             train, test = get_dataset("cifar10", batch_size=2, num_workers=0)
 

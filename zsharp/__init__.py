@@ -5,11 +5,11 @@ This package provides implementations of SAM (Sharpness-Aware Minimization)
 and ZSharp optimizers for deep learning training.
 """
 
-from src.constants import ExperimentResults, TrainingConfig
-from src.data import get_dataset
-from src.models import get_model
-from src.optimizer import SAM, ZSharp
-from src.trainer import get_device, set_seed, train
+from zsharp.constants import ExperimentResults, TrainingConfig
+from zsharp.data import get_dataset
+from zsharp.models import get_model
+from zsharp.optimizer import SAM, ZSharp
+from zsharp.trainer import get_device, set_seed, train
 
 __all__ = [
     "SAM",

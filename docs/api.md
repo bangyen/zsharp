@@ -6,7 +6,7 @@ instructions, see the [main README](../README.md).
 
 ## Core Modules
 
-### `src.optimizer`
+### `zsharp.optimizer`
 
 Optimizer implementations for SAM and ZSharp.
 
@@ -37,7 +37,7 @@ argument.
 - `momentum`: Momentum coefficient (default: 0.9)
 - `weight_decay`: Weight decay (default: 5e-4)
 
-### `src.trainer`
+### `zsharp.trainer`
 
 Training utilities and the main training loop.
 
@@ -55,7 +55,7 @@ Training utilities and the main training loop.
   flags used during training
 - `TrainingHistory`: Accumulated per-epoch metrics and final results
 
-### `src.data`
+### `zsharp.data`
 
 Data loading and preprocessing utilities for CIFAR-10 and CIFAR-100.
 
@@ -78,7 +78,7 @@ Data loading and preprocessing utilities for CIFAR-10 and CIFAR-100.
 - `cifar10`: CIFAR-10 dataset
 - `cifar100`: CIFAR-100 dataset
 
-### `src.models`
+### `zsharp.models`
 
 Model loading utilities.
 
@@ -93,7 +93,7 @@ Model loading utilities.
 - `vgg11`: VGG-11 architecture
 - `vit_b_16`: Vision Transformer B-16
 
-### `src.constants`
+### `zsharp.constants`
 
 Configuration models and default values.
 
@@ -156,8 +156,8 @@ are also range-checked (`percentile` in [0, 100], positive `lr`, `rho`, and
 ### Basic Training
 
 ```python
-from src.constants import TrainingConfig
-from src.trainer import train
+from zsharp.constants import TrainingConfig
+from zsharp.trainer import train
 
 config = TrainingConfig.model_validate(
     {"dataset": "cifar10", "model": "resnet18"}
@@ -182,7 +182,7 @@ python -m scripts.train --config configs/zsharp_baseline.yaml --verbose
 ### Custom Optimizer
 
 ```python
-from src.optimizer import ZSharp
+from zsharp.optimizer import ZSharp
 import torch
 
 # Create ZSharp optimizer

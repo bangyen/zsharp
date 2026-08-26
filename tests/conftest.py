@@ -19,35 +19,17 @@ def _patched_set_start_method(method, force=False):
 
 multiprocessing.set_start_method = _patched_set_start_method
 
-# The package under test is literally named "src". Mutmut names mutants
-# without that prefix (e.g. "data.x_get_dataset__mutmut_1") but the trampoline
-# builds its qualname from __module__, which IS prefixed ("src.data.…"). The
-# two never match, so the selected mutant silently never activates. Re-add the
-# prefix so selection works. "fail" is mutmut's forced-fail probe, not a
-# mutant, so it must pass through untouched.
+
+# Mutmut names mutants without the package prefix (e.g.
+# "data.x_get_dataset__mutmut_1") while the trampoline builds its qualname
+# from __module__, which has it ("zsharp.data...."). Re-add the prefix so the
+# selected mutant actually activates. "fail" is mutmut's forced-fail probe,
+# not a mutant, so it passes through untouched.
 import os  # noqa: E402
 
 _mut = os.environ.get("MUTANT_UNDER_TEST", "")
-if "__mutmut_" in _mut and not _mut.startswith("src."):
-    os.environ["MUTANT_UNDER_TEST"] = "src." + _mut
-
-
-# Monkeypatch mutmut.record_trampoline_hit to strip 'src.' prefix
-# mutmut 3.x has an assertion that module names should not start with 'src.'
-try:
-    import mutmut.__main__
-
-    _orig_record_trampoline_hit = mutmut.__main__.record_trampoline_hit
-
-    def _patched_record_trampoline_hit(name, *args, **kwargs):
-        # Pass through extra args (e.g. mutmut 3.7's `caller`) unchanged so
-        # this shim survives upstream signature changes.
-        name = name.removeprefix("src.")
-        return _orig_record_trampoline_hit(name, *args, **kwargs)
-
-    mutmut.__main__.record_trampoline_hit = _patched_record_trampoline_hit
-except (ImportError, AttributeError):
-    pass
+if "__mutmut_" in _mut and not _mut.startswith("zsharp."):
+    os.environ["MUTANT_UNDER_TEST"] = "zsharp." + _mut
 
 
 @pytest.fixture(autouse=True)
@@ -58,4 +40,6 @@ def _isolate_results_dir(tmp_path, monkeypatch):
     that trains would overwrite the real results/ directory with throwaway
     output.
     """
-    monkeypatch.setattr("src.trainer.RESULTS_DIR", str(tmp_path / "results"))
+    monkeypatch.setattr(
+        "zsharp.trainer.RESULTS_DIR", str(tmp_path / "results")
+    )

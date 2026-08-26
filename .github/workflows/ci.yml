@@ -37,7 +37,7 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        python -m pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=95 -m "not mps"
+        python -m pytest tests/ -v --cov=zsharp --cov-report=xml --cov-report=term-missing --cov-fail-under=95 -m "not mps"
 
   lint:
     runs-on: ubuntu-latest
@@ -66,28 +66,28 @@ jobs:
         pip install -e ".[dev]"
 
     - name: Run ruff check
-      run: ruff check src/ tests/ scripts/
+      run: ruff check zsharp/ tests/ scripts/
 
     - name: Run ruff format check
-      run: ruff format --check src/ tests/ scripts/
+      run: ruff format --check zsharp/ tests/ scripts/
 
     - name: Run mypy type checking
-      run: mypy src/
+      run: mypy zsharp/
 
     - name: Run interrogate doc coverage
-      run: interrogate src/ --fail-under=100
+      run: interrogate zsharp/ --fail-under=100
 
     - name: Run deptry dependency check
       run: deptry .
 
     - name: Run vulture dead code detection
-      run: vulture src/
+      run: vulture zsharp/
 
     - name: Run import-linter architecture check
       run: python -c "from importlinter.cli import lint_imports_command; lint_imports_command()"
 
     - name: Run bandit security linting
-      run: bandit -r src/ -ll
+      run: bandit -r zsharp/ -ll
 
     - name: Run pip-audit security audit
       run: pip-audit

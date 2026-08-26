@@ -16,7 +16,7 @@ import torch
 import torch.optim
 from torch.optim import Optimizer
 
-from src.constants import (
+from zsharp.constants import (
     DEFAULT_PERCENTILE,
     DEFAULT_RHO,
     DEFAULT_TOP_K_RATIO,

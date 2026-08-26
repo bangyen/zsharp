@@ -8,8 +8,8 @@ import sys
 
 import yaml
 
-from src.constants import TrainingConfig
-from src.trainer import train
+from zsharp.constants import TrainingConfig
+from zsharp.trainer import train
 
 
 def main():

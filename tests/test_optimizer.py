@@ -5,12 +5,12 @@ import pytest
 import torch
 from torch import nn, optim
 
-from src.constants import (
+from zsharp.constants import (
     DEFAULT_LEARNING_RATE,
     DEFAULT_PERCENTILE,
     DEFAULT_RHO,
 )
-from src.optimizer import SAM, ZSharp
+from zsharp.optimizer import SAM, ZSharp
 
 
 class SimpleModel(nn.Module):

@@ -12,7 +12,7 @@ import torch.utils.data
 import torchvision
 import torchvision.transforms as T
 
-from src.constants import (
+from zsharp.constants import (
     DATA_ROOT,
     DEFAULT_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
