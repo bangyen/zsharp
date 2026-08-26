@@ -19,6 +19,19 @@ def _patched_set_start_method(method, force=False):
 
 multiprocessing.set_start_method = _patched_set_start_method
 
+# The package under test is literally named "src". Mutmut names mutants
+# without that prefix (e.g. "data.x_get_dataset__mutmut_1") but the trampoline
+# builds its qualname from __module__, which IS prefixed ("src.data.…"). The
+# two never match, so the selected mutant silently never activates. Re-add the
+# prefix so selection works. "fail" is mutmut's forced-fail probe, not a
+# mutant, so it must pass through untouched.
+import os  # noqa: E402
+
+_mut = os.environ.get("MUTANT_UNDER_TEST", "")
+if "__mutmut_" in _mut and not _mut.startswith("src."):
+    os.environ["MUTANT_UNDER_TEST"] = "src." + _mut
+
+
 # Monkeypatch mutmut.record_trampoline_hit to strip 'src.' prefix
 # mutmut 3.x has an assertion that module names should not start with 'src.'
 try:

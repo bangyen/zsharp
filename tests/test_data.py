@@ -98,3 +98,80 @@ class TestDataModule:
             num_workers=1,
             pin_memory=False,
         )
+
+
+def _recording_dataset_classes(calls):
+    """Build fake dataset classes that record their constructor kwargs."""
+
+    def make(name, num_classes):
+        def __init__(self, **kwargs):  # noqa: N807
+            calls.append({"dataset": name, **kwargs})
+
+        return type(
+            f"Recording{name}",
+            (),
+            {
+                "__init__": __init__,
+                "__len__": lambda self: 8,
+                "__getitem__": lambda self, idx: (
+                    torch.randn(3, 32, 32),
+                    torch.tensor(idx % num_classes),
+                ),
+            },
+        )
+
+    return {"cifar10": make("cifar10", 10), "cifar100": make("cifar100", 100)}
+
+
+class TestDatasetWiring:
+    """Assert the values get_dataset threads through to the loaders."""
+
+    def test_known_dataset_is_dispatched_not_rejected(self):
+        """A known name must load; only unknown names raise."""
+        calls = []
+        with patch(
+            "src.data._DATASET_CLASSES", _recording_dataset_classes(calls)
+        ):
+            get_dataset("cifar10", batch_size=4, num_workers=0)
+
+        assert [c["dataset"] for c in calls] == ["cifar10", "cifar10"]
+
+    def test_train_and_test_splits_are_requested(self):
+        """One loader must be train=True and the other train=False."""
+        calls = []
+        with patch(
+            "src.data._DATASET_CLASSES", _recording_dataset_classes(calls)
+        ):
+            get_dataset("cifar100", batch_size=4, num_workers=0)
+
+        assert [c["train"] for c in calls] == [True, False]
+        assert all(c["download"] is True for c in calls)
+        assert all(c["transform"] is not None for c in calls)
+
+    def test_loader_params_reach_the_dataloaders(self):
+        """batch_size / num_workers / pin_memory must not be dropped."""
+        with patch(
+            "src.data._DATASET_CLASSES", _recording_dataset_classes([])
+        ):
+            train, test = get_dataset(
+                "cifar10", batch_size=2, num_workers=0, pin_memory=False
+            )
+
+        for loader in (train, test):
+            assert loader.batch_size == 2
+            assert loader.num_workers == 0
+            assert loader.pin_memory is False
+
+    def test_only_train_loader_shuffles(self):
+        """Train shuffles; test must not, or eval order becomes random."""
+        with patch(
+            "src.data._DATASET_CLASSES", _recording_dataset_classes([])
+        ):
+            train, test = get_dataset("cifar10", batch_size=2, num_workers=0)
+
+        assert isinstance(train.sampler, torch.utils.data.RandomSampler), (
+            "train loader must shuffle"
+        )
+        assert isinstance(test.sampler, torch.utils.data.SequentialSampler), (
+            "test loader must not shuffle"
+        )
