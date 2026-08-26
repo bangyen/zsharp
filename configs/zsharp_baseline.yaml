@@ -1,15 +1,19 @@
+# Paper configuration (arXiv:2505.02369, "Experimental Settings"):
+# AdamW base optimizer, lr 1e-3, weight decay 5e-5, batch size 256,
+# 200 epochs, Q_p = 0.95. The LR step decay (x0.75 every 10 epochs) is
+# applied by the trainer.
 dataset: cifar10
 model: resnet18
 optimizer:
   type: zsharp
   rho: 0.05
-  percentile: 70
-  lr: 0.01
-  momentum: 0.9
-  weight_decay: 5e-4
+  percentile: 95
+  lr: 0.001
+  momentum: 0.9  # unused by zsharp; AdamW is the base optimizer
+  weight_decay: 5e-5
 train:
-  batch_size: 128
-  epochs: 20
+  batch_size: 256
+  epochs: 200
   device: auto
   num_workers: 4
   pin_memory: false

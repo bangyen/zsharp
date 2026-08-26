@@ -14,7 +14,7 @@ Optimizer implementations for SAM and ZSharp.
 
 - `SAM(base_optimizer, rho=0.05, **kwargs)` — Sharpness-Aware Minimization.
   Subclass of `torch.optim.Optimizer`.
-- `ZSharp(base_optimizer, rho=0.05, percentile=70, **kwargs)` — SAM with
+- `ZSharp(base_optimizer, rho=0.05, percentile=95, **kwargs)` — SAM with
   Z-Score gradient filtering. Subclass of `SAM`.
 
 Both take `params` (an iterable of parameters) as their first positional
@@ -30,12 +30,15 @@ argument.
 **Parameters:**
 
 - `params`: Model parameters
-- `base_optimizer`: Base optimizer class (e.g., `torch.optim.SGD`)
+- `base_optimizer`: Base optimizer class. The trainer uses
+  `torch.optim.AdamW`, matching the paper.
 - `rho`: SAM perturbation radius (default: 0.05)
-- `percentile`: Global filtering threshold in percent (default: 70)
-- `lr`: Learning rate (default: 0.01)
-- `momentum`: Momentum coefficient (default: 0.9)
-- `weight_decay`: Weight decay (default: 5e-4)
+- `percentile`: Global filtering threshold in percent (default: 95)
+- `lr`: Learning rate (default: 0.001)
+- `weight_decay`: Weight decay (default: 5e-5)
+
+Any further keyword arguments are forwarded to `base_optimizer`, so
+`momentum` is accepted only when the base optimizer is SGD.
 
 ### `zsharp.trainer`
 
@@ -114,12 +117,14 @@ Configuration models and default values.
 **Key Constants:**
 
 - `DEFAULT_SEED`: 42
-- `DEFAULT_LEARNING_RATE`: 0.01
-- `DEFAULT_MOMENTUM`: 0.9
+- `DEFAULT_LEARNING_RATE`: 0.001
+- `DEFAULT_MOMENTUM`: 0.9 (SGD baseline only)
 - `DEFAULT_RHO`: 0.05
-- `DEFAULT_PERCENTILE`: 70
-- `DEFAULT_WEIGHT_DECAY`: 5e-4
-- `DEFAULT_BATCH_SIZE`: 128
+- `DEFAULT_PERCENTILE`: 95
+- `DEFAULT_WEIGHT_DECAY`: 5e-5
+- `DEFAULT_BATCH_SIZE`: 256
+- `DEFAULT_LR_STEP_SIZE`: 10
+- `DEFAULT_LR_GAMMA`: 0.75
 - `RESULTS_DIR`: "results"
 
 ## Configuration
@@ -133,13 +138,13 @@ model: resnet18
 optimizer:
   type: zsharp
   rho: 0.05
-  percentile: 70
-  lr: 0.01
-  momentum: 0.9
-  weight_decay: 5e-4
+  percentile: 95
+  lr: 0.001
+  momentum: 0.9  # unused by zsharp; AdamW is the base optimizer
+  weight_decay: 5e-5
 train:
-  batch_size: 128
-  epochs: 20
+  batch_size: 256
+  epochs: 200
   device: auto
   num_workers: 4
   pin_memory: false
@@ -188,11 +193,11 @@ import torch
 # Create ZSharp optimizer
 optimizer = ZSharp(
     list(model.parameters()),
-    base_optimizer=torch.optim.SGD,
+    base_optimizer=torch.optim.AdamW,
     rho=0.05,
-    percentile=70,
-    lr=0.01,
-    momentum=0.9,
+    percentile=95,
+    lr=0.001,
+    weight_decay=5e-5,
 )
 
 # Training loop

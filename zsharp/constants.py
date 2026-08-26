@@ -21,27 +21,30 @@ MAX_QUANTILE_NUMEL = 2**24
 CIFAR10_DATASET = "cifar10"
 CIFAR100_DATASET = "cifar100"
 
-# Default batch and training parameters
-DEFAULT_BATCH_SIZE = 128
+# Default batch and training parameters. Batch size matches the paper; the
+# epoch default below stays low deliberately, since the paper's 200 epochs
+# is a poor default for an unattended run. The shipped configs set it.
+DEFAULT_BATCH_SIZE = 256
 DEFAULT_NUM_WORKERS = 2
 DEFAULT_PIN_MEMORY = False
 
 # Optimizer constants
+# Paper defaults (arXiv:2505.02369, "Experimental Settings"): AdamW with
+# lr 1e-3 and weight decay 5e-5, and Q_p = 0.95, which keeps the top 5% of
+# gradient components by absolute Z-score.
 DEFAULT_RHO = 0.05
-DEFAULT_PERCENTILE = 70
-DEFAULT_LEARNING_RATE = 0.01
+DEFAULT_PERCENTILE = 95
+DEFAULT_LEARNING_RATE = 1e-3
 DEFAULT_MOMENTUM = 0.9
-DEFAULT_WEIGHT_DECAY = 5e-4
+DEFAULT_WEIGHT_DECAY = 5e-5
 
-# Numerical stability constants
-EPSILON = 1e-12
+# Learning rate schedule: multiplied by 0.75 every 10 epochs.
+DEFAULT_LR_STEP_SIZE = 10
+DEFAULT_LR_GAMMA = 0.75
+
+# Numerical stability constant (delta in the paper).
+EPSILON = 1e-8
 EPSILON_STD = 1e-8
-
-# Gradient clipping
-MAX_GRADIENT_NORM = 1.0
-
-# Z-score filtering constants
-DEFAULT_TOP_K_RATIO = 0.2  # Keep top 20% if no gradients pass threshold
 
 # Model architecture constants
 RESNET18_NAME = "resnet18"

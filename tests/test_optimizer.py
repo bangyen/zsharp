@@ -698,6 +698,63 @@ class TestOptimizerIntegration:
 
         assert diverged, "SAM and ZSharp should behave differently"
 
+    def test_zsharp_falls_back_to_unfiltered_gradient(self):
+        """Test Eq. 9 fallback when filtering removes every component.
+
+        With percentile=100 the threshold is the maximum absolute Z-score,
+        and the strict ``>`` comparison retains nothing. The paper then
+        specifies using the unfiltered gradient for the ascent step.
+        """
+        model = SimpleModel()
+        zsharp = ZSharp(
+            list(model.parameters()),
+            optim.SGD,
+            rho=0.05,
+            percentile=100,
+            lr=0.01,
+        )
+
+        x = torch.randn(4, 10)
+        y = torch.randint(0, 2, (4,))
+        criterion = nn.CrossEntropyLoss()
+        criterion(model(x), y).backward()
+
+        before = [p.grad.detach().clone() for p in model.parameters()]
+        zsharp.first_step()
+
+        # Gradients are restored unfiltered, and the ascent step still runs.
+        for original, p in zip(before, model.parameters(), strict=True):
+            assert torch.equal(original, p.grad)
+        assert all("e" in zsharp.state[p] for p in model.parameters())
+
+    def test_zsharp_may_zero_an_entire_layer(self):
+        """Test that filtering can zero a whole layer.
+
+        The threshold is pooled across the network, so a layer whose
+        Z-scores are all small contributes nothing to the ascent direction.
+        The paper permits this; only an all-zero gradient triggers Eq. 9.
+        """
+        model = SimpleModel()
+        zsharp = ZSharp(
+            list(model.parameters()),
+            optim.SGD,
+            rho=0.05,
+            percentile=50,
+            lr=0.01,
+        )
+
+        params = list(model.parameters())
+        # One layer with a wide Z-score spread, one perfectly uniform (all
+        # Z-scores zero, so nothing in it can exceed a positive threshold).
+        params[0].grad = torch.randn_like(params[0]) * 10
+        for p in params[1:]:
+            p.grad = torch.full_like(p, 0.5)
+
+        zsharp.first_step()
+
+        assert torch.count_nonzero(params[0].grad) > 0
+        assert torch.count_nonzero(params[1].grad) == 0
+
     def test_sam_first_step_with_existing_state(self):
         """Test SAM first step when parameter already has state in optimizer"""
         model = SimpleModel()
