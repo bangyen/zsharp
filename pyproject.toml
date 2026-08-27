@@ -20,6 +20,9 @@ classifiers = [
 dependencies = [
     "torch>=2.0.0",
     "torchvision>=0.15.0",
+    # Imported directly by zsharp.data to load Tiny-ImageNet JPEGs; torchvision
+    # pulls it in too, but deptry (DEP003) requires direct imports be declared.
+    "pillow",
     "numpy",
     "tqdm",
     "pyyaml",
