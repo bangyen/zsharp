@@ -153,8 +153,12 @@ Configuration models and default values.
   - `optimizer: OptimizerConfig`
   - `dataset: str`
   - `model: str`
+  - `seed: int` (default 42)
 - `TrainingSubConfig`: Training parameters (`device`, `batch_size`, `epochs`,
-  `num_workers`, `pin_memory`, `use_mixed_precision`)
+  `num_workers`, `pin_memory`, `use_mixed_precision`, `checkpoint_dir`).
+  When `checkpoint_dir` is set, training state is saved there after every
+  epoch as `<dataset>_<model>_<optimizer>_seed<seed>.pt`, and rerunning the
+  same config resumes from it (a finished run is only re-evaluated).
 - `OptimizerConfig`: Optimizer parameters (`type`, `lr`, `momentum`,
   `weight_decay`, `rho`, `percentile`)
 - `ExperimentResults`: Results from an experiment (config, accuracies, losses,
