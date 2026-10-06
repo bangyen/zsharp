@@ -1037,3 +1037,95 @@ class TestZSharpLargeModelThreshold:
         expected = torch.quantile(values[0].abs(), 0.7).item()
 
         assert threshold == pytest.approx(expected, abs=1e-4)
+
+
+def _tiny_loaders(**_kwargs):
+    """Build small real loaders so shuffling exercises the RNG state."""
+    gen = torch.Generator().manual_seed(0)
+    x = torch.randn(32, 3, 32, 32, generator=gen)
+    y = torch.randint(0, 10, (32,), generator=gen)
+    data = torch.utils.data.TensorDataset(x, y)
+    return (
+        torch.utils.data.DataLoader(data, batch_size=8, shuffle=True),
+        torch.utils.data.DataLoader(data, batch_size=8),
+    )
+
+
+def _checkpoint_config(opt_type, epochs, checkpoint_dir=None, seed=7):
+    """Build a CPU config for the checkpoint tests."""
+    return TrainingConfig.model_validate(
+        {
+            "seed": seed,
+            "train": {
+                "epochs": epochs,
+                "device": "cpu",
+                "num_workers": 0,
+                "checkpoint_dir": checkpoint_dir,
+            },
+            "optimizer": {"type": opt_type, "lr": 0.01},
+        }
+    )
+
+
+@pytest.fixture
+def _tiny_training():
+    """Train SimpleTestModel on the tiny loaders instead of real data."""
+    with (
+        patch("zsharp.trainer.get_dataset", side_effect=_tiny_loaders),
+        patch(
+            "zsharp.trainer.get_model",
+            side_effect=lambda **_: SimpleTestModel(),
+        ),
+    ):
+        yield
+
+
+@pytest.mark.usefixtures("_tiny_training")
+class TestSeedAndCheckpointing:
+    """Tests for the configurable seed and checkpoint/resume."""
+
+    def test_train_uses_config_seed(self):
+        """train() seeds from the config rather than a fixed constant."""
+        with patch("zsharp.trainer.set_seed") as mock_set_seed:
+            train(_checkpoint_config("sgd", 1, seed=123))
+        mock_set_seed.assert_called_once_with(123)
+
+    def test_seed_rejects_negative(self):
+        """Negative seeds are rejected at validation time."""
+        with pytest.raises(ValidationError):
+            TrainingConfig.model_validate({"seed": -1})
+
+    def test_checkpoint_written_after_each_epoch(self, tmp_path):
+        """A checkpoint named after the run records the last epoch."""
+        train(_checkpoint_config("zsharp", 2, str(tmp_path)))
+
+        path = tmp_path / "cifar10_resnet18_zsharp_seed7.pt"
+        state = torch.load(path, weights_only=False)
+        assert state["progress"]["next_epoch"] == 2
+        assert len(state["progress"]["test_accuracies"]) == 2
+        assert not path.with_suffix(".tmp").exists()
+
+    @pytest.mark.parametrize("opt_type", ["sgd", "zsharp"])
+    def test_resume_matches_uninterrupted_run(self, tmp_path, opt_type):
+        """Stopping after epoch 2 and resuming reproduces a 3-epoch run."""
+        full = train(_checkpoint_config(opt_type, 3))
+
+        train(_checkpoint_config(opt_type, 2, str(tmp_path)))
+        resumed = train(_checkpoint_config(opt_type, 3, str(tmp_path)))
+
+        assert resumed.train_losses == pytest.approx(full.train_losses)
+        assert resumed.test_accuracies == full.test_accuracies
+        assert resumed.final_test_loss == pytest.approx(full.final_test_loss)
+
+    def test_resume_reshares_zsharp_param_groups(self, tmp_path):
+        """After loading, ZSharp and its base optimizer share param groups."""
+        train(_checkpoint_config("zsharp", 1, str(tmp_path)))
+        with patch("zsharp.trainer._run_epoch") as mock_epoch:
+            mock_epoch.side_effect = lambda ctx, *_: (
+                ctx.optimizer.param_groups
+                is ctx.optimizer.base_optimizer.param_groups
+                or pytest.fail("param groups not shared"),
+                (0.0, 0.0),
+            )[1]
+            train(_checkpoint_config("zsharp", 2, str(tmp_path)))
+        mock_epoch.assert_called_once()
