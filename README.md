@@ -4,7 +4,7 @@
 [![CI](https://github.com/bangyen/zsharp/actions/workflows/ci.yml/badge.svg)](https://github.com/bangyen/zsharp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/bangyen/zsharp)](LICENSE)
 
-**Sharpness-Aware Minimization with Z-Score Gradient Filtering: +5.26% accuracy over SGD, Apple Silicon optimized, fully reproducible**
+**Sharpness-Aware Minimization with Z-Score Gradient Filtering: +2.65% accuracy over SGD, Apple Silicon optimized, fully reproducible**
 
 <p align="center">
   <img src="docs/training_curves.png" alt="Training curves comparison" width="600">
@@ -26,16 +26,17 @@ Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bang
 
 ## Results
 
-| Scenario / Dataset | Baseline | This Project | Δ Improvement |
-|--------------------|----------|--------------|---------------|
-| CIFAR-10 ResNet-18 | 74.89%   | **80.15%***  | +5.26%        |
+| Scenario / Dataset | Baseline (SGD) | This Project | Δ Improvement |
+|--------------------|----------------|--------------|---------------|
+| CIFAR-10 ResNet-18 | 78.19 ± 0.23%  | **80.84 ± 0.54%** | +2.65%   |
 
-*\*Benchmark results from full training runs. Local results may vary based on configuration.*
+*Final test accuracy after 20 epochs, mean ± std over 3 seeds (42, 1, 2).
+Baseline: `configs/sgd_baseline.yaml`. ZSharp: `configs/zsharp_baseline.yaml`
+with `epochs: 20` (paper hyperparameters: AdamW, batch size 256, $Q_p = 0.95$).
+Measured on CPU.*
 
-> **Note**: this benchmark predates the alignment of the implementation to
-> the paper (see [docs/algorithm.md](docs/algorithm.md)). It was produced
-> with 70th-percentile filtering, an SGD base optimizer, and gradient
-> clipping, and has not been regenerated under the current defaults.
+> **Note**: these are short runs. The paper's 200-epoch setting has not
+> been reproduced here.
 
 ## Features
 
