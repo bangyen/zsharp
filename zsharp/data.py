@@ -261,8 +261,14 @@ def _get_tiny_imagenet(
         ],
     )
 
-    trainset = TinyImageNet(train=True, transform=transform_train)
-    testset = TinyImageNet(train=False, transform=transform_test)
+    # Pass DATA_ROOT explicitly: the constructor's default is bound at
+    # import time, so it would ignore a patched or reconfigured root.
+    trainset = TinyImageNet(
+        root=DATA_ROOT, train=True, transform=transform_train
+    )
+    testset = TinyImageNet(
+        root=DATA_ROOT, train=False, transform=transform_test
+    )
 
     trainloader = torch.utils.data.DataLoader(
         trainset,
