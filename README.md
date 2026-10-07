@@ -42,14 +42,18 @@ $Q_p = 0.95$), with `epochs` set as shown. Measured on CPU.
 † `label_smoothing: 0.1` and `strong_augmentation: true` (TrivialAugmentWide
 plus random erasing). Both models underfit at 50 epochs under this
 regularization (~70% train accuracy), so it lowers accuracy for both, but
-the per-epoch gap widens. ZSharp took ~3.2x SGD's wall-clock time here.*
+the per-epoch gap widens. ZSharp took ~3.2x SGD's wall-clock time here
+(before the faster threshold computation).*
 
 > **Note**: the gap shrinks with training — ZSharp reaches its plateau
 > sooner, but both end within about a point. Each ZSharp step costs two
-> forward/backward passes; the 200-epoch run took ~4.3x the wall-clock time
-> of SGD (13.2 h vs 3.1 h). At equal compute SGD is ahead until ~3 h, where
-> both reach ~84.2% (ZSharp epoch 46 vs SGD epoch 197); see the right panel
-> of the figure above.
+> forward/backward passes plus the Z-score filtering; one ZSharp epoch takes
+> ~2.4x as long as an SGD epoch (155 s vs 66 s on 4 CPU threads). At equal
+> wall-clock SGD leads for the first ~1.8 h; after that ZSharp is ahead, and
+> at SGD's full 200-epoch budget (3.1 h) ZSharp reaches 85.12% (epoch 85)
+> vs SGD's 84.22%. See the right panel of the figure above. The 200-epoch
+> ZSharp run itself predates the faster threshold computation and took
+> 13.2 h; at the current per-epoch cost it would take ~7.3 h.
 
 ## Features
 
