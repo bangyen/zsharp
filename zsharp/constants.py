@@ -15,8 +15,8 @@ DEFAULT_SEED = 42
 # Math constants
 MIN_NUM_FOR_STD = 2
 
-# torch.quantile rejects inputs larger than 2**24 elements; above this we
-# fall back to kthvalue, which computes the same order statistic unbounded.
+# torch.quantile rejects inputs larger than 2**24 elements. ZSharp computes
+# its threshold by selection instead, so large models stay supported.
 MAX_QUANTILE_NUMEL = 2**24
 
 # Dataset names

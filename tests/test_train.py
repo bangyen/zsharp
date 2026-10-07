@@ -223,6 +223,10 @@ class TestTrain:
             assert results.device is not None
             assert results.optimizer_type == "sgd"
 
+    # The mocked ZSharp never steps its base optimizer, so the scheduler
+    # warns about step order; real ZSharp training does not (see
+    # test_zsharp_training_steps_optimizer_before_scheduler).
+    @pytest.mark.filterwarnings("ignore:Detected call of `lr_scheduler.step")
     @patch("zsharp.trainer.get_dataset")
     @patch("zsharp.trainer.get_model")
     @patch("zsharp.trainer.ZSharp")
@@ -1104,6 +1108,11 @@ class TestSeedAndCheckpointing:
         assert state["progress"]["next_epoch"] == 2
         assert len(state["progress"]["test_accuracies"]) == 2
         assert not path.with_suffix(".tmp").exists()
+
+    @pytest.mark.filterwarnings("error:Detected call of `lr_scheduler.step")
+    def test_zsharp_training_steps_optimizer_before_scheduler(self):
+        """The base optimizer steps before the scheduler, so no warning."""
+        train(_checkpoint_config("zsharp", 2))
 
     @pytest.mark.parametrize("opt_type", ["sgd", "zsharp"])
     def test_resume_matches_uninterrupted_run(self, tmp_path, opt_type):

@@ -21,13 +21,39 @@ from zsharp.constants import (
     DEFAULT_RHO,
     EPSILON,
     EPSILON_STD,
-    MAX_QUANTILE_NUMEL,
     MIN_NUM_FOR_STD,
 )
 
 # Type for optimizer kwargs
 OptimizerKwargs = Any
 """Type alias for optimizer keyword arguments."""
+
+
+def _quantile_by_selection(values: torch.Tensor, q: float) -> float:
+    """Return ``torch.quantile(values, q)`` without sorting every element.
+
+    torch.quantile fully sorts its input, which dominates a ZSharp step on
+    CPU, and it rejects inputs above 2**24 elements. Only the two order
+    statistics around the quantile are needed, so this keeps the
+    ``n - floor(q * (n - 1))`` largest values with ``topk`` and reads them
+    off the bottom of that set, applying the same linear interpolation.
+
+    Args:
+        values: Non-empty 1-D tensor.
+        q: Quantile in [0, 1].
+
+    Returns:
+        float: The interpolated quantile, matching ``torch.quantile``.
+    """
+    n = values.numel()
+    pos = q * (n - 1)
+    lo = int(pos)
+    frac = pos - lo
+    upper = values.topk(n - lo, sorted=False).values
+    if frac == 0:
+        return float(upper.min().item())
+    v_lo, v_hi = upper.topk(2, largest=False).values.sort().values
+    return float((v_lo + (v_hi - v_lo) * frac).item())
 
 
 class SAM(Optimizer):
@@ -267,18 +293,7 @@ class ZSharp(SAM):
         n = all_zscores.numel()
         if n == 0:
             return 0.0
-        if n > MAX_QUANTILE_NUMEL:
-            # torch.quantile rejects inputs above ~2**24 elements, which
-            # large models (e.g. ViT-B/16) exceed. kthvalue has no such
-            # limit and gives the same order statistic.
-            k = min(n, max(1, round(self.percentile / 100 * n)))
-            return float(all_zscores.kthvalue(k).values.item())
-        return float(
-            torch.quantile(
-                all_zscores,
-                self.percentile / 100,
-            ).item(),
-        )
+        return _quantile_by_selection(all_zscores, self.percentile / 100)
 
     def _apply_gradient_filtering(
         self,

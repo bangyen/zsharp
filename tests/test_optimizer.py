@@ -10,7 +10,7 @@ from zsharp.constants import (
     DEFAULT_PERCENTILE,
     DEFAULT_RHO,
 )
-from zsharp.optimizer import SAM, ZSharp
+from zsharp.optimizer import SAM, ZSharp, _quantile_by_selection
 
 
 class SimpleModel(nn.Module):
@@ -779,3 +779,24 @@ class TestOptimizerIntegration:
         assert "existing" in sam.state[p]
         assert sam.state[p]["existing"] == "value"
         assert "e" in sam.state[p]  # New state from SAM
+
+
+class TestQuantileBySelection:
+    """The selection-based threshold must reproduce torch.quantile."""
+
+    @pytest.mark.parametrize("n", [1, 2, 3, 10, 1001, 50_000])
+    @pytest.mark.parametrize("q", [0.0, 0.05, 0.5, 0.7, 0.95, 1.0])
+    def test_matches_torch_quantile(self, n, q):
+        """Interpolated order statistics agree for any size and quantile."""
+        values = torch.randn(n, generator=torch.Generator().manual_seed(n))
+        expected = torch.quantile(values, q).item()
+        assert _quantile_by_selection(values, q) == pytest.approx(
+            expected, rel=1e-6, abs=1e-7
+        )
+
+    def test_handles_ties(self):
+        """Repeated values must not shift the selected order statistic."""
+        values = torch.tensor([3.0, 1.0, 2.0, 2.0, 2.0, 5.0, 2.0])
+        for q in (0.1, 0.4, 0.6, 0.9):
+            expected = torch.quantile(values, q).item()
+            assert _quantile_by_selection(values, q) == pytest.approx(expected)
