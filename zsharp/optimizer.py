@@ -43,7 +43,10 @@ def _quantile_by_selection(values: torch.Tensor, q: float) -> float:
         q: Quantile in [0, 1].
 
     Returns:
-        float: The interpolated quantile, matching ``torch.quantile``.
+        float: The interpolated quantile. It agrees with ``torch.quantile``
+        to float32 precision; the interpolation position is computed in
+        float64 here, whereas torch.quantile rounds it to float32, which
+        snaps it to an integer rank for multi-million-element inputs.
     """
     n = values.numel()
     pos = q * (n - 1)
