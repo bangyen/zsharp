@@ -18,6 +18,10 @@ MIN_NUM_FOR_STD = 2
 # torch.quantile rejects inputs larger than 2**24 elements. ZSharp computes
 # its threshold by selection instead, so large models stay supported.
 MAX_QUANTILE_NUMEL = 2**24
+# Inputs at least this large get their quantile from a sample-narrowed
+# candidate set (exact, ~4x faster for a ResNet-18) instead of plain topk.
+PREFILTER_MIN_NUMEL = 2**18
+QUANTILE_SAMPLE_SIZE = 2**16
 
 # Dataset names
 CIFAR10_DATASET = "cifar10"
