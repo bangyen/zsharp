@@ -4,7 +4,7 @@
 [![CI](https://github.com/bangyen/zsharp/actions/workflows/ci.yml/badge.svg)](https://github.com/bangyen/zsharp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/bangyen/zsharp)](LICENSE)
 
-**Sharpness-Aware Minimization with Z-Score Gradient Filtering: +2.65% accuracy over SGD, Apple Silicon optimized, fully reproducible**
+**Sharpness-Aware Minimization with Z-Score Gradient Filtering: +0.87% accuracy over SGD at 200 epochs (+2.65% at 20), Apple Silicon optimized, fully reproducible**
 
 <p align="center">
   <img src="docs/training_curves.png" alt="Training curves comparison" width="600">
@@ -26,17 +26,20 @@ Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bang
 
 ## Results
 
-| Scenario / Dataset | Baseline (SGD) | This Project | Δ Improvement |
-|--------------------|----------------|--------------|---------------|
-| CIFAR-10 ResNet-18 | 78.19 ± 0.23%  | **80.84 ± 0.54%** | +2.65%   |
+| Scenario / Dataset | Epochs | Baseline (SGD) | This Project | Δ Improvement |
+|--------------------|--------|----------------|--------------|---------------|
+| CIFAR-10 ResNet-18 | 20     | 78.19 ± 0.23%  | **80.84 ± 0.54%** | +2.65%   |
+| CIFAR-10 ResNet-18 | 200    | 84.22%         | **85.09%**   | +0.87%        |
 
-*Final test accuracy after 20 epochs, mean ± std over 3 seeds (42, 1, 2).
-Baseline: `configs/sgd_baseline.yaml`. ZSharp: `configs/zsharp_baseline.yaml`
-with `epochs: 20` (paper hyperparameters: AdamW, batch size 256, $Q_p = 0.95$).
-Measured on CPU.*
+*Final test accuracy. 20 epochs: mean ± std over 3 seeds (42, 1, 2).
+200 epochs: single seed (42). Baseline: `configs/sgd_baseline.yaml`. ZSharp:
+`configs/zsharp_baseline.yaml` (paper hyperparameters: AdamW, batch size 256,
+$Q_p = 0.95$), with `epochs` set as shown. Measured on CPU.*
 
-> **Note**: these are short runs. The paper's 200-epoch setting has not
-> been reproduced here.
+> **Note**: the gap shrinks with training — ZSharp reaches its plateau
+> sooner, but both end within about a point. Each ZSharp step costs two
+> forward/backward passes; the 200-epoch run took ~4.3x the wall-clock time
+> of SGD (13.2 h vs 3.1 h).
 
 ## Features
 
