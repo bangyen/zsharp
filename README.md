@@ -4,10 +4,10 @@
 [![CI](https://github.com/bangyen/zsharp/actions/workflows/ci.yml/badge.svg)](https://github.com/bangyen/zsharp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/bangyen/zsharp)](LICENSE)
 
-**Sharpness-Aware Minimization with Z-Score Gradient Filtering: +0.87% accuracy over SGD at 200 epochs (+2.65% at 20), Apple Silicon optimized, fully reproducible**
+**Sharpness-Aware Minimization with Z-Score Gradient Filtering: +0.87% accuracy over SGD at 200 epochs (+2.65% at 20), fully reproducible**
 
 <p align="center">
-  <img src="docs/training_curves.png" alt="Training curves comparison" width="600">
+  <img src="docs/training_curves.png" alt="Test accuracy of ZSharp and SGD per epoch and per wall-clock hour" width="600">
 </p>
 
 ## Quickstart
@@ -39,12 +39,14 @@ $Q_p = 0.95$), with `epochs` set as shown. Measured on CPU.*
 > **Note**: the gap shrinks with training — ZSharp reaches its plateau
 > sooner, but both end within about a point. Each ZSharp step costs two
 > forward/backward passes; the 200-epoch run took ~4.3x the wall-clock time
-> of SGD (13.2 h vs 3.1 h).
+> of SGD (13.2 h vs 3.1 h). At equal compute SGD is ahead until ~3 h, where
+> both reach ~84.2% (ZSharp epoch 46 vs SGD epoch 197); see the right panel
+> of the figure above.
 
 ## Features
 
 - **Z-Score Gradient Filtering** — Layer-wise Z-score normalization with a global 95th percentile threshold (configurable), matching the paper's $Q_p = 0.95$.
-- **Apple Silicon Optimization** — Up to 4.39x speedup using MPS (Metal Performance Shaders) for faster training on Mac.
+- **Device Support** — Runs on CUDA, Apple Silicon (MPS) or CPU, with optional half precision on MPS.
 - **Paper Architectures** — CIFAR-style ResNet-56/110, VGG-16BN, and the paper's compact ViTs, on CIFAR-10/100 and Tiny-ImageNet.
 - **Comprehensive Testing** — 95%+ test coverage with 85 unit tests ensuring reliability and reproducibility.
 
