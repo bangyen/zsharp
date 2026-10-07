@@ -296,13 +296,19 @@ def _prepare_training(
     if uh:
         m = m.half()
     ctx = TrainingContext(
-        m, opt, nn.CrossEntropyLoss(), device, use_zsharp, uh
+        m,
+        opt,
+        nn.CrossEntropyLoss(label_smoothing=cfg.label_smoothing),
+        device,
+        use_zsharp,
+        uh,
     )
     ldrs = get_dataset(
         dataset_name=config.dataset,
         batch_size=int(cfg.batch_size),
         num_workers=int(cfg.num_workers),
         pin_memory=cfg.pin_memory,
+        strong_augmentation=cfg.strong_augmentation,
     )
     # Step decay from the paper: lr is multiplied by 0.75 every 10 epochs.
     # For ZSharp the schedule is attached to the base optimizer, which is

@@ -155,10 +155,16 @@ Configuration models and default values.
   - `model: str`
   - `seed: int` (default 42)
 - `TrainingSubConfig`: Training parameters (`device`, `batch_size`, `epochs`,
-  `num_workers`, `pin_memory`, `use_mixed_precision`, `checkpoint_dir`).
+  `num_workers`, `pin_memory`, `use_mixed_precision`, `checkpoint_dir`,
+  `label_smoothing`, `strong_augmentation`).
   When `checkpoint_dir` is set, training state is saved there after every
   epoch as `<dataset>_<model>_<optimizer>_seed<seed>.pt`, and rerunning the
   same config resumes from it (a finished run is only re-evaluated).
+  The checkpoint name does not encode the regularization settings, so use a
+  separate `checkpoint_dir` per variant.
+  `label_smoothing` (default 0.0) is passed to the cross-entropy loss, and
+  `strong_augmentation` (default false) adds TrivialAugmentWide and random
+  erasing to the training transform. Both are off in the paper's recipe.
 - `OptimizerConfig`: Optimizer parameters (`type`, `lr`, `momentum`,
   `weight_decay`, `rho`, `percentile`)
 - `ExperimentResults`: Results from an experiment (config, accuracies, losses,

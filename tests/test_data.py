@@ -5,9 +5,12 @@ from unittest.mock import patch
 
 import pytest
 import torch
+import torchvision.transforms as T
 
 from zsharp.data import (
+    DATASET_METADATA,
     TinyImageNet,
+    _train_transform,
     get_cifar10,
     get_cifar100,
     get_dataset,
@@ -180,6 +183,43 @@ class TestDatasetWiring:
         assert isinstance(test.sampler, torch.utils.data.SequentialSampler), (
             "test loader must not shuffle"
         )
+
+    @pytest.mark.parametrize("strong", [False, True])
+    def test_strong_augmentation_reaches_train_transform_only(self, strong):
+        """The flag adds TrivialAugmentWide and erasing to train only."""
+        calls = []
+        with patch(
+            "zsharp.data._DATASET_CLASSES", _recording_dataset_classes(calls)
+        ):
+            get_dataset(
+                "cifar10",
+                batch_size=2,
+                num_workers=0,
+                strong_augmentation=strong,
+            )
+
+        def op_types(call):
+            return {type(op) for op in call["transform"].transforms}
+
+        train_ops, test_ops = op_types(calls[0]), op_types(calls[1])
+        extra = {T.TrivialAugmentWide, T.RandomErasing}
+        assert (extra <= train_ops) is strong
+        assert not extra & test_ops
+
+
+class TestTrainTransform:
+    """Check the augmented training transform on a real image."""
+
+    def test_strong_transform_keeps_shape_and_dtype(self):
+        """Augmentation must not change the tensor the model receives."""
+        from PIL import Image
+
+        meta = DATASET_METADATA["cifar10"]
+        image = Image.new("RGB", (32, 32), (120, 60, 30))
+        out = _train_transform(meta, strong_augmentation=True)(image)
+
+        assert out.shape == (3, 32, 32)
+        assert out.dtype == torch.float32
 
 
 def _build_fake_tiny_imagenet(root, wnids=("n01443537", "n01629819")):
