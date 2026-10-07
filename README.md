@@ -42,7 +42,7 @@ Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bang
 - **Z-Score Gradient Filtering** — Layer-wise Z-score normalization with a global 95th percentile threshold (configurable), matching the paper's $Q_p = 0.95$.
 - **Apple Silicon Optimization** — Up to 4.39x speedup using MPS (Metal Performance Shaders) for faster training on Mac.
 - **Paper Architectures** — CIFAR-style ResNet-56/110, VGG-16BN, and the paper's compact ViTs, on CIFAR-10/100 and Tiny-ImageNet.
-- **Comprehensive Testing** — 95%+ test coverage with 136 tests ensuring reliability and reproducibility.
+- **Comprehensive Testing** — 95%+ test coverage with 143 tests ensuring reliability and reproducibility.
 
 ## Repo Structure
 
@@ -50,7 +50,7 @@ Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bang
 zsharp/
 ├── zsharp_demo.ipynb  # Colab notebook demo
 ├── scripts/           # Training and experiment scripts
-├── tests/             # Unit/integration tests (136 tests)
+├── tests/             # Unit/integration tests (143 tests)
 ├── docs/              # Documentation and training curves
 ├── configs/           # Configuration files
 ├── results/           # Experimental results
