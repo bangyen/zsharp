@@ -1129,3 +1129,45 @@ class TestSeedAndCheckpointing:
             )[1]
             train(_checkpoint_config("zsharp", 2, str(tmp_path)))
         mock_epoch.assert_called_once()
+
+
+@pytest.mark.usefixtures("_tiny_training")
+class TestRegularizationOptions:
+    """Tests for label smoothing and strong augmentation settings."""
+
+    def test_defaults_match_paper_recipe(self):
+        """Both options are off unless a config turns them on."""
+        cfg = TrainingConfig().train
+        assert cfg.label_smoothing == 0.0
+        assert cfg.strong_augmentation is False
+
+    @pytest.mark.parametrize("value", [-0.1, 1.0])
+    def test_label_smoothing_rejects_out_of_range(self, value):
+        """Smoothing must lie in [0, 1)."""
+        with pytest.raises(ValidationError):
+            TrainingConfig.model_validate(
+                {"train": {"label_smoothing": value}}
+            )
+
+    def test_options_reach_loss_and_loader(self):
+        """train() wires smoothing into the loss and the flag into data."""
+        config = _checkpoint_config("sgd", 1)
+        config.train.label_smoothing = 0.1
+        config.train.strong_augmentation = True
+        losses = []
+        real_loss = nn.CrossEntropyLoss
+
+        def recording_loss(**kwargs):
+            losses.append(kwargs)
+            return real_loss(**kwargs)
+
+        with (
+            patch(
+                "zsharp.trainer.get_dataset", side_effect=_tiny_loaders
+            ) as mock_get_dataset,
+            patch("zsharp.trainer.nn.CrossEntropyLoss", recording_loss),
+        ):
+            train(config)
+
+        assert losses == [{"label_smoothing": 0.1}]
+        assert mock_get_dataset.call_args.kwargs["strong_augmentation"]

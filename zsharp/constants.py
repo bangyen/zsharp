@@ -119,6 +119,9 @@ class TrainingSubConfig(BaseModel):
     num_workers: int = Field(default=DEFAULT_NUM_WORKERS, ge=0)
     pin_memory: bool = Field(default=DEFAULT_PIN_MEMORY)
     use_mixed_precision: bool = Field(default=False)
+    # Regularization beyond the paper's recipe, both off by default.
+    label_smoothing: float = Field(default=0.0, ge=0, lt=1)
+    strong_augmentation: bool = Field(default=False)
     # When set, training state is saved here after every epoch and an
     # existing checkpoint for the same run is resumed on the next start.
     checkpoint_dir: Optional[str] = Field(default=None)

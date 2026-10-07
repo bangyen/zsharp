@@ -61,12 +61,37 @@ _DATASET_CLASSES: dict[str, type[torchvision.datasets.VisionDataset]] = {
 }
 
 
+def _train_transform(
+    meta: dict[str, DatasetValue],
+    *,
+    strong_augmentation: bool = False,
+) -> T.Compose:
+    """Build the training transform for a dataset.
+
+    The standard recipe is a padded random crop plus a horizontal flip.
+    ``strong_augmentation`` adds TrivialAugmentWide and random erasing, a
+    heavier regularizer under which sharpness-aware methods are usually
+    evaluated.
+    """
+    ops: list[object] = [
+        T.RandomCrop(meta["image_size"], padding=meta["crop_padding"]),
+        T.RandomHorizontalFlip(),
+    ]
+    if strong_augmentation:
+        ops.append(T.TrivialAugmentWide())
+    ops += [T.ToTensor(), T.Normalize(meta["mean"], meta["std"])]
+    if strong_augmentation:
+        ops.append(T.RandomErasing())
+    return T.Compose(ops)
+
+
 def _get_cifar(
     dataset_name: str,
     batch_size: int = DEFAULT_BATCH_SIZE,
     num_workers: int = DEFAULT_NUM_WORKERS,
     *,
     pin_memory: bool = DEFAULT_PIN_MEMORY,
+    strong_augmentation: bool = False,
 ) -> tuple[
     torch.utils.data.DataLoader[torch.Tensor],
     torch.utils.data.DataLoader[torch.Tensor],
@@ -78,6 +103,8 @@ def _get_cifar(
         batch_size: Batch size for data loaders
         num_workers: Number of worker processes for data loading
         pin_memory: Whether to pin memory for faster GPU transfer
+        strong_augmentation: Add TrivialAugmentWide and random erasing
+            to the training transform
 
     Returns:
         tuple: (train_loader, test_loader) for the specified CIFAR dataset
@@ -86,13 +113,8 @@ def _get_cifar(
     meta = DATASET_METADATA[dataset_name]
     dataset_cls = _DATASET_CLASSES[dataset_name]
 
-    transform_train = T.Compose(
-        [
-            T.RandomCrop(meta["image_size"], padding=meta["crop_padding"]),
-            T.RandomHorizontalFlip(),
-            T.ToTensor(),
-            T.Normalize(meta["mean"], meta["std"]),
-        ],
+    transform_train = _train_transform(
+        meta, strong_augmentation=strong_augmentation
     )
     transform_test = T.Compose(
         [
@@ -230,6 +252,7 @@ def _get_tiny_imagenet(
     num_workers: int = DEFAULT_NUM_WORKERS,
     *,
     pin_memory: bool = DEFAULT_PIN_MEMORY,
+    strong_augmentation: bool = False,
 ) -> tuple[
     torch.utils.data.DataLoader[torch.Tensor],
     torch.utils.data.DataLoader[torch.Tensor],
@@ -240,19 +263,16 @@ def _get_tiny_imagenet(
         batch_size: Batch size for data loaders
         num_workers: Number of worker processes for data loading
         pin_memory: Whether to pin memory for faster GPU transfer
+        strong_augmentation: Add TrivialAugmentWide and random erasing
+            to the training transform
 
     Returns:
         tuple: (train_loader, test_loader) for Tiny-ImageNet
 
     """
     meta = DATASET_METADATA[TINY_IMAGENET_DATASET]
-    transform_train = T.Compose(
-        [
-            T.RandomCrop(meta["image_size"], padding=meta["crop_padding"]),
-            T.RandomHorizontalFlip(),
-            T.ToTensor(),
-            T.Normalize(meta["mean"], meta["std"]),
-        ],
+    transform_train = _train_transform(
+        meta, strong_augmentation=strong_augmentation
     )
     transform_test = T.Compose(
         [
@@ -352,6 +372,7 @@ def get_dataset(
     num_workers: int = DEFAULT_NUM_WORKERS,
     *,
     pin_memory: bool = DEFAULT_PIN_MEMORY,
+    strong_augmentation: bool = False,
 ) -> tuple[
     torch.utils.data.DataLoader[torch.Tensor],
     torch.utils.data.DataLoader[torch.Tensor],
@@ -364,6 +385,8 @@ def get_dataset(
         batch_size: Batch size for data loaders
         num_workers: Number of worker processes for data loading
         pin_memory: Whether to pin memory for faster GPU transfer
+        strong_augmentation: Add TrivialAugmentWide and random erasing
+            to the training transform
 
     Returns:
         tuple: (train_loader, test_loader) for the specified dataset
@@ -378,12 +401,14 @@ def get_dataset(
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
+            strong_augmentation=strong_augmentation,
         )
     if dataset_name == TINY_IMAGENET_DATASET:
         return _get_tiny_imagenet(
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
+            strong_augmentation=strong_augmentation,
         )
     error_msg = f"Unknown dataset: {dataset_name}"
     raise ValueError(error_msg)
