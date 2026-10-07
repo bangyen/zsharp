@@ -29,12 +29,20 @@ Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bang
 | Scenario / Dataset | Epochs | Baseline (SGD) | This Project | Δ Improvement |
 |--------------------|--------|----------------|--------------|---------------|
 | CIFAR-10 ResNet-18 | 20     | 78.19 ± 0.23%  | **80.84 ± 0.54%** | +2.65%   |
+| CIFAR-10 ResNet-18 | 50     | 81.99%         | **83.99%**   | +2.00%        |
+| CIFAR-10 ResNet-18, strong reg.† | 50 | 80.13% | **83.23%** | +3.10%        |
 | CIFAR-10 ResNet-18 | 200    | 84.22%         | **85.09%**   | +0.87%        |
 
 *Final test accuracy. 20 epochs: mean ± std over 3 seeds (42, 1, 2).
-200 epochs: single seed (42). Baseline: `configs/sgd_baseline.yaml`. ZSharp:
+50 and 200 epochs: single seed (42); the plain 50-epoch row is epoch 50 of
+the 200-epoch runs, which match a 50-epoch run exactly since the LR schedule
+does not depend on the total. Baseline: `configs/sgd_baseline.yaml`. ZSharp:
 `configs/zsharp_baseline.yaml` (paper hyperparameters: AdamW, batch size 256,
-$Q_p = 0.95$), with `epochs` set as shown. Measured on CPU.*
+$Q_p = 0.95$), with `epochs` set as shown. Measured on CPU.
+† `label_smoothing: 0.1` and `strong_augmentation: true` (TrivialAugmentWide
+plus random erasing). Both models underfit at 50 epochs under this
+regularization (~70% train accuracy), so it lowers accuracy for both, but
+the per-epoch gap widens. ZSharp took ~3.2x SGD's wall-clock time here.*
 
 > **Note**: the gap shrinks with training — ZSharp reaches its plateau
 > sooner, but both end within about a point. Each ZSharp step costs two
