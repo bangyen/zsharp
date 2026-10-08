@@ -48,12 +48,12 @@ the per-epoch gap widens. ZSharp took ~3.2x SGD's wall-clock time here
 > **Note**: the gap shrinks with training — ZSharp reaches its plateau
 > sooner, but both end within about a point. Each ZSharp step costs two
 > forward/backward passes plus the Z-score filtering; one ZSharp epoch takes
-> ~2.4x as long as an SGD epoch (155 s vs 66 s on 4 CPU threads). At equal
-> wall-clock SGD leads for the first ~1.8 h; after that ZSharp is ahead, and
-> at SGD's full 200-epoch budget (3.1 h) ZSharp reaches 85.12% (epoch 85)
-> vs SGD's 84.22%. See the right panel of the figure above. The 200-epoch
-> ZSharp run itself predates the faster threshold computation and took
-> 13.2 h; at the current per-epoch cost it would take ~7.3 h.
+> ~1.9x as long as an SGD epoch (127 s vs 68 s on 4 CPU threads). Given the
+> same compute as 200 SGD epochs, a 108-epoch ZSharp run reaches 84.73% vs
+> SGD's 84.22% (last-10-epoch means 84.58% vs 84.12%); SGD leads for
+> roughly the first 40% of that budget. See the right panel of the figure
+> above. The 200-epoch ZSharp row predates the faster threshold computation
+> (13.2 h then, ~5.7 h at the current per-epoch cost).
 
 ## Features
 
