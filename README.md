@@ -46,7 +46,10 @@ $Q_p = 0.95$), with `epochs` set as shown. Measured on CPU.
 plus random erasing). Both models underfit at 50 epochs under this
 regularization (~70% train accuracy), so it lowers accuracy for both, but
 the per-epoch gap widens; by 200 epochs it raises both (+1.2% SGD, +1.4%
-ZSharp) and ZSharp leads on every seed.*
+ZSharp) and ZSharp leads on every seed. CIFAR-100:
+`python -m scripts.sweep --configs configs/sgd_cifar100.yaml
+configs/zsharp_cifar100_baseline.yaml --epochs 20 --seeds 42 1 2` (same
+hyperparameters, `dataset: cifar100`).*
 
 > **Note**: the gap shrinks with training — ZSharp reaches its plateau
 > sooner, but both end within about a point. Each ZSharp step costs two
@@ -57,7 +60,9 @@ ZSharp) and ZSharp leads on every seed.*
 > every seed). SGD leads for roughly the first 40% of that budget; see the
 > right panel of the figure above. With strong regularization the
 > equal-compute result is 86.04 ± 0.40% vs 85.62 ± 0.34%. A 200-epoch ZSharp
-> run takes ~5.7 h at the current per-epoch cost.
+> run takes ~5.7 h at the current per-epoch cost. On CIFAR-100 the
+> equal-compute picture reverses: 20 SGD epochs buy ~11 ZSharp epochs
+> (1.9x cost), which reach 47.68 ± 0.37% vs SGD's 48.59 ± 0.51%.
 
 ## Features
 
