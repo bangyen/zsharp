@@ -33,6 +33,7 @@ Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bang
 | CIFAR-10 ResNet-18, strong reg.† | 50 | 80.18 ± 0.08% | **83.49 ± 0.30%** | +3.31% |
 | CIFAR-10 ResNet-18 | 200    | 84.39 ± 0.48%  | **84.98 ± 0.36%** | +0.59%   |
 | CIFAR-10 ResNet-18, strong reg.† | 200 | 85.62 ± 0.34% | **86.38 ± 0.43%** | +0.76% |
+| CIFAR-100 ResNet-18 | 20 | 48.59 ± 0.51% | **50.75 ± 0.49%** | +2.16% |
 
 *Final test accuracy, mean ± std over 3 seeds (42, 1, 2). 200 epochs:
 `python -m scripts.sweep --epochs 200 --seeds 42 1 2 [--regularize]`. The
