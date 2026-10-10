@@ -35,6 +35,18 @@ python -m scripts.experiment --hp-study       # Run hyperparameter study
 - Fast mode for testing
 - Comprehensive logging and result saving
 
+### `sweep.py`
+Multi-seed SGD vs ZSharp comparison, intended for a GPU machine. Each run
+is checkpointed and saved under `results/sweep/`, so rerunning the same
+command skips finished runs and resumes interrupted ones. Prints a
+mean ± std table at the end.
+
+**Usage:**
+```bash
+python -m scripts.sweep --epochs 200 --seeds 42 1 2
+python -m scripts.sweep --epochs 200 --seeds 42 1 2 --regularize
+```
+
 ## Task Runner Integration
 
 All scripts are integrated with the project's task runner (`just`):

@@ -5,6 +5,8 @@ This module defines all the magic numbers and configuration values
 that were previously hardcoded throughout the codebase.
 """
 
+from typing import Optional
+
 from pydantic import BaseModel, Field, field_validator
 
 # Random seed for reproducibility
@@ -13,9 +15,13 @@ DEFAULT_SEED = 42
 # Math constants
 MIN_NUM_FOR_STD = 2
 
-# torch.quantile rejects inputs larger than 2**24 elements; above this we
-# fall back to kthvalue, which computes the same order statistic unbounded.
+# torch.quantile rejects inputs larger than 2**24 elements. ZSharp computes
+# its threshold by selection instead, so large models stay supported.
 MAX_QUANTILE_NUMEL = 2**24
+# Inputs at least this large get their quantile from a sample-narrowed
+# candidate set (exact, ~4x faster for a ResNet-18) instead of plain topk.
+PREFILTER_MIN_NUMEL = 2**18
+QUANTILE_SAMPLE_SIZE = 2**16
 
 # Dataset names
 CIFAR10_DATASET = "cifar10"
@@ -117,6 +123,12 @@ class TrainingSubConfig(BaseModel):
     num_workers: int = Field(default=DEFAULT_NUM_WORKERS, ge=0)
     pin_memory: bool = Field(default=DEFAULT_PIN_MEMORY)
     use_mixed_precision: bool = Field(default=False)
+    # Regularization beyond the paper's recipe, both off by default.
+    label_smoothing: float = Field(default=0.0, ge=0, lt=1)
+    strong_augmentation: bool = Field(default=False)
+    # When set, training state is saved here after every epoch and an
+    # existing checkpoint for the same run is resumed on the next start.
+    checkpoint_dir: Optional[str] = Field(default=None)
 
 
 class TrainingConfig(BaseModel):
@@ -126,6 +138,7 @@ class TrainingConfig(BaseModel):
     optimizer: OptimizerConfig = Field(default_factory=OptimizerConfig)
     dataset: str = Field(default=CIFAR10_DATASET)
     model: str = Field(default=RESNET18_NAME)
+    seed: int = Field(default=DEFAULT_SEED, ge=0)
 
 
 class ExperimentResults(BaseModel):

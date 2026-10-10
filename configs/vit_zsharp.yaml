@@ -16,3 +16,4 @@ train:
   num_workers: 4
   pin_memory: false
   use_mixed_precision: true
+  checkpoint_dir: checkpoints  # resume after interruption

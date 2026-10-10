@@ -9,8 +9,14 @@ from zsharp.constants import (
     DEFAULT_LEARNING_RATE,
     DEFAULT_PERCENTILE,
     DEFAULT_RHO,
+    PREFILTER_MIN_NUMEL,
 )
-from zsharp.optimizer import SAM, ZSharp
+from zsharp.optimizer import (
+    SAM,
+    ZSharp,
+    _order_stats_via_sample,
+    _quantile_by_selection,
+)
 
 
 class SimpleModel(nn.Module):
@@ -779,3 +785,63 @@ class TestOptimizerIntegration:
         assert "existing" in sam.state[p]
         assert sam.state[p]["existing"] == "value"
         assert "e" in sam.state[p]  # New state from SAM
+
+
+def _reference_quantile(values, q):
+    """Sort-based linear-interpolation quantile with a float64 position.
+
+    torch.quantile rounds the position to float32, which visibly shifts
+    the result in sparse tails of large inputs, so it is not used as the
+    reference above small sizes.
+    """
+    ordered = values.sort().values
+    pos = q * (values.numel() - 1)
+    lo = int(pos)
+    if lo + 1 >= values.numel():
+        return ordered[lo].item()
+    return (ordered[lo] + (ordered[lo + 1] - ordered[lo]) * (pos - lo)).item()
+
+
+class TestQuantileBySelection:
+    """The selection-based threshold must reproduce torch.quantile."""
+
+    @pytest.mark.parametrize("n", [1, 2, 3, 10, 1001, 50_000])
+    @pytest.mark.parametrize("q", [0.0, 0.05, 0.5, 0.7, 0.95, 1.0])
+    def test_matches_torch_quantile(self, n, q):
+        """Interpolated order statistics agree for any size and quantile."""
+        values = torch.randn(n, generator=torch.Generator().manual_seed(n))
+        expected = torch.quantile(values, q).item()
+        assert _quantile_by_selection(values, q) == pytest.approx(
+            expected, rel=1e-6, abs=1e-7
+        )
+
+    def test_handles_ties(self):
+        """Repeated values must not shift the selected order statistic."""
+        values = torch.tensor([3.0, 1.0, 2.0, 2.0, 2.0, 5.0, 2.0])
+        for q in (0.1, 0.4, 0.6, 0.9):
+            expected = torch.quantile(values, q).item()
+            assert _quantile_by_selection(values, q) == pytest.approx(expected)
+
+    @pytest.mark.parametrize("q", [0.0, 0.5, 0.95, 0.999, 1.0])
+    def test_sampled_path_matches_torch_quantile(self, q):
+        """Inputs above the prefilter size take the sampled path exactly."""
+        n = PREFILTER_MIN_NUMEL * 2 + 17
+        values = torch.randn(n, generator=torch.Generator().manual_seed(3))
+        assert _quantile_by_selection(values, q) == _reference_quantile(
+            values, q
+        )
+
+    def test_sampled_path_handles_heavy_ties(self):
+        """A bound landing on a long run of equal values stays exact."""
+        n = PREFILTER_MIN_NUMEL * 2
+        values = torch.zeros(n)
+        values[: n // 10] = torch.rand(n // 10) + 1
+        for q in (0.5, 0.85, 0.9, 0.95):
+            expected = _reference_quantile(values, q)
+            assert _quantile_by_selection(values, q) == pytest.approx(expected)
+
+    def test_sample_overshoot_falls_back(self):
+        """If the sample bound is above the target rank, return None."""
+        # Descending, so the strided sample misses the minimum.
+        values = torch.arange(PREFILTER_MIN_NUMEL, dtype=torch.float32).flip(0)
+        assert _order_stats_via_sample(values, 0.0, 0, 0.0) is None

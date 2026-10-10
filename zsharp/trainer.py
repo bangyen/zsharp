@@ -11,7 +11,7 @@ import json
 import logging
 import random
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, cast
 
@@ -296,13 +296,19 @@ def _prepare_training(
     if uh:
         m = m.half()
     ctx = TrainingContext(
-        m, opt, nn.CrossEntropyLoss(), device, use_zsharp, uh
+        m,
+        opt,
+        nn.CrossEntropyLoss(label_smoothing=cfg.label_smoothing),
+        device,
+        use_zsharp,
+        uh,
     )
     ldrs = get_dataset(
         dataset_name=config.dataset,
         batch_size=int(cfg.batch_size),
         num_workers=int(cfg.num_workers),
         pin_memory=cfg.pin_memory,
+        strong_augmentation=cfg.strong_augmentation,
     )
     # Step decay from the paper: lr is multiplied by 0.75 every 10 epochs.
     # For ZSharp the schedule is attached to the base optimizer, which is
@@ -348,41 +354,145 @@ def _create_results(
     )
 
 
-def train(config: TrainingConfig) -> Optional[ExperimentResults]:
-    """Train a model using the provided configuration."""
-    set_seed(DEFAULT_SEED)
-    device = get_device(config)
-    ctx, (train_ldr, test_ldr), epochs, opt_type, scheduler = (
-        _prepare_training(config, device)
+@dataclass
+class _Progress:
+    """Per-epoch metrics so far; checkpointed so a resumed run continues."""
+
+    train_losses: list[float] = field(default_factory=list)
+    train_accuracies: list[float] = field(default_factory=list)
+    test_accuracies: list[float] = field(default_factory=list)
+    elapsed: float = 0.0
+    next_epoch: int = 0
+
+
+def _checkpoint_path(config: TrainingConfig, opt_type: str) -> Optional[Path]:
+    """Return where this run's checkpoint lives, or None if disabled."""
+    ckpt_dir = config.train.checkpoint_dir
+    if ckpt_dir is None:
+        return None
+    name = f"{config.dataset}_{config.model}_{opt_type}_seed{config.seed}.pt"
+    return Path(ckpt_dir) / name
+
+
+def _scheduled_optimizer(ctx: TrainingContext) -> torch.optim.Optimizer:
+    """Return the optimizer that holds the update state.
+
+    For ZSharp this is the base optimizer; ZSharp's own per-parameter
+    state is only the transient perturbation within a step.
+    """
+    return cast(
+        "torch.optim.Optimizer",
+        getattr(ctx.optimizer, "base_optimizer", ctx.optimizer),
     )
-    start_time = time.time()
-    l_list, t_list, v_list = [], [], []
+
+
+def _save_checkpoint(
+    path: Path,
+    ctx: TrainingContext,
+    scheduler: optim.lr_scheduler.StepLR,
+    progress: _Progress,
+) -> None:
+    """Atomically write the training state at the end of an epoch."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    state = {
+        "model": ctx.model.state_dict(),
+        "optimizer": _scheduled_optimizer(ctx).state_dict(),
+        "scheduler": scheduler.state_dict(),
+        "progress": asdict(progress),
+        "rng": {
+            "python": random.getstate(),
+            "numpy": np.random.get_state(),  # noqa: NPY002
+            "torch": torch.get_rng_state(),
+        },
+    }
+    tmp = path.with_suffix(".tmp")
+    torch.save(state, tmp)
+    tmp.replace(path)
+
+
+def _load_checkpoint(
+    path: Path,
+    ctx: TrainingContext,
+    scheduler: optim.lr_scheduler.StepLR,
+) -> _Progress:
+    """Restore training state saved by ``_save_checkpoint``."""
+    state = torch.load(path, map_location=ctx.device, weights_only=False)
+    ctx.model.load_state_dict(state["model"])
+    scheduled = _scheduled_optimizer(ctx)
+    scheduled.load_state_dict(state["optimizer"])
+    if scheduled is not ctx.optimizer:
+        # load_state_dict rebuilds the param groups; re-share them so ZSharp
+        # and its base optimizer keep seeing the same groups.
+        ctx.optimizer.param_groups = scheduled.param_groups
+    scheduler.load_state_dict(state["scheduler"])
+    rng = state["rng"]
+    random.setstate(rng["python"])
+    np.random.set_state(rng["numpy"])  # noqa: NPY002
+    torch.set_rng_state(rng["torch"].cpu())
+    progress = _Progress(**state["progress"])
+    logger.info("Resumed from %s at epoch %d", path, progress.next_epoch + 1)
+    return progress
+
+
+def _train_epochs(
+    ctx: TrainingContext,
+    loaders: tuple[DataLoader[torch.Tensor], DataLoader[torch.Tensor]],
+    epochs: int,
+    scheduler: optim.lr_scheduler.StepLR,
+    ckpt_path: Optional[Path],
+) -> _Progress:
+    """Run the remaining epochs, checkpointing after each if enabled."""
+    train_ldr, test_ldr = loaders
+    progress = _Progress()
+    if ckpt_path is not None and ckpt_path.exists():
+        progress = _load_checkpoint(ckpt_path, ctx, scheduler)
+    start_time = time.time() - progress.elapsed
+
+    for epoch in range(progress.next_epoch, epochs):
+        e_loss, a = _run_epoch(ctx, epoch, train_ldr)
+        scheduler.step()
+        va, _ = _validate(ctx, test_ldr)
+        progress.train_losses.append(e_loss)
+        progress.train_accuracies.append(a)
+        progress.test_accuracies.append(va)
+        progress.next_epoch = epoch + 1
+        progress.elapsed = time.time() - start_time
+        logger.info("Epoch %d: Acc: %.2f%%, Test: %.2f%%", epoch + 1, a, va)
+        if ckpt_path is not None:
+            _save_checkpoint(ckpt_path, ctx, scheduler, progress)
+    return progress
+
+
+def train(config: TrainingConfig) -> Optional[ExperimentResults]:
+    """Train a model using the provided configuration.
+
+    If ``config.train.checkpoint_dir`` is set, the run is checkpointed after
+    every epoch and resumes from an existing checkpoint for the same
+    dataset, model, optimizer, and seed.
+    """
+    set_seed(config.seed)
+    device = get_device(config)
+    ctx, loaders, epochs, opt_type, scheduler = _prepare_training(
+        config, device
+    )
+    ckpt_path = _checkpoint_path(config, opt_type)
 
     try:
-        for epoch in range(epochs):
-            e_loss, a = _run_epoch(ctx, epoch, train_ldr)
-            scheduler.step()
-            va, _ = _validate(ctx, test_ldr)
-            l_list.append(e_loss)
-            t_list.append(a)
-            v_list.append(va)
-            logger.info(
-                "Epoch %d: Acc: %.2f%%, Test: %.2f%%", epoch + 1, a, va
-            )
+        progress = _train_epochs(ctx, loaders, epochs, scheduler, ckpt_path)
     except KeyboardInterrupt:
         return None
 
-    final_acc, final_loss = _validate(ctx, test_ldr)
+    final_acc, final_loss = _validate(ctx, loaders[1])
     res = _create_results(
         config,
         ctx,
         TrainingHistory(
-            train_losses=l_list,
-            train_accuracies=t_list,
-            test_accuracies=v_list,
+            train_losses=progress.train_losses,
+            train_accuracies=progress.train_accuracies,
+            test_accuracies=progress.test_accuracies,
             final_test_accuracy=final_acc,
             final_test_loss=final_loss,
-            total_training_time=time.time() - start_time,
+            total_training_time=progress.elapsed,
         ),
         opt_type,
     )

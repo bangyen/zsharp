@@ -7,6 +7,7 @@ and ZSharp optimizers for deep learning training with gradient filtering.
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, Any, Optional, cast, overload
 
 if TYPE_CHECKING:
@@ -21,13 +22,82 @@ from zsharp.constants import (
     DEFAULT_RHO,
     EPSILON,
     EPSILON_STD,
-    MAX_QUANTILE_NUMEL,
     MIN_NUM_FOR_STD,
+    PREFILTER_MIN_NUMEL,
+    QUANTILE_SAMPLE_SIZE,
 )
 
 # Type for optimizer kwargs
 OptimizerKwargs = Any
 """Type alias for optimizer keyword arguments."""
+
+
+def _quantile_by_selection(values: torch.Tensor, q: float) -> float:
+    """Return ``torch.quantile(values, q)`` without sorting every element.
+
+    torch.quantile fully sorts its input, which dominates a ZSharp step on
+    CPU, and it rejects inputs above 2**24 elements. Only the two order
+    statistics around the quantile are needed. Large inputs are first
+    narrowed to the values above a bound read off a strided sample, which
+    is exact whenever the bound lies below the target rank; otherwise, and
+    for small inputs, the ``n - floor(q * (n - 1))`` largest values are
+    kept with ``topk`` and the order statistics read off their bottom.
+
+    Args:
+        values: Non-empty 1-D tensor.
+        q: Quantile in [0, 1].
+
+    Returns:
+        float: The interpolated quantile. It agrees with ``torch.quantile``
+        to float32 precision; the interpolation position is computed in
+        float64 here, whereas torch.quantile rounds it to float32, which
+        snaps it to an integer rank for multi-million-element inputs.
+    """
+    n = values.numel()
+    pos = q * (n - 1)
+    lo = int(pos)
+    frac = pos - lo
+    order_stats = None
+    if n >= PREFILTER_MIN_NUMEL:
+        order_stats = _order_stats_via_sample(values, q, lo, frac)
+    if order_stats is None:
+        upper = values.topk(n - lo, sorted=False).values
+        order_stats = upper.topk(min(2, n - lo), largest=False).values
+        order_stats = order_stats.sort().values
+    if frac == 0:
+        return float(order_stats[0].item())
+    v_lo, v_hi = order_stats[0], order_stats[1]
+    return float((v_lo + (v_hi - v_lo) * frac).item())
+
+
+def _order_stats_via_sample(
+    values: torch.Tensor, q: float, lo: int, frac: float
+) -> Optional[torch.Tensor]:
+    """Select order statistics ``lo`` (and ``lo + 1``) above a safe bound.
+
+    A strided sample (deterministic, so the global RNG is untouched) gives
+    a bound a few standard errors below the target quantile. Values below
+    the bound are counted and dropped, and the remaining few percent are
+    searched directly.
+
+    Returns:
+        The needed order statistics in ascending order, or None if the
+        bound overshot the target rank and the caller must fall back.
+    """
+    n = values.numel()
+    sample = values[:: max(1, n // QUANTILE_SAMPLE_SIZE)]
+    m = sample.numel()
+    margin = int(4 * math.sqrt(m * q * (1 - q))) + 1
+    bound = sample.kthvalue(max(0, int(q * (m - 1)) - margin) + 1).values
+    below = int((values < bound).sum().item())
+    if below > lo:
+        return None
+    candidates = values[values >= bound]
+    rank = lo - below
+    stats = [candidates.kthvalue(rank + 1).values]
+    if frac:
+        stats.append(candidates.kthvalue(rank + 2).values)
+    return torch.stack(stats)
 
 
 class SAM(Optimizer):
@@ -267,18 +337,7 @@ class ZSharp(SAM):
         n = all_zscores.numel()
         if n == 0:
             return 0.0
-        if n > MAX_QUANTILE_NUMEL:
-            # torch.quantile rejects inputs above ~2**24 elements, which
-            # large models (e.g. ViT-B/16) exceed. kthvalue has no such
-            # limit and gives the same order statistic.
-            k = min(n, max(1, round(self.percentile / 100 * n)))
-            return float(all_zscores.kthvalue(k).values.item())
-        return float(
-            torch.quantile(
-                all_zscores,
-                self.percentile / 100,
-            ).item(),
-        )
+        return _quantile_by_selection(all_zscores, self.percentile / 100)
 
     def _apply_gradient_filtering(
         self,

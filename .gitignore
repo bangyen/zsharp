@@ -128,3 +128,6 @@ dmypy.json
 .claude/
 results/
 data/
+
+# Training checkpoints
+checkpoints/
