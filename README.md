@@ -4,7 +4,7 @@
 [![CI](https://github.com/bangyen/zsharp/actions/workflows/ci.yml/badge.svg)](https://github.com/bangyen/zsharp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/bangyen/zsharp)](LICENSE)
 
-**Sharpness-Aware Minimization with Z-Score Gradient Filtering: +0.87% accuracy over SGD at 200 epochs (+2.65% at 20), fully reproducible**
+**Sharpness-Aware Minimization with Z-Score Gradient Filtering: +0.59% accuracy over SGD at 200 epochs (+2.65% at 20), fully reproducible**
 
 <p align="center">
   <img src="docs/training_curves.png" alt="Test accuracy of ZSharp and SGD per epoch and per wall-clock hour" width="600">
@@ -31,18 +31,21 @@ Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bang
 | CIFAR-10 ResNet-18 | 20     | 78.19 ± 0.23%  | **80.84 ± 0.54%** | +2.65%   |
 | CIFAR-10 ResNet-18 | 50     | 81.99%         | **83.99%**   | +2.00%        |
 | CIFAR-10 ResNet-18, strong reg.† | 50 | 80.13% | **83.23%** | +3.10%        |
-| CIFAR-10 ResNet-18 | 200    | 84.22%         | **85.09%**   | +0.87%        |
+| CIFAR-10 ResNet-18 | 200    | 84.39 ± 0.48%  | **84.98 ± 0.36%** | +0.59%   |
+| CIFAR-10 ResNet-18, strong reg.† | 200 | 85.62 ± 0.34% | **86.38 ± 0.43%** | +0.76% |
 
-*Final test accuracy. 20 epochs: mean ± std over 3 seeds (42, 1, 2).
-50 and 200 epochs: single seed (42); the plain 50-epoch row is epoch 50 of
-the 200-epoch runs, which match a 50-epoch run exactly since the LR schedule
+*Final test accuracy. 20 and 200 epochs: mean ± std over 3 seeds (42, 1, 2;
+`python -m scripts.sweep --epochs 200 --seeds 42 1 2 [--regularize]`).
+50 epochs: single seed (42); the plain 50-epoch row is epoch 50 of the
+seed-42 200-epoch runs, which match a 50-epoch run exactly since the LR schedule
 does not depend on the total. Baseline: `configs/sgd_baseline.yaml`. ZSharp:
 `configs/zsharp_baseline.yaml` (paper hyperparameters: AdamW, batch size 256,
 $Q_p = 0.95$), with `epochs` set as shown. Measured on CPU.
 † `label_smoothing: 0.1` and `strong_augmentation: true` (TrivialAugmentWide
 plus random erasing). Both models underfit at 50 epochs under this
 regularization (~70% train accuracy), so it lowers accuracy for both, but
-the per-epoch gap widens. ZSharp took ~3.2x SGD's wall-clock time here
+the per-epoch gap widens; by 200 epochs it raises both (+1.2% SGD, +1.4%
+ZSharp) and ZSharp leads on every seed. ZSharp took ~3.2x SGD's wall-clock time here
 (before the faster threshold computation).*
 
 > **Note**: the gap shrinks with training — ZSharp reaches its plateau
@@ -52,8 +55,8 @@ the per-epoch gap widens. ZSharp took ~3.2x SGD's wall-clock time here
 > same compute as 200 SGD epochs, a 108-epoch ZSharp run reaches 84.73% vs
 > SGD's 84.22% (last-10-epoch means 84.58% vs 84.12%); SGD leads for
 > roughly the first 40% of that budget. See the right panel of the figure
-> above. The 200-epoch ZSharp row predates the faster threshold computation
-> (13.2 h then, ~5.7 h at the current per-epoch cost).
+> above. ZSharp also leads on every seed at 200 epochs. A 200-epoch ZSharp
+> run takes ~5.7 h at the current per-epoch cost.
 
 ## Features
 
