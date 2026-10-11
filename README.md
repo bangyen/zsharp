@@ -20,6 +20,7 @@ cd zsharp
 pip install -e .
 pytest   # optional: run tests
 python -m scripts.train --config configs/zsharp_baseline.yaml
+python -m scripts.train --config configs/zsharp_fast.yaml   # SAM step every 4th batch
 ```
 
 Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bangyen/zsharp/blob/main/zsharp_demo.ipynb).
