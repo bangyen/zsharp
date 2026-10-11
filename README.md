@@ -4,7 +4,7 @@
 [![CI](https://github.com/bangyen/zsharp/actions/workflows/ci.yml/badge.svg)](https://github.com/bangyen/zsharp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/bangyen/zsharp)](LICENSE)
 
-**Sharpness-Aware Minimization with Z-Score Gradient Filtering: beats SGD per epoch (+2.65% at 20 epochs, +0.59% at 200 on CIFAR-10), but each epoch costs ~1.9x — at equal compute it edges SGD on CIFAR-10 and trails it on CIFAR-100. Fully reproducible.**
+**Sharpness-Aware Minimization with Z-Score Gradient Filtering: beats SGD per epoch (+2.65% at 20 epochs, +0.59% at 200 on CIFAR-10), but each epoch costs ~1.9x. Taking the SAM step every 4th batch cuts that to ~1.1x and keeps most of the gain, so it matches or beats SGD at equal compute on CIFAR-10 and CIFAR-100. Fully reproducible.**
 
 <p align="center">
   <img src="docs/training_curves.png" alt="Test accuracy of ZSharp and SGD per epoch and per wall-clock hour" width="600">
@@ -78,10 +78,15 @@ hyperparameters, `dataset: cifar100`).*
 > | ZSharp, k=1 | 80.84 ± 0.54% | 127 | — |
 > | ZSharp, k=2 | 80.59 ± 0.28% | 88 | 79.10 ± 0.93% |
 > | ZSharp, k=4 | 80.41 ± 0.57% | 76 | 80.12 ± 0.61% |
+> | ZSharp, k=8 | 80.44 ± 1.12% | 69 | ≈ 80.44% (same cost as SGD) |
 >
 > On CIFAR-100 (20 epochs, 3 seeds), k=4 reaches 50.40 ± 0.55% at 78 s/epoch
 > (SGD 48.59 ± 0.51% at 74 s, ZSharp k=1 50.75 ± 0.49% at 140 s); at SGD's
 > 20-epoch time it reaches 50.35 ± 0.38%, reversing the equal-compute loss.
+> At 50 epochs k=4 reaches 51.97 ± 0.61% (80 s/epoch), and 51.95 ± 0.48% at
+> SGD's time, a tie with SGD's 51.99 ± 0.51%. With strong regularization it
+> reaches 55.07 ± 0.53% (88 s/epoch), and 53.75 ± 0.31% at SGD's time vs
+> SGD's 52.39 ± 0.53%.
 
 ## Features
 
