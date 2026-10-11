@@ -153,6 +153,7 @@ def _setup_optimizer(
         lr=lr,
         weight_decay=wd,
         percentile=int(opt_config.percentile),
+        sam_interval=int(opt_config.sam_interval),
     )
     return optimizer, ZSHARP_OPTIMIZER
 
@@ -169,7 +170,7 @@ def _run_train_step(
         pass, so callers can compute training accuracy without re-running
         the model.
     """
-    if ctx.use_zsharp:
+    if ctx.use_zsharp and cast("ZSharp", ctx.optimizer).take_sam_step():
         # ZSharp two-step training
         ctx.optimizer.zero_grad()
         outputs = ctx.model(x)
@@ -183,12 +184,16 @@ def _run_train_step(
         ctx.criterion(ctx.model(x), y).backward()
         zsharp_opt.second_step()
     else:
-        # Standard SGD training
+        # Standard single-step training (SGD, or ZSharp between SAM steps)
         ctx.optimizer.zero_grad()
         outputs = ctx.model(x)
         loss = ctx.criterion(outputs, y)
         loss.backward()
-        ctx.optimizer.step()
+        if ctx.use_zsharp:
+            # ``step`` would advance the SAM schedule a second time
+            cast("ZSharp", ctx.optimizer).base_optimizer.step()
+        else:
+            ctx.optimizer.step()
     return float(loss.item()), outputs.detach()
 
 

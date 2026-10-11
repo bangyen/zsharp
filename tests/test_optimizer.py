@@ -845,3 +845,60 @@ class TestQuantileBySelection:
         # Descending, so the strided sample misses the minimum.
         values = torch.arange(PREFILTER_MIN_NUMEL, dtype=torch.float32).flip(0)
         assert _order_stats_via_sample(values, 0.0, 0, 0.0) is None
+
+
+class TestSamInterval:
+    """Tests for taking the SAM step only every ``sam_interval`` batches."""
+
+    def test_rejects_non_positive_interval(self) -> None:
+        """An interval below 1 is a configuration error."""
+        model = SimpleModel()
+        with pytest.raises(ValueError, match="sam_interval"):
+            ZSharp(list(model.parameters()), optim.AdamW, sam_interval=0)
+
+    def test_schedule_starts_with_sam_step(self) -> None:
+        """The first batch and every k-th batch after it use SAM."""
+        model = SimpleModel()
+        opt = ZSharp(list(model.parameters()), optim.AdamW, sam_interval=3)
+        assert [opt.take_sam_step() for _ in range(7)] == [
+            True,
+            False,
+            False,
+            True,
+            False,
+            False,
+            True,
+        ]
+
+    def test_default_interval_matches_paper(self) -> None:
+        """The default takes the SAM step on every batch."""
+        model = SimpleModel()
+        opt = ZSharp(list(model.parameters()), optim.AdamW)
+        assert all(opt.take_sam_step() for _ in range(5))
+
+    def test_step_skips_closure_between_sam_steps(self) -> None:
+        """Between SAM steps, ``step`` updates without a second pass."""
+        torch.manual_seed(0)
+        model = SimpleModel()
+        opt = ZSharp(list(model.parameters()), optim.AdamW, sam_interval=2)
+        x, y = torch.randn(8, 10), torch.randint(0, 2, (8,))
+        calls = 0
+
+        def closure() -> float:
+            nonlocal calls
+            calls += 1
+            opt.zero_grad()
+            loss = nn.functional.cross_entropy(model(x), y)
+            loss.backward()
+            return float(loss.detach())
+
+        for _ in range(4):
+            before = [p.detach().clone() for p in model.parameters()]
+            closure()
+            opt.step(closure)
+            assert any(
+                not torch.equal(b, p)
+                for b, p in zip(before, model.parameters(), strict=True)
+            )
+        # 4 first passes plus a closure call on the 2 SAM batches.
+        assert calls == 6

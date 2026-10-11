@@ -103,6 +103,9 @@ class OptimizerConfig(BaseModel):
     weight_decay: float = Field(default=DEFAULT_WEIGHT_DECAY, ge=0)
     rho: float = Field(default=DEFAULT_RHO, gt=0)
     percentile: int = Field(default=DEFAULT_PERCENTILE, ge=0, le=100)
+    # Take the sharpness-aware step every ``sam_interval`` batches and a
+    # plain base-optimizer step otherwise (1 = every batch, as in the paper).
+    sam_interval: int = Field(default=1, ge=1)
 
     @field_validator("type")
     @classmethod

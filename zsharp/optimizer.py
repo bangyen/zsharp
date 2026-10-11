@@ -226,6 +226,8 @@ class ZSharp(SAM):
         base_optimizer: Base optimizer class (e.g., torch.optim.SGD)
         rho: Perturbation radius for SAM
         percentile: Percentile threshold for gradient filtering (0-100)
+        sam_interval: Take the two-pass SAM step every this many batches;
+            other batches use a plain base-optimizer step
         **kwargs: Additional arguments passed to base_optimizer
 
     """
@@ -236,6 +238,7 @@ class ZSharp(SAM):
         base_optimizer: type[Optimizer],
         rho: float = DEFAULT_RHO,
         percentile: int = DEFAULT_PERCENTILE,
+        sam_interval: int = 1,
         **kwargs: OptimizerKwargs,
     ) -> None:
         """Initialize ZSharp optimizer.
@@ -245,11 +248,55 @@ class ZSharp(SAM):
             base_optimizer: Base optimizer class (e.g., torch.optim.SGD)
             rho: Perturbation radius for SAM
             percentile: Percentile threshold for gradient filtering (0-100)
+            sam_interval: Take the two-pass SAM step every this many batches;
+                other batches use a plain base-optimizer step
             **kwargs: Additional arguments passed to base_optimizer
 
         """
+        if sam_interval < 1:
+            msg = f"sam_interval must be >= 1, got {sam_interval}"
+            raise ValueError(msg)
         super().__init__(params, base_optimizer, rho=rho, **kwargs)
         self.percentile = percentile
+        self.sam_interval = sam_interval
+        self._batch_count = 0
+
+    def take_sam_step(self) -> bool:
+        """Advance the batch counter and say whether this batch uses SAM.
+
+        Returns:
+            bool: True on every ``sam_interval``-th batch, starting with the
+            first; False when the caller should take a plain step instead.
+        """
+        take = self._batch_count % self.sam_interval == 0
+        self._batch_count += 1
+        return take
+
+    @overload
+    def step(self, closure: None = None) -> None:  # noqa: D418
+        """Perform a step with no closure."""
+
+    @overload
+    def step(self, closure: Callable[[], float]) -> float:  # noqa: D418
+        """Perform a step with a closure."""
+
+    def step(
+        self,
+        closure: Optional[Callable[[], float]] = None,
+    ) -> Optional[float]:
+        """Take a SAM step, or a plain base-optimizer step between SAM steps.
+
+        Args:
+            closure: A closure that re-evaluates the model and returns the loss.
+
+        Returns:
+            Optional[float]: The loss value from the closure, or None for a
+            plain step.
+        """
+        if self.take_sam_step():
+            return super().step(closure)
+        self.base_optimizer.step()
+        return None
 
     def first_step(self) -> None:
         """First step of ZSharp: apply gradient filtering and perturbation."""

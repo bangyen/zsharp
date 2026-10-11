@@ -994,6 +994,26 @@ class TestZSharpGradientHygiene:
 
         assert torch.allclose(model.weight.grad, clean, atol=1e-6)
 
+    def test_sam_interval_uses_one_pass_between_sam_steps(self):
+        """With ``sam_interval=2`` every other batch runs one forward pass."""
+        ctx, model = self._make_ctx()
+        ctx.optimizer.sam_interval = 2
+        x = torch.randn(8, 4)
+        y = torch.randint(0, 2, (8,))
+        calls = 0
+
+        def count(*_args):
+            nonlocal calls
+            calls += 1
+
+        handle = model.register_forward_hook(count)
+        for _ in range(4):
+            _run_train_step(ctx, x, y)
+        handle.remove()
+
+        # Two SAM batches at two passes each, two plain batches at one.
+        assert calls == 6
+
 
 class TestZSharpLargeModelThreshold:
     """Threshold computation must handle models above the quantile cap."""
