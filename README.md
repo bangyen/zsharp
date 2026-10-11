@@ -34,6 +34,7 @@ Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bang
 | CIFAR-10 ResNet-18 | 200    | 84.39 ± 0.48%  | **84.98 ± 0.36%** | +0.59%   |
 | CIFAR-10 ResNet-18, strong reg.† | 200 | 85.62 ± 0.34% | **86.38 ± 0.43%** | +0.76% |
 | CIFAR-100 ResNet-18 | 20 | 48.59 ± 0.51% | **50.75 ± 0.49%** | +2.16% |
+| CIFAR-100 ResNet-18 | 50 | 51.99 ± 0.51% | **52.12 ± 0.41%** | +0.13% |
 
 *Final test accuracy, mean ± std over 3 seeds (42, 1, 2). 200 epochs:
 `python -m scripts.sweep --epochs 200 --seeds 42 1 2 [--regularize]`. The
@@ -48,7 +49,7 @@ regularization (~70% train accuracy), so it lowers accuracy for both, but
 the per-epoch gap widens; by 200 epochs it raises both (+1.2% SGD, +1.4%
 ZSharp) and ZSharp leads on every seed. CIFAR-100:
 `python -m scripts.sweep --configs configs/sgd_cifar100.yaml
-configs/zsharp_cifar100_baseline.yaml --epochs 20 --seeds 42 1 2` (same
+configs/zsharp_cifar100_baseline.yaml --epochs {20,50} --seeds 42 1 2` (same
 hyperparameters, `dataset: cifar100`).*
 
 > **Note**: the gap shrinks with training — ZSharp reaches its plateau
@@ -62,7 +63,8 @@ hyperparameters, `dataset: cifar100`).*
 > equal-compute result is 86.04 ± 0.40% vs 85.62 ± 0.34%. A 200-epoch ZSharp
 > run takes ~5.7 h at the current per-epoch cost. On CIFAR-100 the
 > equal-compute picture reverses: 20 SGD epochs buy ~11 ZSharp epochs
-> (1.9x cost), which reach 47.68 ± 0.37% vs SGD's 48.59 ± 0.51%.
+> (1.9x cost), which reach 47.68 ± 0.37% vs SGD's 48.59 ± 0.51%; at 50 SGD
+> epochs, ~27 ZSharp epochs reach 51.47 ± 0.10% vs 51.99 ± 0.51%.
 
 ## Features
 
