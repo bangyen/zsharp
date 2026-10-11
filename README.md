@@ -67,13 +67,24 @@ hyperparameters, `dataset: cifar100`).*
 > (1.9x cost), which reach 47.68 ± 0.37% vs SGD's 48.59 ± 0.51%; at 50 SGD
 > epochs, ~27 ZSharp epochs reach 51.47 ± 0.10% vs 51.99 ± 0.51%; with strong
 > regularization, ~27 ZSharp epochs reach 49.77 ± 0.59% vs 52.39 ± 0.53%.
+>
+> **Cheaper SAM steps** (`optimizer.sam_interval: k`): take the two-pass SAM
+> step only every k-th batch and a plain AdamW step otherwise. CIFAR-10,
+> 20 epochs, 3 seeds:
+>
+> | Optimizer | Accuracy | s/epoch | At SGD's 20-epoch time |
+> |---|---|---|---|
+> | SGD | 78.19 ± 0.23% | 68 | 78.19 ± 0.23% |
+> | ZSharp, k=1 | 80.84 ± 0.54% | 127 | — |
+> | ZSharp, k=2 | 80.59 ± 0.28% | 88 | 79.10 ± 0.93% |
+> | ZSharp, k=4 | 80.41 ± 0.57% | 76 | 80.12 ± 0.61% |
 
 ## Features
 
 - **Z-Score Gradient Filtering** — Layer-wise Z-score normalization with a global 95th percentile threshold (configurable), matching the paper's $Q_p = 0.95$.
 - **Device Support** — Runs on CUDA, Apple Silicon (MPS) or CPU, with optional half precision on MPS.
 - **Paper Architectures** — CIFAR-style ResNet-56/110, VGG-16BN, and the paper's compact ViTs, on CIFAR-10/100 and Tiny-ImageNet.
-- **Comprehensive Testing** — 95%+ test coverage with 143 tests ensuring reliability and reproducibility.
+- **Comprehensive Testing** — 95%+ test coverage with 153 tests ensuring reliability and reproducibility.
 
 ## Repo Structure
 
