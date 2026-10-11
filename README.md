@@ -4,7 +4,7 @@
 [![CI](https://github.com/bangyen/zsharp/actions/workflows/ci.yml/badge.svg)](https://github.com/bangyen/zsharp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/bangyen/zsharp)](LICENSE)
 
-**Sharpness-Aware Minimization with Z-Score Gradient Filtering: +0.59% accuracy over SGD at 200 epochs (+2.65% at 20), fully reproducible**
+**Sharpness-Aware Minimization with Z-Score Gradient Filtering: beats SGD per epoch (+2.65% at 20 epochs, +0.59% at 200 on CIFAR-10), but each epoch costs ~1.9x — at equal compute it edges SGD on CIFAR-10 and trails it on CIFAR-100. Fully reproducible.**
 
 <p align="center">
   <img src="docs/training_curves.png" alt="Test accuracy of ZSharp and SGD per epoch and per wall-clock hour" width="600">
