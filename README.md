@@ -79,7 +79,7 @@ hyperparameters, `dataset: cifar100`).*
 > | ZSharp, k=1 | 80.84 ± 0.54% | 127 | — |
 > | ZSharp, k=2 | 80.59 ± 0.28% | 88 | 79.10 ± 0.93% |
 > | ZSharp, k=4 | 80.41 ± 0.57% | 76 | 80.12 ± 0.61% |
-> | ZSharp, k=8 | 80.44 ± 1.12% | 69 | ≈ 80.44% (same cost as SGD) |
+> | ZSharp, k=8 (5 seeds) | 80.05 ± 1.05% | 69 | ≈ 80.05% (same cost as SGD) |
 >
 > On CIFAR-100 (20 epochs, 3 seeds), k=4 reaches 50.40 ± 0.55% at 78 s/epoch
 > (SGD 48.59 ± 0.51% at 74 s, ZSharp k=1 50.75 ± 0.49% at 140 s); at SGD's
