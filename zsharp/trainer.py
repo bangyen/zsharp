@@ -154,6 +154,7 @@ def _setup_optimizer(
         weight_decay=wd,
         percentile=int(opt_config.percentile),
         sam_interval=int(opt_config.sam_interval),
+        sam_interval_final=opt_config.sam_interval_final,
     )
     return optimizer, ZSHARP_OPTIMIZER
 
@@ -439,6 +440,15 @@ def _load_checkpoint(
     return progress
 
 
+def _set_optimizer_epoch(
+    ctx: TrainingContext, epoch: int, epochs: int
+) -> None:
+    """Let an optimizer with a per-epoch schedule (ZSharp) update itself."""
+    set_epoch = getattr(ctx.optimizer, "set_epoch", None)
+    if set_epoch is not None:
+        set_epoch(epoch, epochs)
+
+
 def _train_epochs(
     ctx: TrainingContext,
     loaders: tuple[DataLoader[torch.Tensor], DataLoader[torch.Tensor]],
@@ -454,6 +464,7 @@ def _train_epochs(
     start_time = time.time() - progress.elapsed
 
     for epoch in range(progress.next_epoch, epochs):
+        _set_optimizer_epoch(ctx, epoch, epochs)
         e_loss, a = _run_epoch(ctx, epoch, train_ldr)
         scheduler.step()
         va, _ = _validate(ctx, test_ldr)

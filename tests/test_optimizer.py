@@ -870,6 +870,34 @@ class TestSamInterval:
             True,
         ]
 
+    def test_rejects_non_positive_final_interval(self) -> None:
+        """A final interval below 1 is a configuration error."""
+        model = SimpleModel()
+        with pytest.raises(ValueError, match="sam_interval_final"):
+            ZSharp(list(model.parameters()), optim.AdamW, sam_interval_final=0)
+
+    def test_set_epoch_ramps_interval(self) -> None:
+        """The interval rises linearly from start to final over training."""
+        model = SimpleModel()
+        opt = ZSharp(
+            list(model.parameters()),
+            optim.AdamW,
+            sam_interval=2,
+            sam_interval_final=8,
+        )
+        got = []
+        for epoch in range(4):
+            opt.set_epoch(epoch, 4)
+            got.append(opt.sam_interval)
+        assert got == [2, 4, 6, 8]
+
+    def test_set_epoch_keeps_fixed_interval(self) -> None:
+        """Without a final interval, ``set_epoch`` leaves it unchanged."""
+        model = SimpleModel()
+        opt = ZSharp(list(model.parameters()), optim.AdamW, sam_interval=3)
+        opt.set_epoch(5, 10)
+        assert opt.sam_interval == 3
+
     def test_default_interval_matches_paper(self) -> None:
         """The default takes the SAM step on every batch."""
         model = SimpleModel()

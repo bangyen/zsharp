@@ -106,6 +106,9 @@ class OptimizerConfig(BaseModel):
     # Take the sharpness-aware step every ``sam_interval`` batches and a
     # plain base-optimizer step otherwise (1 = every batch, as in the paper).
     sam_interval: int = Field(default=1, ge=1)
+    # If set, the interval rises linearly from ``sam_interval`` at the first
+    # epoch to this value at the last, so SAM steps thin out over training.
+    sam_interval_final: Optional[int] = Field(default=None, ge=1)
 
     @field_validator("type")
     @classmethod

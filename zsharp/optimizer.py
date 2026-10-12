@@ -228,17 +228,21 @@ class ZSharp(SAM):
         percentile: Percentile threshold for gradient filtering (0-100)
         sam_interval: Take the two-pass SAM step every this many batches;
             other batches use a plain base-optimizer step
+        sam_interval_final: If set, ``set_epoch`` moves the interval
+            linearly from ``sam_interval`` to this value over training
         **kwargs: Additional arguments passed to base_optimizer
 
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         params: list[torch.nn.Parameter],
         base_optimizer: type[Optimizer],
         rho: float = DEFAULT_RHO,
         percentile: int = DEFAULT_PERCENTILE,
         sam_interval: int = 1,
+        *,
+        sam_interval_final: Optional[int] = None,
         **kwargs: OptimizerKwargs,
     ) -> None:
         """Initialize ZSharp optimizer.
@@ -250,16 +254,37 @@ class ZSharp(SAM):
             percentile: Percentile threshold for gradient filtering (0-100)
             sam_interval: Take the two-pass SAM step every this many batches;
                 other batches use a plain base-optimizer step
+            sam_interval_final: If set, ``set_epoch`` moves the interval
+                linearly from ``sam_interval`` to this value over training
             **kwargs: Additional arguments passed to base_optimizer
 
         """
         if sam_interval < 1:
             msg = f"sam_interval must be >= 1, got {sam_interval}"
             raise ValueError(msg)
+        if sam_interval_final is not None and sam_interval_final < 1:
+            msg = f"sam_interval_final must be >= 1, got {sam_interval_final}"
+            raise ValueError(msg)
         super().__init__(params, base_optimizer, rho=rho, **kwargs)
         self.percentile = percentile
         self.sam_interval = sam_interval
+        self.sam_interval_start = sam_interval
+        self.sam_interval_final = sam_interval_final
         self._batch_count = 0
+
+    def set_epoch(self, epoch: int, epochs: int) -> None:
+        """Set the SAM interval for ``epoch`` (0-based) of ``epochs``.
+
+        Without ``sam_interval_final`` the interval stays fixed; otherwise it
+        is interpolated linearly and rounded to the nearest integer.
+        """
+        if self.sam_interval_final is None:
+            return
+        frac = epoch / max(epochs - 1, 1)
+        span = self.sam_interval_final - self.sam_interval_start
+        self.sam_interval = max(
+            1, round(self.sam_interval_start + span * frac)
+        )
 
     def take_sam_step(self) -> bool:
         """Advance the batch counter and say whether this batch uses SAM.
