@@ -7,7 +7,7 @@
 **Sharpness-Aware Minimization with Z-Score Gradient Filtering: beats SGD per epoch (+2.65% at 20 epochs, +0.59% at 200 on CIFAR-10), but each epoch costs ~1.9x. Taking the SAM step every 4th batch cuts that to ~1.1–1.3x and keeps most of the gain, so it matches or beats SGD at equal compute on CIFAR-10 and CIFAR-100. Fully reproducible.**
 
 <p align="center">
-  <img src="docs/training_curves.png" alt="Test accuracy of ZSharp and SGD per epoch and per wall-clock hour" width="600">
+  <img src="docs/training_curves.png" alt="Test accuracy of ZSharp, ZSharp with SAM every 4th batch, and SGD per epoch and per wall-clock hour" width="600">
 </p>
 
 ## Quickstart
@@ -57,10 +57,10 @@ hyperparameters, `dataset: cifar100`).*
 > **Note**: the gap shrinks with training — ZSharp reaches its plateau
 > sooner, but both end within about a point. Each ZSharp step costs two
 > forward/backward passes plus the Z-score filtering; one ZSharp epoch takes
-> ~1.9x as long as an SGD epoch (127 s vs 68 s on 4 CPU threads). Given the
-> same compute as 200 SGD epochs, 108 ZSharp epochs reach 84.72 ± 0.23% vs
+> ~2x as long as an SGD epoch (121 s vs 62 s on 4 CPU threads). Given the
+> same compute as 200 SGD epochs, 102 ZSharp epochs reach 84.79 ± 0.36% vs
 > SGD's 84.39 ± 0.48% (last-10-epoch means 84.74% vs 84.35%; ZSharp ahead on
-> every seed). SGD leads for roughly the first 40% of that budget; see the
+> every seed). SGD leads for roughly the first 30% of that budget; see the
 > right panel of the figure above. With strong regularization the
 > equal-compute result is 86.04 ± 0.40% vs 85.62 ± 0.34%. A 200-epoch ZSharp
 > run takes ~5.7 h at the current per-epoch cost. On CIFAR-100 the
