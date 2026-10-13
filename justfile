@@ -98,4 +98,4 @@ run-experiments:
 
 # Run single training experiment
 run-train:
-    {{PYTHON}} -m scripts.train --config configs/zsharp_baseline.yaml
+    {{PYTHON}} -m scripts.train --config configs/zsharp_fast.yaml

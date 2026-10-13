@@ -19,8 +19,8 @@ git clone https://github.com/bangyen/zsharp.git
 cd zsharp
 pip install -e .
 pytest   # optional: run tests
-python -m scripts.train --config configs/zsharp_baseline.yaml
-python -m scripts.train --config configs/zsharp_fast.yaml   # SAM step every 4th batch
+python -m scripts.train --config configs/zsharp_fast.yaml       # recommended: SAM step every 4th batch
+python -m scripts.train --config configs/zsharp_baseline.yaml   # paper setup: SAM step every batch
 ```
 
 Or open in Colab: [Colab Notebook](https://colab.research.google.com/github/bangyen/zsharp/blob/main/zsharp_demo.ipynb).

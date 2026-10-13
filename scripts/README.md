@@ -52,7 +52,7 @@ python -m scripts.sweep --epochs 200 --seeds 42 1 2 --regularize
 All scripts are integrated with the project's task runner (`just`):
 
 ```bash
-just run-train        # Run ZSharp training (configs/zsharp_baseline.yaml)
+just run-train        # Run ZSharp training (configs/zsharp_fast.yaml)
 just run-experiments  # Run comprehensive experiments
 ```
 
@@ -61,7 +61,8 @@ Run `just` (or `just --list`) to see the full set of targets.
 ## Configuration Files
 
 Scripts use configuration files from the `configs/` directory:
-- `zsharp_baseline.yaml` - Standard ZSharp configuration
+- `zsharp_fast.yaml` - Recommended ZSharp configuration (SAM step every 4th batch)
+- `zsharp_baseline.yaml` - Paper ZSharp configuration (SAM step every batch)
 - `sgd_baseline.yaml` - SGD baseline for comparison
 - `zsharp_quick.yaml` - Fast ZSharp training
 - `sgd_quick.yaml` - Fast SGD training
