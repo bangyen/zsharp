@@ -87,6 +87,10 @@ hyperparameters, `dataset: cifar100`).*
 > accuracy but not at equal compute. (Its s/epoch is scaled from a same-host
 > timing against k=4, since the 3-seed sweep ran on a busier machine.)
 >
+> A larger SAM radius does not make up for the skipped steps: k=4 with
+> ρ = 0.1 reaches 80.26 ± 0.36% and with ρ = 0.2 80.51 ± 0.65%, within noise
+> of ρ = 0.05 (80.41 ± 0.57%).
+>
 > At 200 epochs (`configs/zsharp_fast.yaml`, 3 seeds), k=4 reaches
 > 84.99 ± 0.23% at 76 s/epoch, matching k=1 (84.98 ± 0.36%); at SGD's
 > 200-epoch time (~163 epochs) it reaches 85.03 ± 0.28% vs SGD's
