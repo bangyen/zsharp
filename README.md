@@ -80,11 +80,12 @@ hyperparameters, `dataset: cifar100`).*
 > | ZSharp, k=2 | 80.59 ± 0.28% | 88 | 79.10 ± 0.93% |
 > | ZSharp, k=4 | 80.41 ± 0.57% | 76 | 80.12 ± 0.61% |
 > | ZSharp, k=8 (5 seeds) | 80.05 ± 1.05% | 69 | ≈ 80.05% (same cost as SGD) |
-> | ZSharp, k rising 2→8 | 80.51 ± 0.28% | 81 | 80.04 ± 0.47% |
+> | ZSharp, k rising 2→8 | 80.51 ± 0.28% | 75 | 79.34 ± 0.58% |
 >
 > The rising interval (`optimizer.sam_interval_final: 8` with
 > `sam_interval: 2`) moves k linearly over training. It edges out fixed k=4 on
-> accuracy but not at equal compute.
+> accuracy but not at equal compute. (Its s/epoch is scaled from a same-host
+> timing against k=4, since the 3-seed sweep ran on a busier machine.)
 >
 > At 200 epochs (`configs/zsharp_fast.yaml`, 3 seeds), k=4 reaches
 > 84.99 ± 0.23% at 76 s/epoch, matching k=1 (84.98 ± 0.36%); at SGD's
