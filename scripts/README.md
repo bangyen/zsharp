@@ -47,6 +47,17 @@ python -m scripts.sweep --epochs 200 --seeds 42 1 2
 python -m scripts.sweep --epochs 200 --seeds 42 1 2 --regularize
 ```
 
+### `plot_curves.py`
+Redraws `docs/training_curves.png` from the 200-epoch sweep results: test
+accuracy per epoch, and against wall-clock time cut at SGD's 200-epoch
+budget (given as SGD's measured training times).
+
+**Usage:**
+```bash
+python -m scripts.plot_curves --baseline results/sweep \
+    --fast results/sweep_fast200 --sgd-seconds 12329.35 12478.16
+```
+
 ## Task Runner Integration
 
 All scripts are integrated with the project's task runner (`just`):
