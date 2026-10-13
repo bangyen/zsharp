@@ -80,6 +80,11 @@ hyperparameters, `dataset: cifar100`).*
 > | ZSharp, k=2 | 80.59 ± 0.28% | 88 | 79.10 ± 0.93% |
 > | ZSharp, k=4 | 80.41 ± 0.57% | 76 | 80.12 ± 0.61% |
 > | ZSharp, k=8 (5 seeds) | 80.05 ± 1.05% | 69 | ≈ 80.05% (same cost as SGD) |
+> | ZSharp, k rising 2→8 | 80.51 ± 0.28% | 81 | 80.04 ± 0.47% |
+>
+> The rising interval (`optimizer.sam_interval_final: 8` with
+> `sam_interval: 2`) moves k linearly over training. It edges out fixed k=4 on
+> accuracy but not at equal compute.
 >
 > At 200 epochs (`configs/zsharp_fast.yaml`, 3 seeds), k=4 reaches
 > 84.99 ± 0.23% at 76 s/epoch, matching k=1 (84.98 ± 0.36%); at SGD's
@@ -103,7 +108,7 @@ hyperparameters, `dataset: cifar100`).*
 - **Z-Score Gradient Filtering** — Layer-wise Z-score normalization with a global 95th percentile threshold (configurable), matching the paper's $Q_p = 0.95$.
 - **Device Support** — Runs on CUDA, Apple Silicon (MPS) or CPU, with optional half precision on MPS.
 - **Paper Architectures** — CIFAR-style ResNet-56/110, VGG-16BN, and the paper's compact ViTs, on CIFAR-10/100 and Tiny-ImageNet.
-- **Comprehensive Testing** — 95%+ test coverage with 153 tests ensuring reliability and reproducibility.
+- **Comprehensive Testing** — 95%+ test coverage with 156 tests ensuring reliability and reproducibility.
 
 ## Repo Structure
 
