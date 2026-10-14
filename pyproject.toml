@@ -50,6 +50,10 @@ dev = [
     "bandit",
     "pip-audit",
 ]
+# Only scripts/plot_curves.py needs this; the library itself does not plot.
+plot = [
+    "matplotlib",
+]
 
 [tool.deptry.per_rule_ignores]
 DEP002 = ["pytest", "pytest-cov", "ruff", "mypy", "interrogate", "pre-commit", "types-PyYAML", "mutmut", "import-linter", "deptry", "vulture", "hypothesis", "bandit", "pip-audit"]
