@@ -100,6 +100,10 @@ hyperparameters, `dataset: cifar100`).*
 > 86.38 ± 0.43%; SGD: 85.62 ± 0.34%); at regularized SGD's 200-epoch time
 > (~174 epochs) it reaches 86.57 ± 0.30%, vs k=1's 86.04 ± 0.40%.
 >
+> k=8 (`--regularize`, 200 epochs) reaches 86.36 ± 0.24%, no better than k=4.
+> Scaled by a same-machine regularized SGD timing, its 200 epochs cost about
+> the same as SGD's, so it gains nothing over k=4 at equal compute.
+>
 > On CIFAR-100 (20 epochs, 3 seeds), k=4 reaches 50.40 ± 0.55% at 78 s/epoch
 > (SGD 48.59 ± 0.51% at 74 s, ZSharp k=1 50.75 ± 0.49% at 140 s); at SGD's
 > 20-epoch time it reaches 50.35 ± 0.38%, reversing the equal-compute loss.
