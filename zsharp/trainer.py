@@ -422,7 +422,11 @@ def _load_checkpoint(
     scheduler: optim.lr_scheduler.StepLR,
 ) -> _Progress:
     """Restore training state saved by ``_save_checkpoint``."""
-    state = torch.load(path, map_location=ctx.device, weights_only=False)
+    # weights_only=False because the numpy RNG state is not a tensor; this
+    # only ever reads a checkpoint this trainer wrote itself.
+    state = torch.load(  # nosec B614
+        path, map_location=ctx.device, weights_only=False
+    )
     ctx.model.load_state_dict(state["model"])
     scheduled = _scheduled_optimizer(ctx)
     scheduled.load_state_dict(state["optimizer"])
